@@ -5,8 +5,14 @@ type JobRow = {
   job_number: string;
   name: string;
   status: string;
-  customers?: { name: string } | null;
+  customers?: { name: string }[] | { name: string } | null;
 };
+
+function getCustomerName(customers: JobRow["customers"]) {
+  if (!customers) return "—";
+  if (Array.isArray(customers)) return customers[0]?.name ?? "—";
+  return customers.name;
+}
 
 export function JobList({ jobs }: { jobs: JobRow[] }) {
   return (
@@ -23,11 +29,11 @@ export function JobList({ jobs }: { jobs: JobRow[] }) {
           {jobs.map((job) => (
             <tr key={job.id} className="border-t">
               <td className="px-4 py-4">
-                <Link href={`/jobs/${job.id}`} className="font-medium hover:underline">
+                <Link href={`/dashboard/jobs/${job.id}`} className="font-medium hover:underline">
                   {job.job_number} · {job.name}
                 </Link>
               </td>
-              <td className="px-4 py-4">{job.customers?.name ?? "—"}</td>
+              <td className="px-4 py-4">{getCustomerName(job.customers)}</td>
               <td className="px-4 py-4">{job.status}</td>
             </tr>
           ))}

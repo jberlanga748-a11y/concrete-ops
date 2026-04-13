@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
 export function LoginForm() {
@@ -8,6 +9,8 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +26,9 @@ export function LoginForm() {
       return;
     }
 
-    window.location.href = "/dashboard";
+    const nextPath = searchParams.get("next") || "/dashboard";
+    router.replace(nextPath);
+    router.refresh();
   }
 
   return (
