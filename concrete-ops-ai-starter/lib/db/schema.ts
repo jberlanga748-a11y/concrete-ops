@@ -5,6 +5,7 @@ export type JobStatus = 'draft' | 'scheduled' | 'in_progress' | 'on_hold' | 'com
 export type AssignmentRole = 'foreman' | 'lead' | 'crew';
 export type TimeEntryStatus = 'clocked_in' | 'on_break' | 'clocked_out' | 'approved' | 'needs_review';
 export type TimeEntrySource = 'employee_app' | 'admin_entry' | 'import';
+export type UploadTag = 'progress' | 'issue' | 'safety' | 'delivery' | 'damage' | 'change_order_support';
 
 export type Company = {
   id: string;
@@ -146,4 +147,20 @@ export type DailyReportCrewEntry = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+
+export type JobFile = {
+  id: string;
+  company_id: string;
+  job_id: string;
+  daily_report_id: string | null;
+  uploaded_by_user_id: string | null;
+  uploaded_by_employee_id: string | null;
+  file_name: string;
+  file_type: string;
+  storage_path: string;
+  tag: UploadTag;
+  note: string | null;
+  created_at: string;
 };

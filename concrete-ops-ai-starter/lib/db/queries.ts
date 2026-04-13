@@ -1,4 +1,4 @@
-import type { Customer, DailyReport, Employee, Job, JobPhase, TimeEntry, User } from "@/lib/db/schema";
+import type { Customer, DailyReport, Employee, Job, JobFile, JobPhase, TimeEntry, User } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 
 export type JobListRow = Pick<Job, "id" | "job_number" | "name" | "status"> & {
@@ -25,6 +25,16 @@ export type DailyReportListRow = Pick<
 export type DailyReportDetailRow = DailyReport & {
   jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
   users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+};
+
+export type JobFileRow = Pick<
+  JobFile,
+  "id" | "job_id" | "daily_report_id" | "file_name" | "file_type" | "storage_path" | "tag" | "note" | "created_at"
+> & {
+  jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
+  daily_reports: Pick<DailyReport, "report_date">[] | Pick<DailyReport, "report_date"> | null;
+  users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+  employees: Pick<Employee, "full_name">[] | Pick<Employee, "full_name"> | null;
 };
 
 export type TimeOption = { id: string; label: string };
@@ -102,6 +112,30 @@ export async function getDailyReportJobOptions() {
   return jobOptions;
 }
 
+export async function getDailyReportOptions(jobId?: string) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("daily_reports")
+    .select("id, report_date, jobs(job_number, name)")
+    .order("report_date", { ascending: false })
+    .limit(100);
+
+  if (jobId) {
+    query = query.eq("job_id", jobId);
+  }
+
+  const { data } = await query;
+
+  const options: TimeOption[] = (data ?? []).map((report: { id: string; report_date: string; jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null }) => {
+    const job = Array.isArray(report.jobs) ? report.jobs[0] : report.jobs;
+    const jobLabel = job ? `${job.job_number} · ${job.name}` : "Job";
+    return { id: report.id, label: `${report.report_date} · ${jobLabel}` };
+  });
+
+  return options;
+}
+
 export async function getDailyReports(filters?: { jobId?: string; date?: string }) {
   const supabase = await createClient();
 
@@ -140,6 +174,36 @@ export async function getDailyReportById(id: string) {
   return {
     ...result,
     data: (result.data ?? null) as DailyReportDetailRow | null,
+  };
+}
+
+export async function getJobFiles(filters?: { jobId?: string; dailyReportId?: string; tag?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("job_files")
+    .select(
+      "id, job_id, daily_report_id, file_name, file_type, storage_path, tag, note, created_at, jobs(job_number, name), daily_reports(report_date), users(full_name), employees(full_name)",
+    )
+    .order("created_at", { ascending: false });
+
+  if (filters?.jobId) {
+    query = query.eq("job_id", filters.jobId);
+  }
+
+  if (filters?.dailyReportId) {
+    query = query.eq("daily_report_id", filters.dailyReportId);
+  }
+
+  if (filters?.tag) {
+    query = query.eq("tag", filters.tag);
+  }
+
+  const result = await query;
+
+  return {
+    ...result,
+    data: (result.data ?? []) as JobFileRow[],
   };
 }
 
