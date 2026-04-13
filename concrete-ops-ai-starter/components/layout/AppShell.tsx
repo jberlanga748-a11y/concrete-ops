@@ -2,9 +2,10 @@ import Link from "next/link";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/jobs", label: "Jobs" },
-  { href: "/time", label: "Time" },
-  { href: "/settings", label: "Settings" },
+  { href: "/dashboard/jobs", label: "Jobs" },
+  { href: "/dashboard/time", label: "Time" },
+  { href: "/dashboard/daily-reports", label: "Daily Reports" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
