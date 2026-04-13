@@ -1,20 +1,13 @@
 import Link from "next/link";
+import type { JobListRow } from "@/lib/db/queries";
 
-type JobRow = {
-  id: string;
-  job_number: string;
-  name: string;
-  status: string;
-  customers?: { name: string }[] | { name: string } | null;
-};
-
-function getCustomerName(customers: JobRow["customers"]) {
+function getCustomerName(customers: JobListRow["customers"]) {
   if (!customers) return "—";
   if (Array.isArray(customers)) return customers[0]?.name ?? "—";
   return customers.name;
 }
 
-export function JobList({ jobs }: { jobs: JobRow[] }) {
+export function JobList({ jobs }: { jobs: JobListRow[] }) {
   return (
     <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
       <table className="w-full text-sm">
