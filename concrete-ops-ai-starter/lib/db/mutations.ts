@@ -20,11 +20,7 @@ export async function createClockInEntry(input: ClockInInput) {
     source: "employee_app",
   };
 
-  const { data, error } = await supabase
-    .from("time_entries")
-    .insert(payload)
-    .select("id")
-    .single();
+  const { data, error } = await supabase.from("time_entries").insert(payload).select("id").single();
 
   if (error) {
     return { error: error.message };
@@ -80,4 +76,51 @@ export async function clockOutLatestEntry(input: { employeeId: string; jobId?: s
   }
 
   return { data: { id: openEntry.id } };
+}
+
+type DailyReportInput = {
+  jobId: string;
+  reportDate: string;
+  workCompleted: string;
+  delaysIssues?: string;
+  materialsDeliveries?: string;
+  safetyNotes?: string;
+};
+
+export async function createDailyReport(input: DailyReportInput) {
+  const supabase = await createClient();
+  const { data: authResult, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !authResult.user) {
+    return { error: "You must be signed in to submit a daily report." };
+  }
+
+  const { data: appUser, error: appUserError } = await supabase
+    .from("users")
+    .select("id, company_id")
+    .eq("auth_user_id", authResult.user.id)
+    .single();
+
+  if (appUserError || !appUser) {
+    return { error: "Could not resolve your app user record." };
+  }
+
+  const payload = {
+    company_id: appUser.company_id,
+    submitted_by_user_id: appUser.id,
+    job_id: input.jobId,
+    report_date: input.reportDate,
+    work_completed: input.workCompleted,
+    delays_issues: input.delaysIssues?.trim() || null,
+    materials_deliveries: input.materialsDeliveries?.trim() || null,
+    safety_notes: input.safetyNotes?.trim() || null,
+  };
+
+  const { data, error } = await supabase.from("daily_reports").insert(payload).select("id").single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { data };
 }

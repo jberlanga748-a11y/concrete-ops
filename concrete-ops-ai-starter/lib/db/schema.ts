@@ -123,3 +123,27 @@ export type TimeEntry = {
   created_at: string;
   updated_at: string;
 };
+
+export type DailyReport = {
+  id: string;
+  company_id: string;
+  job_id: string;
+  report_date: string;
+  submitted_by_user_id: string;
+  work_completed: string;
+  delays_issues: string | null;
+  materials_deliveries: string | null;
+  safety_notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DailyReportCrewEntry = {
+  id: string;
+  company_id: string;
+  daily_report_id: string;
+  employee_id: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
