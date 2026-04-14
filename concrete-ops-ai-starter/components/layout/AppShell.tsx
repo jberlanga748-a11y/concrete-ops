@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard" },
@@ -14,26 +15,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-zinc-100">
       <header className="border-b bg-white p-4 lg:hidden">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.18em] text-zinc-500">Concrete Ops AI</p>
-            <p className="mt-1 text-lg font-semibold">Admin</p>
-          </div>
-          <Link
-            href="/employee"
-            className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-zinc-100"
-          >
-            Employee Portal
-          </Link>
-        </div>
-
-        <nav className="mt-3 flex flex-wrap gap-2">
+        <p className="text-sm uppercase tracking-[0.18em] text-zinc-500">Concrete Ops AI</p>
+        <p className="mt-1 text-lg font-semibold">Admin</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {nav.map((item) => (
             <Link key={item.href} href={item.href} className="rounded-xl border px-3 py-2 text-sm">
               {item.label}
             </Link>
           ))}
-        </nav>
+          <SignOutButton className="rounded-xl border px-3 py-2 text-sm disabled:opacity-50" />
+        </div>
       </header>
 
       <div className="flex min-h-screen">
@@ -61,6 +52,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
+          <div className="mt-6">
+            <SignOutButton className="w-full rounded-2xl border px-4 py-3 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50" />
+          </div>
         </aside>
 
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
