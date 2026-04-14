@@ -70,6 +70,7 @@ export default async function DashboardPage() {
           <Link href="/dashboard/jobs" className="rounded-xl border px-4 py-2 text-sm">Jobs</Link>
           <Link href="/dashboard/daily-reports" className="rounded-xl border px-4 py-2 text-sm">Daily Reports</Link>
           <Link href="/dashboard/uploads" className="rounded-xl border px-4 py-2 text-sm">Uploads</Link>
+          <Link href="/dashboard/change-orders" className="rounded-xl border px-4 py-2 text-sm">Change Orders</Link>
           <Link href="/dashboard/time" className="rounded-xl border px-4 py-2 text-sm">Time</Link>
         </div>
       </div>

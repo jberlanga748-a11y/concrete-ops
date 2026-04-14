@@ -6,6 +6,7 @@ export type AssignmentRole = 'foreman' | 'lead' | 'crew';
 export type TimeEntryStatus = 'clocked_in' | 'on_break' | 'clocked_out' | 'approved' | 'needs_review';
 export type TimeEntrySource = 'employee_app' | 'admin_entry' | 'import';
 export type UploadTag = 'progress' | 'issue' | 'safety' | 'delivery' | 'damage' | 'change_order_support';
+export type ChangeOrderStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'executed';
 
 export type Company = {
   id: string;
@@ -162,5 +163,42 @@ export type JobFile = {
   storage_path: string;
   tag: UploadTag;
   note: string | null;
+  created_at: string;
+};
+
+
+export type ChangeOrder = {
+  id: string;
+  company_id: string;
+  job_id: string;
+  daily_report_id: string | null;
+  title: string;
+  description: string | null;
+  status: ChangeOrderStatus;
+  direct_cost_total: number;
+  markup_percent: number;
+  total_amount: number;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChangeOrderLineItem = {
+  id: string;
+  company_id: string;
+  change_order_id: string;
+  description: string;
+  quantity: number;
+  unit_cost: number;
+  line_total: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChangeOrderFile = {
+  id: string;
+  company_id: string;
+  change_order_id: string;
+  job_file_id: string;
   created_at: string;
 };

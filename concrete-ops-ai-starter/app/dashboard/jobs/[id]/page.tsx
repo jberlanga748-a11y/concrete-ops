@@ -1,5 +1,5 @@
 import { JobDetailHeader } from "@/components/jobs/JobDetailHeader";
-import { getJobFiles, getJobTimeEntries, type JobFileRow } from "@/lib/db/queries";
+import { getJobFiles, getJobTimeEntries, type JobFileRow, type JobTimeEntryRow } from "@/lib/db/queries";
 
 function getUploader(users: JobFileRow["users"], employees: JobFileRow["employees"]) {
   if (users) {
@@ -13,6 +13,18 @@ function getUploader(users: JobFileRow["users"], employees: JobFileRow["employee
   }
 
   return "—";
+}
+
+function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
+  if (!employees) return "—";
+  if (Array.isArray(employees)) return employees[0]?.full_name ?? "—";
+  return employees.full_name;
+}
+
+function getPhaseName(phases: JobTimeEntryRow["job_phases"]) {
+  if (!phases) return "—";
+  if (Array.isArray(phases)) return phases[0]?.name ?? "—";
+  return phases.name;
 }
 
 export default async function JobDetailPage({
@@ -50,14 +62,10 @@ export default async function JobDetailPage({
           <select name="tag" defaultValue={selectedTag} className="rounded-xl border px-3 py-2 text-sm">
             <option value="">All tags</option>
             {tags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
-              </option>
+              <option key={tag} value={tag}>{tag}</option>
             ))}
           </select>
-          <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
-            Apply
-          </button>
+          <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">Apply</button>
         </form>
 
         <div className="mt-5 space-y-4">
@@ -95,9 +103,39 @@ export default async function JobDetailPage({
         </div>
       </div>
 
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Time entries</h2>
-        <pre className="mt-4 overflow-auto rounded-2xl bg-zinc-100 p-4 text-xs">{JSON.stringify(timeEntries ?? [], null, 2)}</pre>
+      <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
+        <div className="bg-zinc-100 px-4 py-3">
+          <h2 className="text-xl font-semibold">Time Entries</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr>
+              <th className="px-4 py-3 text-left">Employee</th>
+              <th className="px-4 py-3 text-left">Phase</th>
+              <th className="px-4 py-3 text-left">Clock In</th>
+              <th className="px-4 py-3 text-left">Clock Out</th>
+              <th className="px-4 py-3 text-left">Hours</th>
+              <th className="px-4 py-3 text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(timeEntries ?? []).map((entry) => (
+              <tr key={entry.id} className="border-t">
+                <td className="px-4 py-3">{getEmployeeName(entry.employees)}</td>
+                <td className="px-4 py-3">{getPhaseName(entry.job_phases)}</td>
+                <td className="px-4 py-3">{entry.clock_in_at}</td>
+                <td className="px-4 py-3">{entry.clock_out_at || "—"}</td>
+                <td className="px-4 py-3">{entry.total_hours || "—"}</td>
+                <td className="px-4 py-3">{entry.status}</td>
+              </tr>
+            ))}
+            {(timeEntries ?? []).length === 0 ? (
+              <tr>
+                <td className="px-4 py-3 text-zinc-600" colSpan={6}>No time entries found for this job.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
       </div>
     </div>
   );
