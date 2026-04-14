@@ -13,6 +13,18 @@ const nav = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-zinc-100">
+      <header className="border-b bg-white p-4 lg:hidden">
+        <p className="text-sm uppercase tracking-[0.18em] text-zinc-500">Concrete Ops AI</p>
+        <p className="mt-1 text-lg font-semibold">Admin</p>
+        <nav className="mt-3 flex flex-wrap gap-2">
+          {nav.map((item) => (
+            <Link key={item.href} href={item.href} className="rounded-xl border px-3 py-2 text-sm">
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </header>
+
       <div className="flex min-h-screen">
         <aside className="hidden w-72 border-r bg-white p-6 lg:block">
           <p className="text-sm uppercase tracking-[0.18em] text-zinc-500">Concrete Ops AI</p>
