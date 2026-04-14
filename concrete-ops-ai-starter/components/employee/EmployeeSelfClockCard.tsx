@@ -4,75 +4,38 @@ import { useState } from "react";
 import { clockOutLatestEntry, createClockInEntry } from "@/lib/db/mutations";
 import type { TimeOption } from "@/lib/db/queries";
 
-export function EmployeeClockCard({
-  employeeOptions,
-  jobOptions,
-  phaseOptions,
-}: {
-  employeeOptions: TimeOption[];
-  jobOptions: TimeOption[];
-  phaseOptions: TimeOption[];
-}) {
-  const [employeeId, setEmployeeId] = useState("");
+export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: { employeeId: string; jobOptions: TimeOption[]; phaseOptions: TimeOption[] }) {
   const [jobId, setJobId] = useState("");
   const [jobPhaseId, setJobPhaseId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleClockIn() {
-    if (!employeeId || !jobId) {
-      setMessage("Select an employee and job before clocking in.");
+    if (!jobId) {
+      setMessage("Select a job before clocking in.");
       return;
     }
 
     setLoading(true);
     setMessage(null);
-
     const result = await createClockInEntry({ employeeId, jobId, jobPhaseId: jobPhaseId || undefined });
-
-    if (result.error) {
-      setMessage(result.error);
-    } else {
-      setMessage("Clock-in saved.");
-    }
-
+    setMessage(result.error ? result.error : "Clock-in saved.");
     setLoading(false);
   }
 
   async function handleClockOut() {
-    if (!employeeId) {
-      setMessage("Select an employee before clocking out.");
-      return;
-    }
-
     setLoading(true);
     setMessage(null);
-
     const result = await clockOutLatestEntry({ employeeId, jobId: jobId || undefined });
-
-    if (result.error) {
-      setMessage(result.error);
-    } else {
-      setMessage("Clock-out saved.");
-    }
-
+    setMessage(result.error ? result.error : "Clock-out saved.");
     setLoading(false);
   }
 
   return (
     <div className="rounded-3xl border bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold">Employee Time</h2>
-      <p className="mt-3 text-zinc-600">Choose employee, job, and phase, then clock in or clock out.</p>
+      <h2 className="text-xl font-semibold">My Time</h2>
+      <p className="mt-3 text-zinc-600">Select job/phase, then clock in or clock out.</p>
       <div className="mt-6 space-y-4">
-        <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
-          <option value="">Select employee</option>
-          {employeeOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-
         <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
           <option value="">Select job</option>
           {jobOptions.map((option) => (
