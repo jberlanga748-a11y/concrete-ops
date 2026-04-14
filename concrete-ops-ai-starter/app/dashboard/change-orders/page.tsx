@@ -37,7 +37,7 @@ export default async function ChangeOrdersPage({
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Change Orders</h1>
-            <p className="mt-2 text-zinc-600">Admin module for field-proof-backed change orders.</p>
+            <p className="mt-2 text-zinc-600">Manage scope/cost changes backed by optional daily report and field-proof uploads.</p>
           </div>
           <Link href="/dashboard/change-orders/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">New Change Order</Link>
         </div>
@@ -87,11 +87,14 @@ export default async function ChangeOrdersPage({
                 <td className="px-4 py-4">{co.direct_cost_total}</td>
                 <td className="px-4 py-4">{co.markup_percent}</td>
                 <td className="px-4 py-4">{co.total_amount}</td>
-                <td className="px-4 py-4">
-                  <Link className="underline" href={`/dashboard/change-orders/${co.id}`}>Open</Link>
-                </td>
+                <td className="px-4 py-4"><Link className="underline" href={`/dashboard/change-orders/${co.id}`}>Open</Link></td>
               </tr>
             ))}
+            {(changeOrders ?? []).length === 0 ? (
+              <tr>
+                <td className="px-4 py-6 text-zinc-600" colSpan={8}>No change orders found. Start by creating a new change order.</td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

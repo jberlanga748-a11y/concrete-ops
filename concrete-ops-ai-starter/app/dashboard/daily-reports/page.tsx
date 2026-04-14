@@ -37,7 +37,7 @@ export default async function DailyReportsPage({
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Daily Reports</h1>
-            <p className="mt-2 text-zinc-600">Admin view of submitted field reports.</p>
+            <p className="mt-2 text-zinc-600">Admin view of submitted field reports. Filter by job/date or open a report for full detail.</p>
           </div>
           <Link href="/dashboard/daily-reports/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
             New Report
@@ -49,17 +49,13 @@ export default async function DailyReportsPage({
         <select name="jobId" defaultValue={selectedJobId} className="rounded-xl border px-3 py-2 text-sm">
           <option value="">All jobs</option>
           {jobOptions.map((job) => (
-            <option key={job.id} value={job.id}>
-              {job.label}
-            </option>
+            <option key={job.id} value={job.id}>{job.label}</option>
           ))}
         </select>
 
         <input name="date" type="date" defaultValue={selectedDate} className="rounded-xl border px-3 py-2 text-sm" />
 
-        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
-          Apply filters
-        </button>
+        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">Apply filters</button>
       </form>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
@@ -81,12 +77,15 @@ export default async function DailyReportsPage({
                 <td className="px-4 py-4">{getSubmitter(report.users)}</td>
                 <td className="max-w-md truncate px-4 py-4">{report.work_completed}</td>
                 <td className="px-4 py-4">
-                  <Link className="text-zinc-900 underline" href={`/dashboard/daily-reports/${report.id}`}>
-                    Open
-                  </Link>
+                  <Link className="text-zinc-900 underline" href={`/dashboard/daily-reports/${report.id}`}>Open</Link>
                 </td>
               </tr>
             ))}
+            {(reports ?? []).length === 0 ? (
+              <tr>
+                <td className="px-4 py-6 text-zinc-600" colSpan={5}>No daily reports found. Try clearing filters or create a new report.</td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

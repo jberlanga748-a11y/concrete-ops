@@ -25,6 +25,7 @@ export function ChangeOrderForm({
   const [proofFileIds, setProofFileIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const filteredProofFiles = useMemo(() => {
     if (!jobId) return proofFiles;
@@ -48,6 +49,7 @@ export function ChangeOrderForm({
 
   async function handleSubmit() {
     if (!jobId || !title.trim()) {
+      setMessageType("error");
       setMessage("Job and title are required.");
       return;
     }
@@ -68,11 +70,13 @@ export function ChangeOrderForm({
     });
 
     if (result.error || !result.data) {
+      setMessageType("error");
       setMessage(result.error || "Failed to create change order.");
       setLoading(false);
       return;
     }
 
+    setMessageType("success");
     setMessage("Change order created.");
     setLoading(false);
     router.push(`/dashboard/change-orders/${result.data.id}`);
@@ -81,43 +85,64 @@ export function ChangeOrderForm({
   return (
     <div className="rounded-3xl border bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-semibold">New Change Order</h2>
-      <p className="mt-2 text-sm text-zinc-600">Link field proof from uploads and optional daily report context.</p>
+      <p className="mt-2 text-sm text-zinc-600">Link to job context, optional daily report context, and optional field proof uploads.</p>
 
       <div className="mt-5 space-y-4">
-        <select value={jobId} onChange={(e) => { setJobId(e.target.value); setDailyReportId(""); }} className="w-full rounded-2xl border px-4 py-3">
-          <option value="">Select job</option>
-          {jobOptions.map((job) => (
-            <option key={job.id} value={job.id}>{job.label}</option>
-          ))}
-        </select>
-
-        <select value={dailyReportId} onChange={(e) => setDailyReportId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
-          <option value="">Link daily report (optional)</option>
-          {scopedReportOptions.map((report) => (
-            <option key={report.id} value={report.id}>{report.label}</option>
-          ))}
-        </select>
-
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-2xl border px-4 py-3" />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" className="min-h-28 w-full rounded-2xl border px-4 py-3" />
-
-        <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="w-full rounded-2xl border px-4 py-3">
-          <option value="draft">Draft</option>
-          <option value="submitted">Submitted</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="executed">Executed</option>
-        </select>
-
-        <div className="grid gap-3 md:grid-cols-2">
-          <input type="number" min="0" step="0.01" value={directCostTotal} onChange={(e) => setDirectCostTotal(e.target.value)} placeholder="Direct cost total" className="w-full rounded-2xl border px-4 py-3" />
-          <input type="number" min="0" step="0.01" value={markupPercent} onChange={(e) => setMarkupPercent(e.target.value)} placeholder="Markup percent" className="w-full rounded-2xl border px-4 py-3" />
+        <div>
+          <p className="mb-2 text-sm text-zinc-600">Job *</p>
+          <select value={jobId} onChange={(e) => { setJobId(e.target.value); setDailyReportId(""); }} className="w-full rounded-2xl border px-4 py-3">
+            <option value="">Select job</option>
+            {jobOptions.map((job) => (
+              <option key={job.id} value={job.id}>{job.label}</option>
+            ))}
+          </select>
         </div>
 
-        <p className="text-sm text-zinc-600">Total amount preview: {totalAmountPreview.toFixed(2)}</p>
+        <div>
+          <p className="mb-2 text-sm text-zinc-600">Linked daily report (optional)</p>
+          <select value={dailyReportId} onChange={(e) => setDailyReportId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+            <option value="">Select daily report</option>
+            {scopedReportOptions.map((report) => (
+              <option key={report.id} value={report.id}>{report.label}</option>
+            ))}
+          </select>
+          {jobId && scopedReportOptions.length === 0 ? <p className="mt-2 text-xs text-zinc-500">No reports for selected job yet. You can still create the change order.</p> : null}
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm text-zinc-600">Title *</p>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Example: Extra slab edge prep" className="w-full rounded-2xl border px-4 py-3" />
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm text-zinc-600">Description</p>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What changed and why" className="min-h-28 w-full rounded-2xl border px-4 py-3" />
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm text-zinc-600">Status</p>
+          <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="w-full rounded-2xl border px-4 py-3">
+            <option value="draft">Draft</option>
+            <option value="submitted">Submitted</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="executed">Executed</option>
+          </select>
+        </div>
+
+        <div className="rounded-2xl border p-4">
+          <p className="font-medium">Totals</p>
+          <p className="mt-1 text-sm text-zinc-600">Enter direct cost and markup. Total is previewed automatically.</p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <input type="number" min="0" step="0.01" value={directCostTotal} onChange={(e) => setDirectCostTotal(e.target.value)} placeholder="Direct cost total" className="w-full rounded-2xl border px-4 py-3" />
+            <input type="number" min="0" step="0.01" value={markupPercent} onChange={(e) => setMarkupPercent(e.target.value)} placeholder="Markup percent" className="w-full rounded-2xl border px-4 py-3" />
+          </div>
+          <p className="mt-3 text-sm text-zinc-600">Total amount preview: {totalAmountPreview.toFixed(2)}</p>
+        </div>
 
         <div className="rounded-2xl border p-4">
           <p className="font-medium">Link field proof (optional)</p>
+          <p className="mt-1 text-sm text-zinc-600">Select photos/documents that support this change order.</p>
           <div className="mt-3 max-h-60 space-y-2 overflow-auto text-sm">
             {filteredProofFiles.map((file) => (
               <label key={file.id} className="flex items-start gap-2 rounded-xl border p-2">
@@ -136,7 +161,11 @@ export function ChangeOrderForm({
           {loading ? "Saving..." : "Create Change Order"}
         </button>
 
-        {message ? <p className="text-sm text-zinc-600">{message}</p> : null}
+        {message ? (
+          <p className={`text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
+        ) : (
+          <p className="text-sm text-zinc-500">Required fields: job and title.</p>
+        )}
       </div>
     </div>
   );

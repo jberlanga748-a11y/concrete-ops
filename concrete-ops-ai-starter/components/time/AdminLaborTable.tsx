@@ -49,6 +49,13 @@ export function AdminLaborTable({ entries }: { entries: JobTimeEntryRow[] }) {
               <td className="px-4 py-4">{entry.status}</td>
             </tr>
           ))}
+          {entries.length === 0 ? (
+            <tr>
+              <td className="px-4 py-6 text-zinc-600" colSpan={7}>
+                No time entries match the current filters.
+              </td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </div>
