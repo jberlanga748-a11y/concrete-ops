@@ -103,23 +103,23 @@ export function EmployeeUploadForm({
   return (
     <div className="flex flex-col gap-6">
       {/* File Upload Area */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground">Photo or Document</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Upload job site photos or supporting documents</p>
+      <div className="rounded-2xl border bg-white p-6">
+        <h3 className="text-sm font-semibold text-zinc-900">Photo or Document</h3>
+        <p className="mt-1 text-sm text-zinc-500">Upload job site photos or supporting documents</p>
 
         {!file ? (
           <label
             htmlFor="file-upload"
-            className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 px-6 py-10 transition-all hover:border-primary/50 hover:bg-primary/5"
+            className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 px-6 py-10 transition-colors hover:border-orange-400 hover:bg-orange-50"
           >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <svg className="h-7 w-7 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
+              <svg className="h-7 w-7 text-orange-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
             </div>
-            <p className="mt-4 text-sm font-medium text-foreground">Tap to select a file</p>
-            <p className="mt-1 text-xs text-muted-foreground">or drag and drop here</p>
-            <p className="mt-3 text-xs text-muted-foreground">Images and PDF files accepted</p>
+            <p className="mt-4 text-sm font-medium text-zinc-900">Tap to select a file</p>
+            <p className="mt-1 text-xs text-zinc-500">or drag and drop here</p>
+            <p className="mt-3 text-xs text-zinc-400">Images and PDF files accepted</p>
             <input
               ref={fileInputRef}
               id="file-upload"
@@ -130,24 +130,24 @@ export function EmployeeUploadForm({
             />
           </label>
         ) : (
-          <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+          <div className="mt-4 rounded-xl border bg-zinc-50 p-4">
             {preview ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-zinc-200">
                 <img src={preview} alt="Preview" className="h-full w-full object-cover" />
               </div>
             ) : (
-              <div className="flex items-center gap-3 rounded-lg bg-muted p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <div className="flex items-center gap-3 rounded-lg bg-zinc-100 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                  <svg className="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-foreground">{file.name}</span>
+                <span className="text-sm font-medium text-zinc-900">{file.name}</span>
               </div>
             )}
             <button
               onClick={handleRemoveFile}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border bg-white py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -159,19 +159,19 @@ export function EmployeeUploadForm({
       </div>
 
       {/* Tag Selection */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground">Category</h3>
-        <p className="mt-1 text-sm text-muted-foreground">What type of upload is this?</p>
+      <div className="rounded-2xl border bg-white p-6">
+        <h3 className="text-sm font-semibold text-zinc-900">Category</h3>
+        <p className="mt-1 text-sm text-zinc-500">What type of upload is this?</p>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           {TAG_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => setTag(option.value)}
-              className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-xs font-medium transition-all ${
+              className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-xs font-medium transition-colors ${
                 tag === option.value
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:bg-muted"
+                  ? "border-orange-500 bg-orange-50 text-orange-600"
+                  : "border-zinc-200 bg-white text-zinc-600 hover:border-orange-300 hover:bg-zinc-50"
               }`}
             >
               {option.icon === "chart" && (
@@ -211,14 +211,14 @@ export function EmployeeUploadForm({
       </div>
 
       {/* Job & Report Selection */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground">Link to Job</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Attach this upload to a specific job</p>
+      <div className="rounded-2xl border bg-white p-6">
+        <h3 className="text-sm font-semibold text-zinc-900">Link to Job</h3>
+        <p className="mt-1 text-sm text-zinc-500">Attach this upload to a specific job</p>
 
         <div className="mt-5 flex flex-col gap-4">
           <div>
-            <label htmlFor="job-select" className="mb-2 block text-sm font-medium text-foreground">
-              Job <span className="text-destructive">*</span>
+            <label htmlFor="job-select" className="mb-2 block text-sm font-medium text-zinc-900">
+              Job <span className="text-red-500">*</span>
             </label>
             <select
               id="job-select"
@@ -227,7 +227,7 @@ export function EmployeeUploadForm({
                 setJobId(e.target.value);
                 setDailyReportId("");
               }}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border bg-white px-4 py-3 text-sm text-zinc-900 transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
             >
               <option value="">Select a job</option>
               {jobOptions.map((option) => (
@@ -239,14 +239,14 @@ export function EmployeeUploadForm({
           </div>
 
           <div>
-            <label htmlFor="report-select" className="mb-2 block text-sm font-medium text-foreground">
-              Daily Report <span className="text-muted-foreground font-normal">(optional)</span>
+            <label htmlFor="report-select" className="mb-2 block text-sm font-medium text-zinc-900">
+              Daily Report <span className="text-zinc-400 font-normal">(optional)</span>
             </label>
             <select
               id="report-select"
               value={dailyReportId}
               onChange={(e) => setDailyReportId(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border bg-white px-4 py-3 text-sm text-zinc-900 transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
             >
               <option value="">Select a daily report</option>
               {scopedReportOptions.map((option) => (
@@ -256,23 +256,23 @@ export function EmployeeUploadForm({
               ))}
             </select>
             {jobId && scopedReportOptions.length === 0 && (
-              <p className="mt-2 text-xs text-muted-foreground">No daily reports for this job yet.</p>
+              <p className="mt-2 text-xs text-zinc-500">No daily reports for this job yet.</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Note */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground">Note</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Add context about what this file shows</p>
+      <div className="rounded-2xl border bg-white p-6">
+        <h3 className="text-sm font-semibold text-zinc-900">Note</h3>
+        <p className="mt-1 text-sm text-zinc-500">Add context about what this file shows</p>
 
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="E.g., Foundation pour complete, west side"
           rows={3}
-          className="mt-4 w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="mt-4 w-full resize-none rounded-xl border bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
         />
       </div>
 
@@ -281,10 +281,10 @@ export function EmployeeUploadForm({
         <div
           className={`flex items-start gap-3 rounded-xl p-4 ${
             messageType === "error"
-              ? "bg-destructive/10 text-destructive"
+              ? "bg-red-50 text-red-600"
               : messageType === "success"
-              ? "bg-success/10 text-success"
-              : "bg-muted text-muted-foreground"
+              ? "bg-green-50 text-green-600"
+              : "bg-zinc-100 text-zinc-600"
           }`}
         >
           {messageType === "error" ? (
@@ -304,7 +304,7 @@ export function EmployeeUploadForm({
       <button
         onClick={handleSubmit}
         disabled={loading || !jobId || !file}
-        className="flex items-center justify-center gap-2 rounded-xl bg-primary py-4 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-hover disabled:opacity-50"
+        className="flex items-center justify-center gap-2 rounded-xl bg-orange-600 py-4 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:opacity-50"
       >
         {loading ? (
           <>

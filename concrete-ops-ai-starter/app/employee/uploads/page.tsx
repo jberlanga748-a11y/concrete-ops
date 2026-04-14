@@ -11,15 +11,15 @@ export default async function EmployeeUploadsPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/employee"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card transition-all hover:bg-muted"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white transition-colors hover:bg-zinc-100"
         >
-          <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Upload Photo</h1>
-          <p className="text-sm text-muted-foreground">Attach photos and documents to jobs</p>
+          <h1 className="text-xl font-semibold text-zinc-900">Upload Photo</h1>
+          <p className="text-sm text-zinc-500">Attach photos and documents to jobs</p>
         </div>
       </div>
 

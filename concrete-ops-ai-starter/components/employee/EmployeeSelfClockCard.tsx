@@ -51,22 +51,22 @@ export function EmployeeSelfClockCard({
   return (
     <div className="flex flex-col gap-6">
       {/* Clock In/Out Buttons - Primary Focus */}
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-2xl border bg-white p-6">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+            <svg className="h-8 w-8 text-orange-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-foreground">Time Clock</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Clock in to start tracking your shift</p>
+          <h2 className="mt-4 text-lg font-semibold text-zinc-900">Time Clock</h2>
+          <p className="mt-1 text-sm text-zinc-500">Clock in to start tracking your shift</p>
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button
             onClick={handleClockIn}
             disabled={loading}
-            className="flex items-center justify-center gap-2 rounded-xl bg-success py-4 text-sm font-semibold text-success-foreground transition-all hover:bg-success/90 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-xl bg-green-600 py-4 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
           >
             {loadingAction === "in" ? (
               <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export function EmployeeSelfClockCard({
           <button
             onClick={handleClockOut}
             disabled={loading}
-            className="flex items-center justify-center gap-2 rounded-xl bg-foreground py-4 text-sm font-semibold text-background transition-all hover:bg-foreground/90 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
           >
             {loadingAction === "out" ? (
               <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -104,10 +104,10 @@ export function EmployeeSelfClockCard({
           <div
             className={`mt-4 flex items-start gap-3 rounded-xl p-4 ${
               messageType === "error"
-                ? "bg-destructive/10 text-destructive"
+                ? "bg-red-50 text-red-600"
                 : messageType === "success"
-                ? "bg-success/10 text-success"
-                : "bg-muted text-muted-foreground"
+                ? "bg-green-50 text-green-600"
+                : "bg-zinc-100 text-zinc-600"
             }`}
           >
             {messageType === "error" ? (
@@ -129,20 +129,20 @@ export function EmployeeSelfClockCard({
       </div>
 
       {/* Job Selection */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground">Job Details</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Select the job you are working on</p>
+      <div className="rounded-2xl border bg-white p-6">
+        <h3 className="text-sm font-semibold text-zinc-900">Job Details</h3>
+        <p className="mt-1 text-sm text-zinc-500">Select the job you are working on</p>
 
         <div className="mt-5 flex flex-col gap-4">
           <div>
-            <label htmlFor="job-select" className="mb-2 block text-sm font-medium text-foreground">
-              Job <span className="text-destructive">*</span>
+            <label htmlFor="job-select" className="mb-2 block text-sm font-medium text-zinc-900">
+              Job <span className="text-red-500">*</span>
             </label>
             <select
               id="job-select"
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border bg-white px-4 py-3 text-sm text-zinc-900 transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
             >
               <option value="">Select a job</option>
               {jobOptions.map((option) => (
@@ -154,14 +154,14 @@ export function EmployeeSelfClockCard({
           </div>
 
           <div>
-            <label htmlFor="phase-select" className="mb-2 block text-sm font-medium text-foreground">
-              Phase <span className="text-muted-foreground font-normal">(optional)</span>
+            <label htmlFor="phase-select" className="mb-2 block text-sm font-medium text-zinc-900">
+              Phase <span className="text-zinc-400 font-normal">(optional)</span>
             </label>
             <select
               id="phase-select"
               value={jobPhaseId}
               onChange={(e) => setJobPhaseId(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border bg-white px-4 py-3 text-sm text-zinc-900 transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
             >
               <option value="">Select a phase</option>
               {phaseOptions.map((option) => (
@@ -174,11 +174,11 @@ export function EmployeeSelfClockCard({
         </div>
 
         {/* Help Text */}
-        <div className="mt-5 flex items-start gap-2 rounded-lg bg-muted p-3">
-          <svg className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <div className="mt-5 flex items-start gap-2 rounded-lg bg-zinc-100 p-3">
+          <svg className="h-4 w-4 shrink-0 text-zinc-500 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
           </svg>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-zinc-500">
             Tip: When clocking out, if no job is selected, your most recent open time entry will be used.
           </p>
         </div>

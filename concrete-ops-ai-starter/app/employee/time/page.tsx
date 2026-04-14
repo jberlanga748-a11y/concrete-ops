@@ -29,27 +29,27 @@ export default async function EmployeeTimePage() {
         <div className="flex items-center gap-3">
           <Link
             href="/employee"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card transition-all hover:bg-muted"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white transition-colors hover:bg-zinc-100"
           >
-            <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Time Entry</h1>
-            <p className="text-sm text-muted-foreground">Clock in and out of your shifts</p>
+            <h1 className="text-xl font-semibold text-zinc-900">Time Entry</h1>
+            <p className="text-sm text-zinc-500">Clock in and out of your shifts</p>
           </div>
         </div>
 
         {/* No Employee Record */}
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card px-6 py-12 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <svg className="h-7 w-7 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <div className="flex flex-col items-center justify-center rounded-2xl border bg-white px-6 py-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100">
+            <svg className="h-7 w-7 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-foreground">No Employee Record</h2>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+          <h2 className="mt-4 text-lg font-semibold text-zinc-900">No Employee Record</h2>
+          <p className="mt-2 max-w-sm text-sm text-zinc-500">
             Your account is not linked to an employee record yet. Please contact your office administrator to get set up.
           </p>
         </div>
@@ -78,15 +78,15 @@ export default async function EmployeeTimePage() {
       <div className="flex items-center gap-3">
         <Link
           href="/employee"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card transition-all hover:bg-muted"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white transition-colors hover:bg-zinc-100"
         >
-          <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Time Entry</h1>
-          <p className="text-sm text-muted-foreground">Clock in and out of your shifts</p>
+          <h1 className="text-xl font-semibold text-zinc-900">Time Entry</h1>
+          <p className="text-sm text-zinc-500">Clock in and out of your shifts</p>
         </div>
       </div>
 

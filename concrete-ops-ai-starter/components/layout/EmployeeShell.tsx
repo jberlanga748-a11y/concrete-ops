@@ -37,18 +37,18 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-zinc-50">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card lg:flex">
-        <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <svg className="h-5 w-5 text-primary-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r bg-white lg:flex">
+        <div className="flex h-16 items-center gap-3 border-b px-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-600">
+            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">Concrete Ops</span>
-            <span className="text-xs text-muted-foreground">Employee Portal</span>
+            <span className="text-sm font-semibold">Concrete Ops</span>
+            <span className="text-xs text-zinc-500">Employee Portal</span>
           </div>
         </div>
 
@@ -59,10 +59,10 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-orange-50 text-orange-600"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 }`}
               >
                 {item.icon}
@@ -72,23 +72,23 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="border-t border-border p-4">
-          <div className="rounded-lg bg-muted p-3">
-            <p className="text-xs font-medium text-muted-foreground">Need Help?</p>
-            <p className="mt-1 text-xs text-muted-foreground">Contact your supervisor or office admin.</p>
+        <div className="border-t p-4">
+          <div className="rounded-lg bg-zinc-100 p-3">
+            <p className="text-xs font-medium text-zinc-600">Need Help?</p>
+            <p className="mt-1 text-xs text-zinc-500">Contact your supervisor or office admin.</p>
           </div>
         </div>
       </aside>
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-white px-4 lg:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <svg className="h-4 w-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600">
+            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
             </svg>
           </div>
-          <span className="text-sm font-semibold text-foreground">Concrete Ops</span>
+          <span className="text-sm font-semibold">Concrete Ops</span>
         </div>
       </header>
 
@@ -100,7 +100,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card pb-safe lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
         <div className="flex items-center justify-around py-2">
           {nav.map((item) => {
             const isActive = pathname === item.href;
@@ -109,7 +109,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={`flex flex-col items-center gap-1 px-4 py-1.5 ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isActive ? "text-orange-600" : "text-zinc-500"
                 }`}
               >
                 {item.icon}
