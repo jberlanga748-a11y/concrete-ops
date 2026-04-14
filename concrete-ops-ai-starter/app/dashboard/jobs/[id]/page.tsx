@@ -1,16 +1,103 @@
 import { JobDetailHeader } from "@/components/jobs/JobDetailHeader";
-import { getJobTimeEntries } from "@/lib/db/queries";
+import { getJobFiles, getJobTimeEntries, type JobFileRow } from "@/lib/db/queries";
 
-export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function getUploader(users: JobFileRow["users"], employees: JobFileRow["employees"]) {
+  if (users) {
+    if (Array.isArray(users)) return users[0]?.full_name ?? "—";
+    return users.full_name;
+  }
+
+  if (employees) {
+    if (Array.isArray(employees)) return employees[0]?.full_name ?? "—";
+    return employees.full_name;
+  }
+
+  return "—";
+}
+
+export default async function JobDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tag?: string }>;
+}) {
   const { id } = await params;
-  const { data } = await getJobTimeEntries(id);
+  const query = await searchParams;
+  const selectedTag = query.tag?.trim() || "";
+
+  const [{ data: timeEntries }, { data: files }] = await Promise.all([
+    getJobTimeEntries(id),
+    getJobFiles({ jobId: id, tag: selectedTag || undefined }),
+  ]);
+
+  const tags = Array.from(new Set((files ?? []).map((file) => file.tag)));
+  const filesByTag = (files ?? []).reduce<Record<string, JobFileRow[]>>((acc, file) => {
+    const key = file.tag;
+    acc[key] = [...(acc[key] ?? []), file];
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
       <JobDetailHeader id={id} />
+
+      <div className="rounded-3xl border bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">Related Uploads</h2>
+        <p className="mt-2 text-sm text-zinc-600">Grouped by tag. Shows uploader, date, tag, note, and storage path.</p>
+
+        <form method="get" className="mt-4 flex flex-wrap gap-3">
+          <select name="tag" defaultValue={selectedTag} className="rounded-xl border px-3 py-2 text-sm">
+            <option value="">All tags</option>
+            {tags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+            Apply
+          </button>
+        </form>
+
+        <div className="mt-5 space-y-4">
+          {Object.entries(filesByTag).length === 0 ? (
+            <p className="text-sm text-zinc-600">No uploads found for this job.</p>
+          ) : (
+            Object.entries(filesByTag).map(([tag, groupedFiles]) => (
+              <div key={tag} className="overflow-hidden rounded-2xl border">
+                <div className="bg-zinc-100 px-4 py-2 text-sm font-medium">{tag}</div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-left">Uploaded At</th>
+                      <th className="px-4 py-3 text-left">Uploader</th>
+                      <th className="px-4 py-3 text-left">File</th>
+                      <th className="px-4 py-3 text-left">Note</th>
+                      <th className="px-4 py-3 text-left">Storage Path</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupedFiles.map((file) => (
+                      <tr key={file.id} className="border-t">
+                        <td className="px-4 py-3">{file.created_at}</td>
+                        <td className="px-4 py-3">{getUploader(file.users, file.employees)}</td>
+                        <td className="px-4 py-3">{file.file_name}</td>
+                        <td className="px-4 py-3">{file.note || "—"}</td>
+                        <td className="max-w-xs truncate px-4 py-3">{file.storage_path}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">Time entries</h2>
-        <pre className="mt-4 overflow-auto rounded-2xl bg-zinc-100 p-4 text-xs">{JSON.stringify(data ?? [], null, 2)}</pre>
+        <pre className="mt-4 overflow-auto rounded-2xl bg-zinc-100 p-4 text-xs">{JSON.stringify(timeEntries ?? [], null, 2)}</pre>
       </div>
     </div>
   );
