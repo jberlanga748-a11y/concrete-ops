@@ -43,7 +43,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className="mt-6 space-y-2">
             {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-zinc-100">
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-zinc-100"
+              >
                 {item.label}
               </Link>
             ))}
