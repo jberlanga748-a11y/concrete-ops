@@ -1,14 +1,13 @@
 import Link from "next/link";
+import type { JobListRow } from "@/lib/db/queries";
 
-type JobRow = {
-  id: string;
-  job_number: string;
-  name: string;
-  status: string;
-  customers?: { name: string } | null;
-};
+function getCustomerName(customers: JobListRow["customers"]) {
+  if (!customers) return "—";
+  if (Array.isArray(customers)) return customers[0]?.name ?? "—";
+  return customers.name;
+}
 
-export function JobList({ jobs }: { jobs: JobRow[] }) {
+export function JobList({ jobs }: { jobs: JobListRow[] }) {
   return (
     <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
       <table className="w-full text-sm">
@@ -23,11 +22,11 @@ export function JobList({ jobs }: { jobs: JobRow[] }) {
           {jobs.map((job) => (
             <tr key={job.id} className="border-t">
               <td className="px-4 py-4">
-                <Link href={`/jobs/${job.id}`} className="font-medium hover:underline">
+                <Link href={`/dashboard/jobs/${job.id}`} className="font-medium hover:underline">
                   {job.job_number} · {job.name}
                 </Link>
               </td>
-              <td className="px-4 py-4">{job.customers?.name ?? "—"}</td>
+              <td className="px-4 py-4">{getCustomerName(job.customers)}</td>
               <td className="px-4 py-4">{job.status}</td>
             </tr>
           ))}
