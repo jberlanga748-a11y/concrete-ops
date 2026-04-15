@@ -34,9 +34,15 @@ function getUploader(users: JobFileRow["users"], employees: JobFileRow["employee
 export default async function UploadsPage({
   searchParams,
 }: {
+ codex/setup-next.js-with-supabase-authentication-anp0qb
+  searchParams: { jobId?: string; dailyReportId?: string; tag?: string };
+}) {
+  const params = searchParams;
+
   searchParams: Promise<{ jobId?: string; dailyReportId?: string; tag?: string }>;
 }) {
   const params = await searchParams;
+ main
   const selectedJobId = params.jobId?.trim() || "";
   const selectedDailyReportId = params.dailyReportId?.trim() || "";
   const selectedTag = params.tag?.trim() || "";
