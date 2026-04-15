@@ -66,8 +66,8 @@ function formatDateTime(value: string | null | undefined) {
   }).format(parsed);
 }
 
-export default async function JobHubPage({ params }: { params: Promise<{ jobId: string }> }) {
-  const { jobId } = await params;
+export default async function JobHubPage({ params }: { params: { jobId: string } }) {
+  const { jobId } = params;
   const supabase = await createClient();
 
   const { data: job } = await supabase
