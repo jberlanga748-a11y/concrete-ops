@@ -5,9 +5,13 @@ import { getTimeEntries, getTimeFilterOptions } from "@/lib/db/queries";
 export default async function TimePage({
   searchParams,
 }: {
-  searchParams: { jobId?: string; employeeId?: string };
+ searchParams: { jobId?: string; employeeId?: string };
 }) {
   const params = searchParams;
+  searchParams: Promise<{ jobId?: string; employeeId?: string }>;
+}) {
+  const params = await searchParams;
+ main
   const selectedJobId = params.jobId?.trim() || "";
   const selectedEmployeeId = params.employeeId?.trim() || "";
 

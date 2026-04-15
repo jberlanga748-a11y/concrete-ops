@@ -20,9 +20,15 @@ function getReportDate(reports: ChangeOrderListRow["daily_reports"]) {
 export default async function ChangeOrdersPage({
   searchParams,
 }: {
+ codex/setup-next.js-with-supabase-authentication-anp0qb
   searchParams: { jobId?: string; status?: string };
 }) {
   const params = searchParams;
+
+  searchParams: Promise<{ jobId?: string; status?: string }>;
+}) {
+  const params = await searchParams;
+ main
   const selectedJobId = params.jobId?.trim() || "";
   const selectedStatus = params.status?.trim() || "";
 

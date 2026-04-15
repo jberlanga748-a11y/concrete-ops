@@ -34,8 +34,13 @@ function getProofFile(file: ChangeOrderFileRow["job_files"]) {
   return file;
 }
 
+ codex/setup-next.js-with-supabase-authentication-anp0qb
 export default async function ChangeOrderDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
+
+export default async function ChangeOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+ main
 
   const [{ data: changeOrder }, { data: lineItems }, { data: proofFiles }] = await Promise.all([
     getChangeOrderById(id),

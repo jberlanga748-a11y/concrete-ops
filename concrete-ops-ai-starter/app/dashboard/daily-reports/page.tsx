@@ -20,9 +20,15 @@ function getSubmitter(users: DailyReportListRow["users"]) {
 export default async function DailyReportsPage({
   searchParams,
 }: {
+codex/setup-next.js-with-supabase-authentication-anp0qb
   searchParams: { jobId?: string; date?: string };
 }) {
   const params = searchParams;
+
+  searchParams: Promise<{ jobId?: string; date?: string }>;
+}) {
+  const params = await searchParams;
+ main
   const selectedJobId = params.jobId?.trim() || "";
   const selectedDate = params.date?.trim() || "";
 
