@@ -32,8 +32,8 @@ function getUploader(users: JobFileRow["users"], employees: JobFileRow["employee
   return "—";
 }
 
-export default async function DailyReportDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function DailyReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const [{ data: report }, { data: files }] = await Promise.all([getDailyReportById(id), getJobFiles({ dailyReportId: id })]);
 
   if (!report) {

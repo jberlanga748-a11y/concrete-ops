@@ -34,8 +34,8 @@ function getProofFile(file: ChangeOrderFileRow["job_files"]) {
   return file;
 }
 
-export default async function ChangeOrderDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function ChangeOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   const [{ data: changeOrder }, { data: lineItems }, { data: proofFiles }] = await Promise.all([
     getChangeOrderById(id),

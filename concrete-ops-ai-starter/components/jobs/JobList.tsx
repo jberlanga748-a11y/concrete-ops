@@ -18,6 +18,7 @@ export function JobList({ jobs }: { jobs: JobListRow[] }) {
             <th className="px-4 py-3 text-left">Status</th>
           </tr>
         </thead>
+
         <tbody>
           {jobs.map((job) => (
             <tr key={job.id} className="border-t">
@@ -26,8 +27,14 @@ export function JobList({ jobs }: { jobs: JobListRow[] }) {
                   {job.job_number} · {job.name}
                 </Link>
               </td>
-              <td className="px-4 py-4">{getCustomerName(job.customers)}</td>
-              <td className="px-4 py-4">{job.status}</td>
+
+              <td className="px-4 py-4">
+                {getCustomerName(job.customers)}
+              </td>
+
+              <td className="px-4 py-4">
+                {job.status}
+              </td>
             </tr>
           ))}
         </tbody>
