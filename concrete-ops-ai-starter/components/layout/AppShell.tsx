@@ -94,6 +94,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 px-4 py-4 md:px-6 md:py-6 lg:p-8">{children}</main>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-white p-3 shadow-[0_-10px_24px_rgba(0,0,0,0.08)] lg:hidden">
+        <div className="grid grid-cols-4 gap-2">
+          {mobileQuickNav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-3 text-center text-xs font-medium text-zinc-800"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {mobileMoreNav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-3 text-center text-xs font-medium text-zinc-800"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
