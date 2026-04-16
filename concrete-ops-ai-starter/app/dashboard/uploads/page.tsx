@@ -34,15 +34,9 @@ function getUploader(users: JobFileRow["users"], employees: JobFileRow["employee
 export default async function UploadsPage({
   searchParams,
 }: {
- codex/setup-next.js-with-supabase-authentication-anp0qb
-  searchParams: { jobId?: string; dailyReportId?: string; tag?: string };
+  searchParams?: { jobId?: string; dailyReportId?: string; tag?: string };
 }) {
-  const params = searchParams;
-
-  searchParams: Promise<{ jobId?: string; dailyReportId?: string; tag?: string }>;
-}) {
-  const params = await searchParams;
- main
+  const params = searchParams ?? {};
   const selectedJobId = params.jobId?.trim() || "";
   const selectedDailyReportId = params.dailyReportId?.trim() || "";
   const selectedTag = params.tag?.trim() || "";
@@ -65,7 +59,9 @@ export default async function UploadsPage({
             <h1 className="text-3xl font-semibold">Job Uploads</h1>
             <p className="mt-2 text-zinc-600">Admin list of uploaded photos/documents tied to jobs and reports.</p>
           </div>
-          <Link href="/dashboard/uploads/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">New Upload</Link>
+          <Link href="/dashboard/uploads/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+            New Upload
+          </Link>
         </div>
       </div>
 
@@ -73,14 +69,18 @@ export default async function UploadsPage({
         <select name="jobId" defaultValue={selectedJobId} className="rounded-xl border px-3 py-2 text-sm">
           <option value="">All jobs</option>
           {jobOptions.map((job) => (
-            <option key={job.id} value={job.id}>{job.label}</option>
+            <option key={job.id} value={job.id}>
+              {job.label}
+            </option>
           ))}
         </select>
 
         <select name="dailyReportId" defaultValue={selectedDailyReportId} className="rounded-xl border px-3 py-2 text-sm">
           <option value="">All reports</option>
           {dailyReportOptions.map((report) => (
-            <option key={report.id} value={report.id}>{report.label}</option>
+            <option key={report.id} value={report.id}>
+              {report.label}
+            </option>
           ))}
         </select>
 
@@ -94,7 +94,9 @@ export default async function UploadsPage({
           <option value="change_order_support">Change Order Support</option>
         </select>
 
-        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">Apply filters</button>
+        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+          Apply filters
+        </button>
       </form>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
@@ -124,7 +126,9 @@ export default async function UploadsPage({
             ))}
             {(files ?? []).length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={7}>No uploads found. Try changing filters or add a new upload.</td>
+                <td className="px-4 py-6 text-zinc-600" colSpan={7}>
+                  No uploads found. Try changing filters or add a new upload.
+                </td>
               </tr>
             ) : null}
           </tbody>
