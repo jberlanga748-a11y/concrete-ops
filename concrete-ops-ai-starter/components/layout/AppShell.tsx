@@ -26,6 +26,18 @@ const adminNav = [
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
+function getAdminNav(role?: AppRole) {
+  if (role === "owner") {
+    return [
+      ...adminNav.slice(0, adminNav.length - 1),
+      { href: "/dashboard/setup", label: "Setup" },
+      adminNav[adminNav.length - 1],
+    ];
+  }
+
+  return adminNav;
+}
+
 const foremanNav = [
   { href: "/dashboard/foreman", label: "Foreman" },
   { href: "/dashboard/jobs", label: "Jobs" },
@@ -52,7 +64,7 @@ export function AppShell({
   role?: AppRole;
 }) {
   const pathname = usePathname();
-  const nav = role === "foreman" ? foremanNav : adminNav;
+  const nav = role === "foreman" ? foremanNav : getAdminNav(role);
   const mobileQuickNav = nav.slice(0, 4);
   const mobileMoreNav = nav.slice(4);
   const showSettingsShortcut = role !== "foreman";
