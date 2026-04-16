@@ -1,7 +1,6 @@
 "use server";
 
 import type { ApprovalStatus, ApprovalType, AppRole, AssignmentRole, CustomerStatus, DocumentLinkType, EstimateLineItemType, EstimateStatus, IncidentStatus, IncidentType, JobStatus, NotificationPriority, NotificationType, PPEItemStatus, ProposalSectionType, ProposalStatus } from "@/lib/db/schema";
-import { createDemoRecords, deleteDemoRecords } from "@/lib/demo/setup";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -2285,66 +2284,4 @@ export async function updateManagedUser(userId: string, input: UpdateManagedUser
   if (audit.error) return { error: audit.error };
 
   return { data };
-}
-
-export async function createDemoSetupData() {
-  const auth = await getCurrentAppUser();
-  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
-
-  if (auth.appUser.role !== "owner") {
-    return { error: "Only an owner can create demo data." };
-  }
-
-  const defaultCompanyId = process.env.DEFAULT_COMPANY_ID?.trim();
-  if (!defaultCompanyId) {
-    return { error: "Demo setup is not configured. Set DEFAULT_COMPANY_ID first." };
-  }
-
-  if (auth.appUser.company_id !== defaultCompanyId) {
-    return { error: "Your owner account does not belong to the configured default company." };
-  }
-
-  const result = await createDemoRecords(auth.appUser.id);
-  if (!result.ok) {
-    return { error: result.error || "Could not create demo data." };
-  }
-
-  return {
-    data: {
-      alreadyExists: Boolean(result.alreadyExists),
-      counts: result.counts,
-      warning: result.warning ?? null,
-    },
-  };
-}
-
-export async function deleteDemoSetupData() {
-  const auth = await getCurrentAppUser();
-  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
-
-  if (auth.appUser.role !== "owner") {
-    return { error: "Only an owner can delete demo data." };
-  }
-
-  const defaultCompanyId = process.env.DEFAULT_COMPANY_ID?.trim();
-  if (!defaultCompanyId) {
-    return { error: "Demo setup is not configured. Set DEFAULT_COMPANY_ID first." };
-  }
-
-  if (auth.appUser.company_id !== defaultCompanyId) {
-    return { error: "Your owner account does not belong to the configured default company." };
-  }
-
-  const result = await deleteDemoRecords();
-  if (!result.ok) {
-    return { error: result.error || "Could not delete demo data." };
-  }
-
-  return {
-    data: {
-      alreadyExists: Boolean(result.alreadyExists),
-      counts: result.counts,
-      warning: result.warning ?? null,
-    },
-  };
 }
