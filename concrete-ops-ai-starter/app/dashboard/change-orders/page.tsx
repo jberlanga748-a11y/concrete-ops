@@ -20,15 +20,9 @@ function getReportDate(reports: ChangeOrderListRow["daily_reports"]) {
 export default async function ChangeOrdersPage({
   searchParams,
 }: {
- codex/setup-next.js-with-supabase-authentication-anp0qb
-  searchParams: { jobId?: string; status?: string };
+  searchParams?: { jobId?: string; status?: string };
 }) {
-  const params = searchParams;
-
-  searchParams: Promise<{ jobId?: string; status?: string }>;
-}) {
-  const params = await searchParams;
- main
+  const params = searchParams ?? {};
   const selectedJobId = params.jobId?.trim() || "";
   const selectedStatus = params.status?.trim() || "";
 
@@ -45,7 +39,9 @@ export default async function ChangeOrdersPage({
             <h1 className="text-3xl font-semibold">Change Orders</h1>
             <p className="mt-2 text-zinc-600">Manage scope/cost changes backed by optional daily report and field-proof uploads.</p>
           </div>
-          <Link href="/dashboard/change-orders/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">New Change Order</Link>
+          <Link href="/dashboard/change-orders/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+            New Change Order
+          </Link>
         </div>
       </div>
 
@@ -53,7 +49,9 @@ export default async function ChangeOrdersPage({
         <select name="jobId" defaultValue={selectedJobId} className="rounded-xl border px-3 py-2 text-sm">
           <option value="">All jobs</option>
           {jobOptions.map((job) => (
-            <option key={job.id} value={job.id}>{job.label}</option>
+            <option key={job.id} value={job.id}>
+              {job.label}
+            </option>
           ))}
         </select>
 
@@ -66,7 +64,9 @@ export default async function ChangeOrdersPage({
           <option value="executed">Executed</option>
         </select>
 
-        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">Apply filters</button>
+        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+          Apply filters
+        </button>
       </form>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
@@ -93,12 +93,18 @@ export default async function ChangeOrdersPage({
                 <td className="px-4 py-4">{co.direct_cost_total}</td>
                 <td className="px-4 py-4">{co.markup_percent}</td>
                 <td className="px-4 py-4">{co.total_amount}</td>
-                <td className="px-4 py-4"><Link className="underline" href={`/dashboard/change-orders/${co.id}`}>Open</Link></td>
+                <td className="px-4 py-4">
+                  <Link className="underline" href={`/dashboard/change-orders/${co.id}`}>
+                    Open
+                  </Link>
+                </td>
               </tr>
             ))}
             {(changeOrders ?? []).length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={8}>No change orders found. Start by creating a new change order.</td>
+                <td className="px-4 py-6 text-zinc-600" colSpan={8}>
+                  No change orders found. Start by creating a new change order.
+                </td>
               </tr>
             ) : null}
           </tbody>
