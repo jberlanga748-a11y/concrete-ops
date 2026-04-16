@@ -1,8 +1,23 @@
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getEnv } from "@/lib/env";
 
 const ADMIN_ROLES = new Set(["owner", "office_admin", "foreman"]);
+const OFFICE_ONLY_PREFIXES = [
+  "/dashboard/settings",
+  "/dashboard/employees",
+  "/dashboard/customers",
+  "/dashboard/estimates",
+  "/dashboard/proposals",
+  "/dashboard/approvals",
+  "/dashboard/notifications",
+  "/dashboard/audit-logs",
+];
+
+function isOfficeOnlyPath(pathname: string) {
+  return OFFICE_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -26,7 +41,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/forgot-password");
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password");
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isEmployeeRoute = pathname.startsWith("/employee");
 
@@ -39,11 +54,48 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const { data: appUser } = await supabase
+    let { data: appUser } = await supabase
       .from("users")
-      .select("role")
+      .select("id, role, company_id, email, status")
       .eq("auth_user_id", user.id)
       .maybeSingle();
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!appUser && user.email && serviceRoleKey) {
+      const adminClient = createAdminClient(env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const { data: invitedUser } = await adminClient
+        .from("users")
+        .select("id, role, company_id, email, status")
+        .is("auth_user_id", null)
+        .ilike("email", user.email)
+        .maybeSingle();
+
+      if (invitedUser) {
+        await adminClient
+          .from("users")
+          .update({
+            auth_user_id: user.id,
+            status: "active",
+            last_login_at: new Date().toISOString(),
+          })
+          .eq("id", invitedUser.id);
+
+        await adminClient
+          .from("employees")
+          .update({ user_id: invitedUser.id })
+          .eq("company_id", invitedUser.company_id)
+          .is("user_id", null)
+          .ilike("email", user.email);
+
+        appUser = {
+          ...invitedUser,
+          status: "active",
+        };
+      }
+    }
 
     const role = appUser?.role ?? "employee";
     const isAdmin = ADMIN_ROLES.has(role);
@@ -76,6 +128,13 @@ export async function updateSession(request: NextRequest) {
     if (isAdmin && isEmployeeRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (role === "foreman" && isOfficeOnlyPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard/foreman";
       url.search = "";
       return NextResponse.redirect(url);
     }

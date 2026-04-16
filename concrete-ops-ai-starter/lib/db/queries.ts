@@ -284,6 +284,17 @@ export type TimeOption = { id: string; label: string };
 export type DailyReportOption = TimeOption & { jobId: string };
 export type EmployeeOption = TimeOption & { isActive: boolean };
 export type CustomerOption = TimeOption & { status: Customer["status"] };
+export type ManagedUserRow = Pick<
+  User,
+  "id" | "full_name" | "email" | "phone" | "role" | "status" | "last_login_at" | "created_at"
+> & {
+  linkedEmployee:
+    | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name" | "email" | "user_id">
+    | null;
+};
+export type EmployeeUserLinkOption = Pick<Employee, "id" | "user_id" | "is_active"> & {
+  label: string;
+};
 
 export async function getJobs() {
   const supabase = await createClient();
@@ -457,6 +468,76 @@ export async function getCustomerById(id: string) {
     .maybeSingle();
 
   return { ...result, data: (result.data ?? null) as Customer | null };
+}
+
+export async function getManagedUsers() {
+  const supabase = await createClient();
+  const [{ data: users, error: usersError }, { data: employees, error: employeesError }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, full_name, email, phone, role, status, last_login_at, created_at")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("employees")
+      .select("id, user_id, full_name, job_title, crew_name, email"),
+  ]);
+
+  if (usersError) {
+    return { data: [] as ManagedUserRow[], error: usersError };
+  }
+
+  if (employeesError) {
+    return { data: [] as ManagedUserRow[], error: employeesError };
+  }
+
+  const employeeByUserId = new Map<string, {
+    id: string;
+    user_id: string | null;
+    full_name: string;
+    job_title: string | null;
+    crew_name: string | null;
+    email: string | null;
+  }>();
+
+  for (const employee of employees ?? []) {
+    if (employee.user_id) {
+      employeeByUserId.set(employee.user_id, employee);
+    }
+  }
+
+  return {
+    data: (users ?? []).map((user) => ({
+      ...user,
+      linkedEmployee: employeeByUserId.get(user.id) ?? null,
+    })) as ManagedUserRow[],
+    error: null,
+  };
+}
+
+export async function getEmployeeUserLinkOptions() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, user_id, full_name, job_title, crew_name, email, is_active")
+    .order("is_active", { ascending: false })
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    return [] as EmployeeUserLinkOption[];
+  }
+
+  return (data ?? []).map((employee) => ({
+    id: employee.id,
+    user_id: employee.user_id,
+    is_active: employee.is_active,
+    label: [
+      employee.full_name,
+      employee.job_title,
+      employee.crew_name,
+      employee.email,
+      employee.is_active ? null : "Inactive",
+    ].filter(Boolean).join(" · "),
+  })) as EmployeeUserLinkOption[];
 }
 
 export async function getJobAssignments(jobId: string) {

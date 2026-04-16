@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
@@ -45,6 +46,12 @@ export function LoginForm() {
       <button disabled={loading} className="w-full rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
         {loading ? "Signing in..." : "Sign in"}
       </button>
+      <p className="text-sm text-zinc-600">
+        Need an account?{" "}
+        <Link href="/signup" className="underline">
+          Sign up
+        </Link>
+      </p>
     </form>
   );
 }
