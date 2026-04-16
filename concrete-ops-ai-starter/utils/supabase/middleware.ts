@@ -30,6 +30,7 @@ export async function updateSession(request: NextRequest) {
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isEmployeeRoute = pathname.startsWith("/employee");
 
+  // If not logged in, protect dashboard + employee routes
   if (!user && (isDashboardRoute || isEmployeeRoute)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -38,10 +39,24 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const { data: appUser } = await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle();
+    const { data: appUser } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
     const role = appUser?.role ?? "employee";
     const isAdmin = ADMIN_ROLES.has(role);
 
+    // Foreman landing: send dashboard root to foreman home
+    if (role === "foreman" && pathname === "/dashboard") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard/foreman";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    // If logged in and trying to access auth pages, send to correct home
     if (isAuthRoute) {
       const url = request.nextUrl.clone();
       url.pathname = isAdmin ? "/dashboard" : "/employee";
@@ -49,6 +64,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
+    // Employees can't access dashboard
     if (!isAdmin && isDashboardRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/employee";
@@ -56,6 +72,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
+    // Admin roles can't access employee portal
     if (isAdmin && isEmployeeRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
