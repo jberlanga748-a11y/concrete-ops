@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { createDailyReport, updateDailyReport } from "@/lib/db/mutations";
 import type { JobAssignmentOptionRow, TimeOption } from "@/lib/db/queries";
-import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
-import { useToast } from "@/components/ui/ToastProvider";
 
 type CrewRow = {
   employeeId: string;
@@ -39,7 +37,6 @@ export function DailyReportForm({
   initialValues?: DailyReportFormValues;
 }) {
   const router = useRouter();
-  const { pushToast } = useToast();
   const [jobId, setJobId] = useState(initialValues?.jobId ?? "");
   const [reportDate, setReportDate] = useState(initialValues?.reportDate ?? new Date().toISOString().slice(0, 10));
   const [workCompleted, setWorkCompleted] = useState(initialValues?.workCompleted ?? "");
@@ -47,6 +44,8 @@ export function DailyReportForm({
   const [materialsDeliveries, setMaterialsDeliveries] = useState(initialValues?.materialsDeliveries ?? "");
   const [safetyNotes, setSafetyNotes] = useState(initialValues?.safetyNotes ?? "");
   const [assistantLoading, setAssistantLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [messageTone, setMessageTone] = useState<"success" | "error" | "info">("info");
   const [crewEntries, setCrewEntries] = useState<CrewRow[]>(
     initialValues?.crewEntries.map((entry) => ({
       employeeId: entry.employeeId,
@@ -79,15 +78,13 @@ export function DailyReportForm({
 
   async function handleCleanupWithAI() {
     if (workCompleted.trim().length < 10) {
-      pushToast({
-        tone: "error",
-        title: "Add more work notes first",
-        description: "Provide at least a short work-completed note before running the assistant.",
-      });
+      setMessageTone("error");
+      setMessage("Add at least a short work-completed note before running the assistant.");
       return;
     }
 
     setAssistantLoading(true);
+    setMessage(null);
 
     try {
       const selectedJob = jobOptions.find((job) => job.id === jobId);
@@ -118,11 +115,8 @@ export function DailyReportForm({
         | null;
 
       if (!response.ok || !body?.cleaned) {
-        pushToast({
-          tone: "error",
-          title: "Daily Report Assistant unavailable",
-          description: body?.error || "We couldn't clean up the report notes right now. Please try again.",
-        });
+        setMessageTone("error");
+        setMessage(body?.error || "Daily Report Assistant is unavailable right now. Please try again.");
         setAssistantLoading(false);
         return;
       }
@@ -132,17 +126,11 @@ export function DailyReportForm({
       setMaterialsDeliveries(body.cleaned.materialsDeliveries);
       setSafetyNotes(body.cleaned.safetyNotes);
 
-      pushToast({
-        tone: "success",
-        title: "Notes cleaned for office review",
-        description: body.cleaned.officeSummary || "The report sections were tightened into concise, office-ready language.",
-      });
+      setMessageTone("success");
+      setMessage(body.cleaned.officeSummary || "Notes cleaned into concise office-ready language.");
     } catch {
-      pushToast({
-        tone: "error",
-        title: "Daily Report Assistant unavailable",
-        description: "We couldn't reach the assistant service right now. Please try again.",
-      });
+      setMessageTone("error");
+      setMessage("Daily Report Assistant is unavailable right now. Please try again.");
     } finally {
       setAssistantLoading(false);
     }
@@ -150,11 +138,8 @@ export function DailyReportForm({
 
   async function handleSubmit() {
     if (!jobId || !reportDate || !workCompleted.trim()) {
-      pushToast({
-        tone: "error",
-        title: "Missing required report details",
-        description: "Job, report date, and work completed are required before the report can be saved.",
-      });
+      setMessageTone("error");
+      setMessage("Job, report date, and work completed are required before saving.");
       return;
     }
 
@@ -167,15 +152,13 @@ export function DailyReportForm({
       }));
 
     if (normalizedCrewEntries.some((entry) => entry.hours <= 0)) {
-      pushToast({
-        tone: "error",
-        title: "Crew hours need attention",
-        description: "Any crew row you keep on the report needs hours greater than zero.",
-      });
+      setMessageTone("error");
+      setMessage("Any crew row included on the report needs hours greater than zero.");
       return;
     }
 
     setLoading(true);
+    setMessage(null);
 
     const payload = {
       jobId,
@@ -190,22 +173,14 @@ export function DailyReportForm({
     const result = reportId ? await updateDailyReport(reportId, payload) : await createDailyReport(payload);
 
     if (result.error || !result.data) {
-      pushToast({
-        tone: "error",
-        title: "Daily report not saved",
-        description: "We couldn’t save that report right now. Try again in a moment.",
-      });
+      setMessageTone("error");
+      setMessage("We couldn't save that report right now. Please try again.");
       setLoading(false);
       return;
     }
 
-    pushToast({
-      tone: "success",
-      title: reportId ? "Daily report updated" : "Daily report submitted",
-      description: reportId
-        ? "Your field notes and crew entries are updated."
-        : "The new report is ready for office review.",
-    });
+    setMessageTone("success");
+    setMessage(reportId ? "Daily report updated." : "Daily report submitted.");
     setLoading(false);
 
     if (reportId) {
@@ -217,13 +192,10 @@ export function DailyReportForm({
   }
 
   return (
-    <div className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+    <div className="rounded-3xl border bg-white p-6 shadow-sm">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Field Report</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Foreman Daily Report</h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-600">
-          Capture production notes and a clean crew breakdown while the day is still fresh.
-        </p>
+        <h2 className="text-2xl font-semibold">Foreman Daily Report</h2>
+        <p className="mt-2 text-sm text-zinc-600">Capture production notes and a clean crew breakdown while the day is still fresh.</p>
       </div>
 
       <div className="mt-5 space-y-4">
@@ -234,11 +206,7 @@ export function DailyReportForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <FieldLabel required>Job</FieldLabel>
-              <select
-                value={jobId}
-                onChange={(e) => setJobId(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-              >
+              <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
                 <option value="">Select job</option>
                 {jobOptions.map((job) => (
                   <option key={job.id} value={job.id}>
@@ -250,23 +218,13 @@ export function DailyReportForm({
 
             <div>
               <FieldLabel required>Report date</FieldLabel>
-              <input
-                type="date"
-                value={reportDate}
-                onChange={(e) => setReportDate(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-              />
+              <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
             </div>
           </div>
 
           <div>
             <FieldLabel required>Work completed</FieldLabel>
-            <textarea
-              value={workCompleted}
-              onChange={(e) => setWorkCompleted(e.target.value)}
-              placeholder="What was completed today?"
-              className="min-h-32 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-            />
+            <textarea value={workCompleted} onChange={(e) => setWorkCompleted(e.target.value)} placeholder="What was completed today?" className="min-h-32 w-full rounded-2xl border px-4 py-3" />
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -287,26 +245,18 @@ export function DailyReportForm({
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm leading-6 text-zinc-600">Crew rows are optional, but they make the report more useful downstream.</p>
-            <button
-              onClick={addCrewEntry}
-              type="button"
-              className="rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
-            >
+            <button onClick={addCrewEntry} type="button" className="rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50">
               Add crew row
             </button>
           </div>
 
           <div className="space-y-3">
             {crewEntries.map((entry, index) => (
-              <div key={`${index}-${entry.employeeId}`} className="rounded-[24px] border border-zinc-200 bg-white p-4">
+              <div key={`${index}-${entry.employeeId}`} className="rounded-2xl border p-4">
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   <div className="xl:col-span-2">
                     <FieldLabel>Employee</FieldLabel>
-                    <select
-                      value={entry.employeeId}
-                      onChange={(e) => updateCrewEntry(index, { employeeId: e.target.value })}
-                      className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-                    >
+                    <select value={entry.employeeId} onChange={(e) => updateCrewEntry(index, { employeeId: e.target.value })} className="w-full rounded-2xl border px-4 py-3">
                       <option value="">Select crew member</option>
                       {scopedAssignmentOptions.map((option) => (
                         <option key={`${option.jobId}-${option.employeeId}`} value={option.employeeId}>
@@ -318,23 +268,11 @@ export function DailyReportForm({
 
                   <div>
                     <FieldLabel>Hours</FieldLabel>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.25"
-                      value={entry.hours}
-                      onChange={(e) => updateCrewEntry(index, { hours: e.target.value })}
-                      className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-                      placeholder="Hours"
-                    />
+                    <input type="number" min="0" step="0.25" value={entry.hours} onChange={(e) => updateCrewEntry(index, { hours: e.target.value })} className="w-full rounded-2xl border px-4 py-3" placeholder="Hours" />
                   </div>
 
                   <div className="flex items-end">
-                    <button
-                      onClick={() => removeCrewEntry(index)}
-                      type="button"
-                      className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
-                    >
+                    <button onClick={() => removeCrewEntry(index)} type="button" className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50">
                       Remove row
                     </button>
                   </div>
@@ -342,12 +280,7 @@ export function DailyReportForm({
 
                 <div className="mt-3">
                   <FieldLabel>Notes</FieldLabel>
-                  <textarea
-                    value={entry.notes}
-                    onChange={(e) => updateCrewEntry(index, { notes: e.target.value })}
-                    placeholder="Crew notes"
-                    className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-                  />
+                  <textarea value={entry.notes} onChange={(e) => updateCrewEntry(index, { notes: e.target.value })} placeholder="Crew notes" className="min-h-24 w-full rounded-2xl border px-4 py-3" />
                 </div>
               </div>
             ))}
@@ -360,51 +293,83 @@ export function DailyReportForm({
           </div>
         </FormSection>
 
-        <FormSection
-          title="Operations notes"
-          description="Capture the small details that usually get asked about later."
-        >
+        <FormSection title="Operations notes" description="Capture the small details that usually get asked about later.">
           <div>
             <FieldLabel>Delays / issues</FieldLabel>
-            <textarea
-              value={delaysIssues}
-              onChange={(e) => setDelaysIssues(e.target.value)}
-              placeholder="Anything blocking progress?"
-              className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-            />
+            <textarea value={delaysIssues} onChange={(e) => setDelaysIssues(e.target.value)} placeholder="Anything blocking progress?" className="min-h-24 w-full rounded-2xl border px-4 py-3" />
           </div>
 
           <div>
             <FieldLabel>Materials / deliveries</FieldLabel>
-            <textarea
-              value={materialsDeliveries}
-              onChange={(e) => setMaterialsDeliveries(e.target.value)}
-              placeholder="Deliveries, shortages, substitutions"
-              className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-            />
+            <textarea value={materialsDeliveries} onChange={(e) => setMaterialsDeliveries(e.target.value)} placeholder="Deliveries, shortages, substitutions" className="min-h-24 w-full rounded-2xl border px-4 py-3" />
           </div>
 
           <div>
             <FieldLabel>Safety notes</FieldLabel>
-            <textarea
-              value={safetyNotes}
-              onChange={(e) => setSafetyNotes(e.target.value)}
-              placeholder="Safety observations or incidents"
-              className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
-            />
+            <textarea value={safetyNotes} onChange={(e) => setSafetyNotes(e.target.value)} placeholder="Safety observations or incidents" className="min-h-24 w-full rounded-2xl border px-4 py-3" />
           </div>
         </FormSection>
 
         <FormActions hint="Required fields: job, date, and work completed. Crew rows are optional but help the office understand who was on site.">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
-          >
+          <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
             {loading ? "Saving..." : reportId ? "Save Daily Report" : "Submit Daily Report"}
           </button>
         </FormActions>
+
+        {message ? (
+          <p
+            className={`rounded-2xl border px-4 py-3 text-sm ${
+              messageTone === "error"
+                ? "border-red-200 bg-red-50 text-red-700"
+                : messageTone === "success"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-zinc-200 bg-zinc-50 text-zinc-700"
+            }`}
+          >
+            {message}
+          </p>
+        ) : (
+          <p className="text-sm text-zinc-500">Keep notes brief and factual so office review stays fast and clear.</p>
+        )}
       </div>
     </div>
+  );
+}
+
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border p-5">
+      <h3 className="text-base font-semibold">{title}</h3>
+      {description ? <p className="mt-1 text-sm text-zinc-600">{description}</p> : null}
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function FormActions({ children, hint }: { children: ReactNode; hint?: string }) {
+  return (
+    <div className="rounded-2xl border bg-zinc-50 px-4 py-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-3">{children}</div>
+        {hint ? <p className="text-sm text-zinc-600 md:text-right">{hint}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function FieldLabel({ children, required = false }: { children: ReactNode; required?: boolean }) {
+  return (
+    <p className="mb-2 text-sm font-medium text-zinc-700">
+      {children}
+      {required ? <span className="ml-1 text-orange-600">*</span> : null}
+    </p>
   );
 }
