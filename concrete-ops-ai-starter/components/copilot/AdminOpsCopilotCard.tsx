@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { postJson } from "@/lib/ai/client";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -51,15 +52,10 @@ export function AdminOpsCopilotCard() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/ai/admin-ops-copilot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-
-      const body = (await response.json().catch(() => null)) as
-        | { answer?: CopilotAnswer; error?: string }
-        | null;
+      const { response, data: body } = await postJson<{ answer?: CopilotAnswer; error?: string }>(
+        "/api/ai/admin-ops-copilot",
+        { question },
+      );
 
       if (!response.ok || !body?.answer) {
         pushToast({

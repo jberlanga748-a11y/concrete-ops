@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createDailyReport, updateDailyReport } from "@/lib/db/mutations";
 import type { JobAssignmentOptionRow, TimeOption } from "@/lib/db/queries";
+import { postJson } from "@/lib/ai/client";
 import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -46,6 +47,7 @@ export function DailyReportForm({
   const [delaysIssues, setDelaysIssues] = useState(initialValues?.delaysIssues ?? "");
   const [materialsDeliveries, setMaterialsDeliveries] = useState(initialValues?.materialsDeliveries ?? "");
   const [safetyNotes, setSafetyNotes] = useState(initialValues?.safetyNotes ?? "");
+  const [assistantLoading, setAssistantLoading] = useState(false);
   const [crewEntries, setCrewEntries] = useState<CrewRow[]>(
     initialValues?.crewEntries.map((entry) => ({
       employeeId: entry.employeeId,
@@ -74,6 +76,69 @@ export function DailyReportForm({
     setCrewEntries((current) =>
       current.length === 1 ? [{ employeeId: "", hours: "", notes: "" }] : current.filter((_, entryIndex) => entryIndex !== index),
     );
+  }
+
+  async function handleCleanupWithAI() {
+    if (workCompleted.trim().length < 10) {
+      pushToast({
+        tone: "error",
+        title: "Add more work notes first",
+        description: "Provide at least a short work-completed note before running the assistant.",
+      });
+      return;
+    }
+
+    setAssistantLoading(true);
+
+    try {
+      const selectedJob = jobOptions.find((job) => job.id === jobId);
+      const { response, data: body } = await postJson<{
+        cleaned?: {
+          workCompleted: string;
+          delaysIssues: string;
+          materialsDeliveries: string;
+          safetyNotes: string;
+          officeSummary?: string;
+        };
+        error?: string;
+      }>("/api/ai/daily-report-cleanup", {
+        jobLabel: selectedJob?.label,
+        reportDate,
+        workCompleted,
+        delaysIssues,
+        materialsDeliveries,
+        safetyNotes,
+      });
+
+      if (!response.ok || !body?.cleaned) {
+        pushToast({
+          tone: "error",
+          title: "Daily Report Assistant unavailable",
+          description: body?.error || "We couldn't clean up the report notes right now. Please try again.",
+        });
+        setAssistantLoading(false);
+        return;
+      }
+
+      setWorkCompleted(body.cleaned.workCompleted);
+      setDelaysIssues(body.cleaned.delaysIssues);
+      setMaterialsDeliveries(body.cleaned.materialsDeliveries);
+      setSafetyNotes(body.cleaned.safetyNotes);
+
+      pushToast({
+        tone: "success",
+        title: "Notes cleaned for office review",
+        description: body.cleaned.officeSummary || "The report sections were tightened into concise, office-ready language.",
+      });
+    } catch {
+      pushToast({
+        tone: "error",
+        title: "Daily Report Assistant unavailable",
+        description: "We couldn't reach the assistant service right now. Please try again.",
+      });
+    } finally {
+      setAssistantLoading(false);
+    }
   }
 
   async function handleSubmit() {
@@ -195,6 +260,17 @@ export function DailyReportForm({
               placeholder="What was completed today?"
               className="min-h-32 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
             />
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleCleanupWithAI}
+                disabled={assistantLoading || loading}
+                className="rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 disabled:opacity-50"
+              >
+                {assistantLoading ? "Cleaning..." : "Clean Up With AI"}
+              </button>
+              <p className="text-xs leading-5 text-zinc-500">Rewrites notes into concise office-ready language without changing underlying facts.</p>
+            </div>
           </div>
         </FormSection>
 
