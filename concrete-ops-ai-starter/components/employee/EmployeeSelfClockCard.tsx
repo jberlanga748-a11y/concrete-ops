@@ -3,8 +3,18 @@
 import { useState } from "react";
 import { clockOutLatestEntry, createClockInEntry } from "@/lib/db/mutations";
 import type { TimeOption } from "@/lib/db/queries";
+import { useToast } from "@/components/ui/ToastProvider";
+import {
+  InlineNotice,
+  inputClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+  selectClassName,
+  surfaceClassName,
+} from "@/components/ui/primitives";
 
 export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: { employeeId: string; jobOptions: TimeOption[]; phaseOptions: TimeOption[] }) {
+  const { pushToast } = useToast();
   const [jobId, setJobId] = useState("");
   const [jobPhaseId, setJobPhaseId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -15,6 +25,7 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
     if (!jobId) {
       setMessageType("error");
       setMessage("Select a job before clocking in.");
+      pushToast({ tone: "error", title: "Select a job before clocking in." });
       return;
     }
 
@@ -23,6 +34,11 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
     const result = await createClockInEntry({ employeeId, jobId, jobPhaseId: jobPhaseId || undefined });
     setMessageType(result.error ? "error" : "success");
     setMessage(result.error ? result.error : "Clock-in saved.");
+    pushToast({
+      tone: result.error ? "error" : "success",
+      title: result.error ? "Clock in failed." : "Clock-in saved.",
+      description: result.error ? "Please review the selected job and try again." : "Your shift is now running.",
+    });
     setLoading(false);
   }
 
@@ -32,17 +48,22 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
     const result = await clockOutLatestEntry({ employeeId, jobId: jobId || undefined });
     setMessageType(result.error ? "error" : "success");
     setMessage(result.error ? result.error : "Clock-out saved.");
+    pushToast({
+      tone: result.error ? "error" : "success",
+      title: result.error ? "Clock out failed." : "Clock-out saved.",
+      description: result.error ? "Please try again in a moment." : "Your latest open entry has been closed.",
+    });
     setLoading(false);
   }
 
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-sm">
+    <div className={`${surfaceClassName} p-6`}>
       <h2 className="text-xl font-semibold">My Time</h2>
       <p className="mt-3 text-zinc-600">Select your job and optional phase, then clock in or out.</p>
       <div className="mt-6 space-y-4">
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Job</p>
-          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Job</label>
+          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className={selectClassName}>
             <option value="">Select job</option>
             {jobOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
@@ -51,8 +72,8 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Phase (optional)</p>
-          <select value={jobPhaseId} onChange={(e) => setJobPhaseId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Phase (optional)</label>
+          <select value={jobPhaseId} onChange={(e) => setJobPhaseId(e.target.value)} className={selectClassName}>
             <option value="">Select phase</option>
             {phaseOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
@@ -61,18 +82,20 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
         </div>
 
         <div className="flex gap-3">
-          <button onClick={handleClockIn} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
+          <button onClick={handleClockIn} disabled={loading} className={primaryButtonClassName}>
             {loading ? "Saving..." : "Clock In"}
           </button>
-          <button onClick={handleClockOut} disabled={loading} className="rounded-2xl border px-5 py-3 disabled:opacity-50">
+          <button onClick={handleClockOut} disabled={loading} className={secondaryButtonClassName}>
             {loading ? "Saving..." : "Clock Out"}
           </button>
         </div>
 
         {message ? (
-          <p className={`text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
+          <InlineNotice tone={messageType === "error" ? "error" : messageType === "success" ? "success" : "neutral"}>
+            {message}
+          </InlineNotice>
         ) : (
-          <p className="text-sm text-zinc-500">Tip: if you leave job blank on clock out, the latest open entry is used.</p>
+          <InlineNotice tone="neutral">Tip: if you leave job blank on clock out, the latest open entry is used.</InlineNotice>
         )}
       </div>
     </div>

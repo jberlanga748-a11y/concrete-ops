@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EmployeeTable } from "@/components/employees/EmployeeTable";
+import { InlineNotice, PageActionLink, PageHeader } from "@/components/ui/primitives";
 import { getEmployees } from "@/lib/db/queries";
 
 export default async function EmployeesPage() {
@@ -7,20 +8,14 @@ export default async function EmployeesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Employees</h1>
-            <p className="mt-2 text-zinc-600">Manage field employees, crews, and contact details without exposing payroll settings broadly.</p>
-          </div>
-          <Link href="/dashboard/employees/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
-            New Employee
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Employees"
+        description="Manage field employees, crews, and contact details without exposing payroll settings broadly."
+        action={<PageActionLink href="/dashboard/employees/new">New Employee</PageActionLink>}
+      />
 
       {error ? (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700">{error.message}</div>
+        <InlineNotice tone="error">We couldn’t load employees right now. Please refresh and try again.</InlineNotice>
       ) : (
         <EmployeeTable employees={data ?? []} />
       )}

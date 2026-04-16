@@ -2,6 +2,7 @@
 // trigger redeploy marker
 import Link from "next/link";
 import { getDailyReports, getJobFiles, getNotifications, getTimeEntries, type DailyReportListRow, type JobFileRow, type JobTimeEntryRow } from "@/lib/db/queries";
+import { MetricCard, PageActionLink, PageHeader, SectionCard, surfaceClassName } from "@/components/ui/primitives";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -73,42 +74,22 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Contractor Command Center</p>
-        <h1 className="mt-2 text-2xl font-semibold text-zinc-900 sm:text-3xl">Admin Dashboard</h1>
-        <p className="mt-2 text-sm text-zinc-600 sm:text-base">Monitor today&apos;s activity across labor, reports, and field uploads.</p>
-      </section>
+      <PageHeader
+        eyebrow="Contractor Command Center"
+        title="Admin Dashboard"
+        description="Monitor today’s labor, reports, uploads, and office review work from one clean control center."
+        action={<PageActionLink href="/dashboard/jobs/new">New Job</PageActionLink>}
+      />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Time Entries</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allTimeEntries.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">{activeClocks} currently clocked in</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Daily Reports</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allReports.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">Latest: {formatDate(recentReports[0]?.report_date)}</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Uploads</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allUploads.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">Latest: {formatDateTime(recentUploads[0]?.created_at)}</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Open Change Orders</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">Review Queue</p>
-          <p className="mt-1 text-xs text-zinc-500">Go to change orders to review status.</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Notifications</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allUnreadNotifications.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">Unread office updates.</p>
-        </div>
+        <MetricCard label="Time Entries" value={allTimeEntries.length} hint={`${activeClocks} currently clocked in`} />
+        <MetricCard label="Daily Reports" value={allReports.length} hint={`Latest: ${formatDate(recentReports[0]?.report_date)}`} />
+        <MetricCard label="Uploads" value={allUploads.length} hint={`Latest: ${formatDateTime(recentUploads[0]?.created_at)}`} />
+        <MetricCard label="Open Change Orders" value="Review Queue" hint="Go to change orders to review status." />
+        <MetricCard label="Notifications" value={allUnreadNotifications.length} hint="Unread office updates." />
       </section>
 
-      <section className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="text-lg font-semibold text-zinc-900">Quick Actions</h2>
+      <SectionCard title="Quick Actions" description="Jump straight into the most common admin workflows.">
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <Link href="/dashboard/time" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Open Time Board</Link>
           <Link href="/dashboard/daily-reports/new" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Create Daily Report</Link>
@@ -118,10 +99,10 @@ export default async function DashboardPage() {
           <Link href="/dashboard/change-orders" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Review Change Orders</Link>
           <Link href="/dashboard/notifications" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Open Notifications</Link>
         </div>
-      </section>
+      </SectionCard>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-zinc-900">Recent Time Activity</h3>
             <Link href="/dashboard/time" className="text-xs font-medium text-zinc-600 underline">View all</Link>
@@ -138,7 +119,7 @@ export default async function DashboardPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-zinc-900">Recent Daily Reports</h3>
             <Link href="/dashboard/daily-reports" className="text-xs font-medium text-zinc-600 underline">View all</Link>
@@ -155,7 +136,7 @@ export default async function DashboardPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-zinc-900">Recent Uploads</h3>
             <Link href="/dashboard/uploads" className="text-xs font-medium text-zinc-600 underline">View all</Link>

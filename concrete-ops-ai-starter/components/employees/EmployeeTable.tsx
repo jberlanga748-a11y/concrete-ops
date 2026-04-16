@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { EmployeeListRow } from "@/lib/db/queries";
+import { EmptyState, tableCellClassName, tableHeaderClassName, tableShellClassName } from "@/components/ui/primitives";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -9,10 +10,20 @@ function formatDate(value: string | null) {
 }
 
 export function EmployeeTable({ employees }: { employees: EmployeeListRow[] }) {
+  if (employees.length === 0) {
+    return (
+      <EmptyState
+        title="No employees yet"
+        description="Add the field team here so assignments, daily reports, toolbox talks, and PPE tracking all have real people to work with."
+        action={<Link href="/dashboard/employees/new" className="inline-flex items-center justify-center rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white">New Employee</Link>}
+      />
+    );
+  }
+
   return (
-    <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
+    <div className={tableShellClassName}>
       <table className="w-full text-sm">
-        <thead className="bg-zinc-100">
+        <thead className={tableHeaderClassName}>
           <tr>
             <th className="px-4 py-3 text-left">Employee</th>
             <th className="px-4 py-3 text-left">Crew</th>
@@ -23,26 +34,23 @@ export function EmployeeTable({ employees }: { employees: EmployeeListRow[] }) {
         </thead>
         <tbody>
           {employees.map((employee) => (
-            <tr key={employee.id} className="border-t">
-              <td className="px-4 py-4">
+            <tr key={employee.id} className="border-t border-zinc-200 transition hover:bg-zinc-50">
+              <td className={tableCellClassName}>
                 <Link href={`/dashboard/employees/${employee.id}`} className="font-medium hover:underline">
                   {employee.full_name}
                 </Link>
                 <p className="mt-1 text-xs text-zinc-500">{employee.email || employee.phone || "No contact info"}</p>
               </td>
-              <td className="px-4 py-4">{employee.crew_name || "—"}</td>
-              <td className="px-4 py-4">{employee.job_title || "—"}</td>
-              <td className="px-4 py-4">{employee.is_active ? "Active" : "Inactive"}</td>
-              <td className="px-4 py-4">{formatDate(employee.hire_date)}</td>
+              <td className={tableCellClassName}>{employee.crew_name || "—"}</td>
+              <td className={tableCellClassName}>{employee.job_title || "—"}</td>
+              <td className={tableCellClassName}>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">
+                  {employee.is_active ? "Active" : "Inactive"}
+                </span>
+              </td>
+              <td className={tableCellClassName}>{formatDate(employee.hire_date)}</td>
             </tr>
           ))}
-          {employees.length === 0 ? (
-            <tr>
-              <td className="px-4 py-6 text-zinc-600" colSpan={5}>
-                No employees found yet.
-              </td>
-            </tr>
-          ) : null}
         </tbody>
       </table>
     </div>

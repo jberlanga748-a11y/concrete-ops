@@ -4,6 +4,16 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createDailyReport, updateDailyReport } from "@/lib/db/mutations";
 import type { JobAssignmentOptionRow, TimeOption } from "@/lib/db/queries";
+import { useToast } from "@/components/ui/ToastProvider";
+import {
+  InlineNotice,
+  inputClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+  selectClassName,
+  surfaceClassName,
+  textareaClassName,
+} from "@/components/ui/primitives";
 
 type CrewRow = {
   employeeId: string;
@@ -37,6 +47,7 @@ export function DailyReportForm({
   initialValues?: DailyReportFormValues;
 }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [jobId, setJobId] = useState(initialValues?.jobId ?? "");
   const [reportDate, setReportDate] = useState(initialValues?.reportDate ?? new Date().toISOString().slice(0, 10));
   const [workCompleted, setWorkCompleted] = useState(initialValues?.workCompleted ?? "");
@@ -77,6 +88,7 @@ export function DailyReportForm({
     if (!jobId || !reportDate || !workCompleted.trim()) {
       setMessageType("error");
       setMessage("Job, report date, and work completed are required.");
+      pushToast({ tone: "error", title: "Fill in the required report fields." });
       return;
     }
 
@@ -91,6 +103,7 @@ export function DailyReportForm({
     if (normalizedCrewEntries.some((entry) => entry.hours <= 0)) {
       setMessageType("error");
       setMessage("Crew entry hours must be greater than zero.");
+      pushToast({ tone: "error", title: "Crew row hours must be greater than zero." });
       return;
     }
 
@@ -112,12 +125,18 @@ export function DailyReportForm({
     if (result.error || !result.data) {
       setMessageType("error");
       setMessage(result.error || "Failed to save daily report.");
+      pushToast({ tone: "error", title: "Could not save daily report.", description: "Please review the report details and try again." });
       setLoading(false);
       return;
     }
 
     setMessageType("success");
     setMessage(reportId ? "Daily report updated." : "Daily report submitted.");
+    pushToast({
+      tone: "success",
+      title: reportId ? "Daily report updated." : "Daily report submitted.",
+      description: "The report and any crew rows are now saved.",
+    });
     setLoading(false);
 
     if (reportId) {
@@ -129,14 +148,14 @@ export function DailyReportForm({
   }
 
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-sm">
+    <div className={`${surfaceClassName} p-6`}>
       <h2 className="text-2xl font-semibold">Foreman Daily Report</h2>
       <p className="mt-2 text-sm text-zinc-600">Capture production notes and a simple crew breakdown while the day is still fresh.</p>
 
       <div className="mt-5 space-y-4">
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Job</p>
-          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Job</label>
+          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className={selectClassName}>
             <option value="">Select job</option>
             {jobOptions.map((job) => (
               <option key={job.id} value={job.id}>
@@ -147,31 +166,31 @@ export function DailyReportForm({
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Report date</p>
-          <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Report date</label>
+          <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className={inputClassName} />
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Work completed *</p>
-          <textarea value={workCompleted} onChange={(e) => setWorkCompleted(e.target.value)} placeholder="What was completed today?" className="min-h-28 w-full rounded-2xl border px-4 py-3" />
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Work completed *</label>
+          <textarea value={workCompleted} onChange={(e) => setWorkCompleted(e.target.value)} placeholder="What was completed today?" className={`${textareaClassName} min-h-28`} />
         </div>
 
-        <div className="rounded-2xl border p-4">
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="font-medium">Crew Entries</p>
               <p className="mt-1 text-sm text-zinc-600">Add the people who worked this job today, how many hours they put in, and any notes worth keeping.</p>
             </div>
-            <button onClick={addCrewEntry} type="button" className="rounded-xl border px-4 py-2 text-sm">
+            <button onClick={addCrewEntry} type="button" className={secondaryButtonClassName}>
               Add Crew Row
             </button>
           </div>
 
           <div className="mt-4 space-y-3">
             {crewEntries.map((entry, index) => (
-              <div key={`${index}-${entry.employeeId}`} className="rounded-2xl border p-4">
+              <div key={`${index}-${entry.employeeId}`} className="rounded-2xl border border-zinc-200 bg-white p-4">
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <select value={entry.employeeId} onChange={(e) => updateCrewEntry(index, { employeeId: e.target.value })} className="rounded-2xl border px-4 py-3 xl:col-span-2">
+                  <select value={entry.employeeId} onChange={(e) => updateCrewEntry(index, { employeeId: e.target.value })} className={`${selectClassName} xl:col-span-2`}>
                     <option value="">Select crew member</option>
                     {scopedAssignmentOptions.map((option) => (
                       <option key={`${option.jobId}-${option.employeeId}`} value={option.employeeId}>
@@ -185,10 +204,10 @@ export function DailyReportForm({
                     step="0.25"
                     value={entry.hours}
                     onChange={(e) => updateCrewEntry(index, { hours: e.target.value })}
-                    className="rounded-2xl border px-4 py-3"
+                    className={inputClassName}
                     placeholder="Hours"
                   />
-                  <button onClick={() => removeCrewEntry(index)} type="button" className="rounded-2xl border px-4 py-3 text-sm">
+                  <button onClick={() => removeCrewEntry(index)} type="button" className={secondaryButtonClassName}>
                     Remove
                   </button>
                 </div>
@@ -196,7 +215,7 @@ export function DailyReportForm({
                   value={entry.notes}
                   onChange={(e) => updateCrewEntry(index, { notes: e.target.value })}
                   placeholder="Crew notes"
-                  className="mt-3 min-h-20 w-full rounded-2xl border px-4 py-3"
+                  className={`${textareaClassName} mt-3 min-h-20`}
                 />
               </div>
             ))}
@@ -208,28 +227,30 @@ export function DailyReportForm({
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Delays / issues</p>
-          <textarea value={delaysIssues} onChange={(e) => setDelaysIssues(e.target.value)} placeholder="Anything blocking progress?" className="min-h-20 w-full rounded-2xl border px-4 py-3" />
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Delays / issues</label>
+          <textarea value={delaysIssues} onChange={(e) => setDelaysIssues(e.target.value)} placeholder="Anything blocking progress?" className={`${textareaClassName} min-h-20`} />
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Materials / deliveries</p>
-          <textarea value={materialsDeliveries} onChange={(e) => setMaterialsDeliveries(e.target.value)} placeholder="Deliveries, shortages, substitutions" className="min-h-20 w-full rounded-2xl border px-4 py-3" />
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Materials / deliveries</label>
+          <textarea value={materialsDeliveries} onChange={(e) => setMaterialsDeliveries(e.target.value)} placeholder="Deliveries, shortages, substitutions" className={`${textareaClassName} min-h-20`} />
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Safety notes</p>
-          <textarea value={safetyNotes} onChange={(e) => setSafetyNotes(e.target.value)} placeholder="Safety observations or incidents" className="min-h-20 w-full rounded-2xl border px-4 py-3" />
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Safety notes</label>
+          <textarea value={safetyNotes} onChange={(e) => setSafetyNotes(e.target.value)} placeholder="Safety observations or incidents" className={`${textareaClassName} min-h-20`} />
         </div>
 
-        <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
+        <button onClick={handleSubmit} disabled={loading} className={primaryButtonClassName}>
           {loading ? "Saving..." : reportId ? "Save Daily Report" : "Submit Daily Report"}
         </button>
 
         {message ? (
-          <p className={`text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
+          <InlineNotice tone={messageType === "error" ? "error" : messageType === "success" ? "success" : "neutral"}>
+            {message}
+          </InlineNotice>
         ) : (
-          <p className="text-sm text-zinc-500">Required fields: job, date, and work completed. Crew rows are optional but field-friendly.</p>
+          <InlineNotice tone="neutral">Required fields: job, date, and work completed. Crew rows stay optional but field-friendly.</InlineNotice>
         )}
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { JobTimeEntryRow } from "@/lib/db/queries";
+import { EmptyState, tableCellClassName, tableHeaderClassName, tableShellClassName } from "@/components/ui/primitives";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -23,10 +24,19 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"]) {
 }
 
 export function AdminLaborTable({ entries }: { entries: JobTimeEntryRow[] }) {
+  if (entries.length === 0) {
+    return (
+      <EmptyState
+        title="No time entries match these filters"
+        description="Try widening the filters or have the crew clock in from the employee or admin time tools."
+      />
+    );
+  }
+
   return (
-    <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
+    <div className={tableShellClassName}>
       <table className="w-full text-sm">
-        <thead className="bg-zinc-100">
+        <thead className={tableHeaderClassName}>
           <tr>
             <th className="px-4 py-3 text-left">Employee</th>
             <th className="px-4 py-3 text-left">Job</th>
@@ -39,23 +49,18 @@ export function AdminLaborTable({ entries }: { entries: JobTimeEntryRow[] }) {
         </thead>
         <tbody>
           {entries.map((entry) => (
-            <tr key={entry.id} className="border-t">
-              <td className="px-4 py-4">{getEmployeeName(entry.employees)}</td>
-              <td className="px-4 py-4">{getJobLabel(entry.jobs)}</td>
-              <td className="px-4 py-4">{getPhaseName(entry.job_phases)}</td>
-              <td className="px-4 py-4">{entry.clock_in_at}</td>
-              <td className="px-4 py-4">{entry.clock_out_at ?? "—"}</td>
-              <td className="px-4 py-4">{entry.total_hours ?? "—"}</td>
-              <td className="px-4 py-4">{entry.status}</td>
-            </tr>
-          ))}
-          {entries.length === 0 ? (
-            <tr>
-              <td className="px-4 py-6 text-zinc-600" colSpan={7}>
-                No time entries match the current filters.
+            <tr key={entry.id} className="border-t border-zinc-200 transition hover:bg-zinc-50">
+              <td className={tableCellClassName}>{getEmployeeName(entry.employees)}</td>
+              <td className={tableCellClassName}>{getJobLabel(entry.jobs)}</td>
+              <td className={tableCellClassName}>{getPhaseName(entry.job_phases)}</td>
+              <td className={tableCellClassName}>{entry.clock_in_at}</td>
+              <td className={tableCellClassName}>{entry.clock_out_at ?? "—"}</td>
+              <td className={tableCellClassName}>{entry.total_hours ?? "—"}</td>
+              <td className={tableCellClassName}>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">{entry.status}</span>
               </td>
             </tr>
-          ) : null}
+          ))}
         </tbody>
       </table>
     </div>

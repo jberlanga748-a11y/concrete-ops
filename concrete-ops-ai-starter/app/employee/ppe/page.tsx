@@ -1,4 +1,5 @@
 import { getMyPPEItems, type PPEItemRow } from "@/lib/db/queries";
+import { EmptyState, PageHeader } from "@/components/ui/primitives";
 
 function getEmployee(employee: PPEItemRow["employees"]) {
   if (!employee) return null;
@@ -22,10 +23,7 @@ export default async function EmployeePPEPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">My PPE</h1>
-        <p className="mt-3 text-zinc-600">See what has been issued to you and what needs a fit check or replacement.</p>
-      </div>
+      <PageHeader title="My PPE" description="See what has been issued to you and what needs a fit check or replacement." />
 
       <div className="space-y-4">
         {(items ?? []).map((item) => {
@@ -64,9 +62,7 @@ export default async function EmployeePPEPage() {
         })}
 
         {(items ?? []).length === 0 ? (
-          <div className="rounded-3xl border bg-white p-6 text-zinc-600 shadow-sm">
-            No PPE items are assigned to you right now.
-          </div>
+          <EmptyState title="No PPE items assigned" description="PPE assignments will appear here after an admin or office user issues them to you." />
         ) : null}
       </div>
     </div>

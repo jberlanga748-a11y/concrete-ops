@@ -1,4 +1,5 @@
 import { PolicyAcknowledgmentButton } from "@/components/policies/PolicyAcknowledgmentButton";
+import { EmptyState, PageHeader } from "@/components/ui/primitives";
 import { getMyPolicyAcknowledgments, type PolicyDetailRow } from "@/lib/db/queries";
 
 function getPolicy(policy: PolicyDetailRow[] | PolicyDetailRow | null) {
@@ -29,10 +30,7 @@ export default async function EmployeePoliciesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Policies</h1>
-        <p className="mt-3 text-zinc-600">Read active company policies and acknowledge anything still waiting on your signature.</p>
-      </div>
+      <PageHeader title="Policies" description="Read active company policies and acknowledge anything still waiting on your signature." />
 
       <div className="space-y-4">
         {activeAcknowledgments.map((ack) => {
@@ -58,9 +56,7 @@ export default async function EmployeePoliciesPage() {
         })}
 
         {activeAcknowledgments.length === 0 ? (
-          <div className="rounded-3xl border bg-white p-6 text-zinc-600 shadow-sm">
-            No active policy acknowledgments are assigned to you right now.
-          </div>
+          <EmptyState title="No active policy acknowledgments" description="You’re all caught up for now. New policy acknowledgments will appear here automatically." />
         ) : null}
       </div>
     </div>

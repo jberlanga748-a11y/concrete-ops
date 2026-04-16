@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEmployee, updateEmployee } from "@/lib/db/mutations";
+import { useToast } from "@/components/ui/ToastProvider";
+import {
+  InlineNotice,
+  inputClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+  selectClassName,
+  surfaceClassName,
+} from "@/components/ui/primitives";
 
 type EmployeeFormValues = {
   fullName: string;
@@ -22,6 +31,7 @@ export function EmployeeForm({
   initialValues?: EmployeeFormValues;
 }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [fullName, setFullName] = useState(initialValues?.fullName ?? "");
   const [phone, setPhone] = useState(initialValues?.phone ?? "");
   const [email, setEmail] = useState(initialValues?.email ?? "");
@@ -37,6 +47,7 @@ export function EmployeeForm({
     if (!fullName.trim()) {
       setMessageType("error");
       setMessage("Employee name is required.");
+      pushToast({ tone: "error", title: "Employee name is required." });
       return;
     }
 
@@ -58,12 +69,18 @@ export function EmployeeForm({
     if (result.error || !result.data) {
       setMessageType("error");
       setMessage(result.error || "Failed to save employee.");
+      pushToast({ tone: "error", title: "Could not save employee.", description: "Check the required fields and try again." });
       setLoading(false);
       return;
     }
 
     setMessageType("success");
     setMessage(employeeId ? "Employee updated." : "Employee created.");
+    pushToast({
+      tone: "success",
+      title: employeeId ? "Employee updated." : "Employee created.",
+      description: employeeId ? "The changes are now live." : "You can add assignments or link user access next.",
+    });
     setLoading(false);
 
     if (employeeId) {
@@ -74,62 +91,67 @@ export function EmployeeForm({
   }
 
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-sm">
+    <div className={`${surfaceClassName} p-6`}>
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Full name *</p>
+          <label className="mb-2 block text-sm font-medium text-zinc-700">Full name *</label>
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="w-full rounded-2xl border px-4 py-3"
+            className={inputClassName}
             placeholder="Example: Maria Santos"
           />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Phone</p>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Phone</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClassName} />
           </div>
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Email</p>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <p className="mb-2 text-sm text-zinc-600">Crew name</p>
-            <input value={crewName} onChange={(e) => setCrewName(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
-          </div>
-          <div>
-            <p className="mb-2 text-sm text-zinc-600">Job title</p>
-            <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Email</label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClassName} />
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Hire date</p>
-            <input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} className="w-full rounded-2xl border px-4 py-3" />
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Crew name</label>
+            <input value={crewName} onChange={(e) => setCrewName(e.target.value)} className={inputClassName} />
           </div>
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Status</p>
-            <select value={isActive ? "active" : "inactive"} onChange={(e) => setIsActive(e.target.value === "active")} className="w-full rounded-2xl border px-4 py-3">
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Job title</label>
+            <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inputClassName} />
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Hire date</label>
+            <input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} className={inputClassName} />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Status</label>
+            <select value={isActive ? "active" : "inactive"} onChange={(e) => setIsActive(e.target.value === "active")} className={selectClassName}>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </div>
         </div>
 
-        <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
-          {loading ? "Saving..." : employeeId ? "Save Employee" : "Create Employee"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={handleSubmit} disabled={loading} className={primaryButtonClassName}>
+            {loading ? "Saving..." : employeeId ? "Save Employee" : "Create Employee"}
+          </button>
+          <span className="text-sm text-zinc-500">Hourly rate stays intentionally hidden from this screen.</span>
+        </div>
 
         {message ? (
-          <p className={`text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
+          <InlineNotice tone={messageType === "error" ? "error" : messageType === "success" ? "success" : "neutral"}>
+            {message}
+          </InlineNotice>
         ) : (
-          <p className="text-sm text-zinc-500">Hourly rate is intentionally not shown here.</p>
+          <InlineNotice tone="neutral">Keep crew and title details current so assignments and daily reports stay easy to manage.</InlineNotice>
         )}
       </div>
     </div>

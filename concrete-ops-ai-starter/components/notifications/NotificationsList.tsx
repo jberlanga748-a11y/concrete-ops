@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/db/mutations";
+import { EmptyState, primaryButtonClassName, secondaryButtonClassName, SectionCard } from "@/components/ui/primitives";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { NotificationRow } from "@/lib/db/queries";
 
 function formatDateTime(value: string) {
@@ -38,14 +40,23 @@ export function NotificationsList({
   notifications: NotificationRow[];
 }) {
   const router = useRouter();
+  const { pushToast } = useToast();
 
   async function handleMarkRead(notificationId: string) {
-    await markNotificationRead(notificationId);
+    const result = await markNotificationRead(notificationId);
+    pushToast({
+      tone: result.error ? "error" : "success",
+      title: result.error ? "Could not mark notification as read." : "Notification marked as read.",
+    });
     router.refresh();
   }
 
   async function handleMarkAllRead() {
-    await markAllNotificationsRead();
+    const result = await markAllNotificationsRead();
+    pushToast({
+      tone: result.error ? "error" : "success",
+      title: result.error ? "Could not mark notifications as read." : "All notifications marked as read.",
+    });
     router.refresh();
   }
 
@@ -53,19 +64,17 @@ export function NotificationsList({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm">
-        <div>
-          <p className="text-sm font-medium text-zinc-900">{unreadCount} unread</p>
-          <p className="mt-1 text-sm text-zinc-600">Notifications are generated from current office-facing workflows.</p>
-        </div>
-        <button
-          onClick={handleMarkAllRead}
-          disabled={unreadCount === 0}
-          className="rounded-xl border px-4 py-2 text-sm disabled:opacity-50"
-        >
-          Mark All Read
-        </button>
-      </div>
+      <SectionCard
+        title={`${unreadCount} unread`}
+        description="Notifications are generated from current office-facing workflows."
+        action={
+          <button onClick={handleMarkAllRead} disabled={unreadCount === 0} className={secondaryButtonClassName}>
+            Mark All Read
+          </button>
+        }
+      >
+        <div />
+      </SectionCard>
 
       <ul className="space-y-3">
         {notifications.map((notification) => {
@@ -73,7 +82,7 @@ export function NotificationsList({
           return (
             <li
               key={notification.id}
-              className={`rounded-2xl border bg-white p-4 shadow-sm ${notification.is_read ? "opacity-80" : ""}`}
+              className={`rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${notification.is_read ? "opacity-80" : ""}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -101,7 +110,7 @@ export function NotificationsList({
                   {!notification.is_read ? (
                     <button
                       onClick={() => handleMarkRead(notification.id)}
-                      className="rounded-xl border px-3 py-2 text-xs font-medium hover:bg-zinc-50"
+                      className={secondaryButtonClassName}
                     >
                       Mark Read
                     </button>
@@ -113,8 +122,11 @@ export function NotificationsList({
         })}
 
         {notifications.length === 0 ? (
-          <li className="rounded-2xl border bg-white p-6 text-zinc-600 shadow-sm">
-            No notifications yet.
+          <li>
+            <EmptyState
+              title="No notifications yet"
+              description="Office-facing alerts will appear here as reports, incidents, and approvals come in."
+            />
           </li>
         ) : null}
       </ul>

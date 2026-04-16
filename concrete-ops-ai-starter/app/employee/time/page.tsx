@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { EmployeeSelfClockCard } from "@/components/employee/EmployeeSelfClockCard";
+import { EmptyState, PageHeader } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/server";
 import type { Job, JobPhase } from "@/lib/db/schema";
 
@@ -23,10 +24,7 @@ export default async function EmployeeTimePage() {
 
   if (!employee) {
     return (
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">No employee record is linked to your user yet.</p>
-      </div>
+      <EmptyState title="Employee Time" description="No employee record is linked to your user yet. Ask an owner or office admin to connect your user to an employee profile." />
     );
   }
 
@@ -47,10 +45,7 @@ export default async function EmployeeTimePage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">Clock in/out for your shifts.</p>
-      </div>
+      <PageHeader title="Employee Time" description="Clock in and out for your shifts with a cleaner, field-friendly time card." />
 
       <EmployeeSelfClockCard employeeId={employee.id} jobOptions={jobOptions} phaseOptions={phaseOptions} />
     </div>

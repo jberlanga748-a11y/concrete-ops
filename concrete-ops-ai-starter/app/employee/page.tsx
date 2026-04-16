@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/lib/db/schema";
+import { EmptyState, PageActionLink, PageHeader, SectionCard, surfaceClassName } from "@/components/ui/primitives";
 
 function getJobLabel(jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null) {
   if (!jobs) return "—";
@@ -55,13 +56,15 @@ export default async function EmployeeHomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Employee Home</h1>
-        <p className="mt-3 text-zinc-600">Clock status and your recent uploads.</p>
-      </div>
+      <PageHeader
+        eyebrow="Personal Workspace"
+        title="Employee Home"
+        description="Check your current shift, jump into everyday tasks, and keep your recent field uploads close at hand."
+        action={<PageActionLink href="/employee/time">Open Time</PageActionLink>}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-4">
+        <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <p className="text-sm text-zinc-500">Current Clock Status</p>
           <p className="mt-2 text-2xl font-semibold">{isClockedIn ? "Clocked In" : "Not Clocked In"}</p>
           <p className="mt-1 text-sm text-zinc-600">{openEntry ? `Since ${openEntry.clock_in_at}` : "No active shift."}</p>
@@ -70,7 +73,7 @@ export default async function EmployeeHomePage() {
           </Link>
         </div>
 
-        <div className="rounded-2xl border bg-white p-4">
+        <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <h2 className="text-lg font-semibold">Quick Links</h2>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link href="/employee/time" className="rounded-xl border px-4 py-2 text-sm">Time</Link>
@@ -81,8 +84,7 @@ export default async function EmployeeHomePage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-white p-4">
-        <h2 className="text-lg font-semibold">My Recent Uploads</h2>
+      <SectionCard title="My Recent Uploads" description="Your latest photos and supporting documents live here.">
         <ul className="mt-3 space-y-3 text-sm">
           {(uploads ?? []).map((upload) => (
             <li key={upload.id} className="rounded-xl border p-3">
@@ -93,9 +95,17 @@ export default async function EmployeeHomePage() {
               <p className="text-zinc-500">{upload.created_at}</p>
             </li>
           ))}
-          {(uploads ?? []).length === 0 ? <li className="text-zinc-600">No uploads yet.</li> : null}
+          {(uploads ?? []).length === 0 ? (
+            <li>
+              <EmptyState
+                title="No uploads yet"
+                description="Add your first photo or document from the employee uploads page."
+                action={<PageActionLink href="/employee/uploads">Open Uploads</PageActionLink>}
+              />
+            </li>
+          ) : null}
         </ul>
-      </div>
+      </SectionCard>
     </div>
   );
 }

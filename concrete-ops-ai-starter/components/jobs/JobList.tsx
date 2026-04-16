@@ -1,5 +1,11 @@
 import Link from "next/link";
 import type { JobListRow } from "@/lib/db/queries";
+import {
+  EmptyState,
+  tableCellClassName,
+  tableHeaderClassName,
+  tableShellClassName,
+} from "@/components/ui/primitives";
 
 function getCustomerName(customers: JobListRow["customers"]) {
   if (!customers) return "—";
@@ -8,10 +14,20 @@ function getCustomerName(customers: JobListRow["customers"]) {
 }
 
 export function JobList({ jobs }: { jobs: JobListRow[] }) {
+  if (jobs.length === 0) {
+    return (
+      <EmptyState
+        title="No jobs yet"
+        description="Create the first job to start assigning crews, collecting reports, and tracking field activity."
+        action={<Link href="/dashboard/jobs/new" className="inline-flex items-center justify-center rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white">New Job</Link>}
+      />
+    );
+  }
+
   return (
-    <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
+    <div className={tableShellClassName}>
       <table className="w-full text-sm">
-        <thead className="bg-zinc-100">
+        <thead className={tableHeaderClassName}>
           <tr>
             <th className="px-4 py-3 text-left">Job</th>
             <th className="px-4 py-3 text-left">Customer</th>
@@ -20,14 +36,16 @@ export function JobList({ jobs }: { jobs: JobListRow[] }) {
         </thead>
         <tbody>
           {jobs.map((job) => (
-            <tr key={job.id} className="border-t">
-              <td className="px-4 py-4">
+            <tr key={job.id} className="border-t border-zinc-200 transition hover:bg-zinc-50">
+              <td className={tableCellClassName}>
                 <Link href={`/dashboard/jobs/${job.id}`} className="font-medium hover:underline">
                   {job.job_number} · {job.name}
                 </Link>
               </td>
-              <td className="px-4 py-4">{getCustomerName(job.customers)}</td>
-              <td className="px-4 py-4">{job.status}</td>
+              <td className={tableCellClassName}>{getCustomerName(job.customers)}</td>
+              <td className={tableCellClassName}>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">{job.status}</span>
+              </td>
             </tr>
           ))}
         </tbody>

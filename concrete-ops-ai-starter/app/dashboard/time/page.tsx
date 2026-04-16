@@ -1,6 +1,7 @@
 import { EmployeeClockCard } from "@/components/time/EmployeeClockCard";
 import { AdminLaborTable } from "@/components/time/AdminLaborTable";
 import { getTimeEntries, getTimeFilterOptions } from "@/lib/db/queries";
+import { PageHeader, selectClassName, primaryButtonClassName, SectionCard } from "@/components/ui/primitives";
 
 export default async function TimePage({
   searchParams,
@@ -22,12 +23,10 @@ export default async function TimePage({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Time &amp; Labor</h1>
-        <p className="mt-3 text-zinc-600">
-          Employee clock in/out writes live time entries, and admin reads the same records below.
-        </p>
-      </div>
+      <PageHeader
+        title="Time & Labor"
+        description="Employee clock in/out writes live time entries, and admin reads the same records below."
+      />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <EmployeeClockCard
@@ -36,14 +35,12 @@ export default async function TimePage({
           phaseOptions={phaseOptions}
         />
 
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Admin Labor</h2>
-
-          <form className="flex flex-wrap gap-3 rounded-2xl border bg-white p-4" method="get">
+        <SectionCard title="Admin Labor" description="Filter the live time table by job or employee.">
+          <form className="flex flex-wrap gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4" method="get">
             <select
               name="jobId"
               defaultValue={selectedJobId}
-              className="rounded-xl border px-3 py-2 text-sm"
+              className={selectClassName}
             >
               <option value="">All jobs</option>
               {jobOptions.map((job) => (
@@ -56,7 +53,7 @@ export default async function TimePage({
             <select
               name="employeeId"
               defaultValue={selectedEmployeeId}
-              className="rounded-xl border px-3 py-2 text-sm"
+              className={selectClassName}
             >
               <option value="">All employees</option>
               {employeeOptions.map((employee) => (
@@ -66,13 +63,13 @@ export default async function TimePage({
               ))}
             </select>
 
-            <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+            <button type="submit" className={primaryButtonClassName}>
               Apply filters
             </button>
           </form>
 
           <AdminLaborTable entries={entries ?? []} />
-        </div>
+        </SectionCard>
       </div>
     </div>
   );
