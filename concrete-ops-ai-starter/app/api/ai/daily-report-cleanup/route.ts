@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
   try {
     parsedJson = JSON.parse(rawText);
   } catch {
-    return NextResponse.json({ error: "AI response was not valid JSON." }, { status: 502 });
+    return NextResponse.json({ error: "AI returned an invalid JSON response." }, { status: 502 });
   }
 
   const parsedResult = DailyReportCleanupResultSchema.safeParse(parsedJson);
