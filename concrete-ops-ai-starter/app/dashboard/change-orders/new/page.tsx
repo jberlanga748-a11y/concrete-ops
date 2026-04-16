@@ -1,8 +1,18 @@
 import Link from "next/link";
 import { ChangeOrderForm } from "@/components/change-orders/ChangeOrderForm";
 import { getDailyReportJobOptions, getDailyReportOptions, getJobFiles } from "@/lib/db/queries";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function NewChangeOrderPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: appUser } = user
+    ? await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle()
+    : { data: null };
+  const isForeman = appUser?.role === "foreman";
+
   const [jobOptions, dailyReportOptions, { data: proofFiles }] = await Promise.all([
     getDailyReportJobOptions(),
     getDailyReportOptions(),
@@ -21,7 +31,7 @@ export default async function NewChangeOrderPage() {
         </div>
       </div>
 
-      <ChangeOrderForm jobOptions={jobOptions} dailyReportOptions={dailyReportOptions} proofFiles={proofFiles ?? []} />
+      <ChangeOrderForm jobOptions={jobOptions} dailyReportOptions={dailyReportOptions} proofFiles={proofFiles ?? []} hideFinancials={isForeman} />
     </div>
   );
 }

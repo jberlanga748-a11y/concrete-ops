@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { DailyReportForm } from "@/components/daily-reports/DailyReportForm";
-import { getDailyReportJobOptions } from "@/lib/db/queries";
+import { getActiveJobAssignmentOptions, getDailyReportJobOptions } from "@/lib/db/queries";
 
 export default async function NewDailyReportPage() {
-  const jobOptions = await getDailyReportJobOptions();
+  const [jobOptions, assignmentOptions] = await Promise.all([
+    getDailyReportJobOptions(),
+    getActiveJobAssignmentOptions(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -19,7 +22,7 @@ export default async function NewDailyReportPage() {
         </div>
       </div>
 
-      <DailyReportForm jobOptions={jobOptions} />
+      <DailyReportForm jobOptions={jobOptions} assignmentOptions={assignmentOptions} />
     </div>
   );
 }

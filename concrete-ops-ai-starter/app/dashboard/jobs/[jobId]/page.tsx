@@ -1,68 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { JobAssignmentsCard } from "@/components/jobs/JobAssignmentsCard";
 import {
-  getChangeOrders,
-  getDailyReports,
-  getJobFiles,
+  getJobById,
+  getJobAssignments,
+  getEmployeeOptions,
   getTimeEntries,
-  type ChangeOrderListRow,
-  type DailyReportListRow,
-  type JobFileRow,
-  type JobTimeEntryRow,
 } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
-
-type JobHubRow = {
-  id: string;
-  job_number: string;
-  name: string;
-  status: string;
-  address: string | null;
-  start_date: string | null;
-  target_finish_date: string | null;
-  customers:
-    | { name: string; contact_name: string | null; phone: string | null; email: string | null }
-    | { name: string; contact_name: string | null; phone: string | null; email: string | null }[]
-    | null;
-};
-
-function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
-  if (!employees) return "—";
-  if (Array.isArray(employees)) return employees[0]?.full_name ?? "—";
-  return employees.full_name;
-}
-
-function getJobLabel(
-  jobs:
-    | JobTimeEntryRow["jobs"]
-    | DailyReportListRow["jobs"]
-    | JobFileRow["jobs"]
-    | ChangeOrderListRow["jobs"]
-) {
-  if (!jobs) return "—";
-  if (Array.isArray(jobs)) {
-    const job = jobs[0];
-    return job ? `${job.job_number} · ${job.name}` : "—";
-  }
-  return `${jobs.job_number} · ${jobs.name}`;
-}
-
-function getSubmitter(
-  users: DailyReportListRow["users"] | JobFileRow["users"],
-  employees?: JobFileRow["employees"]
-) {
-  if (users) {
-    if (Array.isArray(users)) return users[0]?.full_name ?? "—";
-    return users.full_name;
-  }
-
-  if (employees) {
-    if (Array.isArray(employees)) return employees[0]?.full_name ?? "—";
-    return employees.full_name;
-  }
-
-  return "—";
-}
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -87,41 +32,29 @@ function formatDateTime(value: string | null | undefined) {
   }).format(parsed);
 }
 
-export default async function JobHubPage({
-  params,
-}: {
-  params: { jobId: string };
-}) {
-  const { jobId } = params; // ✅ FIXED
-
+export default async function JobHubPage({ params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = await params;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: appUser } = user
+    ? await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle()
+    : { data: null };
+  const isForeman = appUser?.role === "foreman";
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select(
-      "id, job_number, name, status, address, start_date, target_finish_date, customers(name, contact_name, phone, email)"
-    )
-    .eq("id", jobId)
-    .maybeSingle<JobHubRow>();
+  const { data: job } = await getJobById(jobId);
 
   if (!job) notFound();
 
-  const [
-    { data: timeEntries },
-    { data: reports },
-    { data: uploads },
-    { data: changeOrders },
-  ] = await Promise.all([
+  const [{ data: timeEntries }, { data: assignments }, employeeOptions] = await Promise.all([
     getTimeEntries({ jobId }),
-    getDailyReports({ jobId }),
-    getJobFiles({ jobId }),
-    getChangeOrders({ jobId }),
+    getJobAssignments(jobId),
+    getEmployeeOptions(),
   ]);
 
   const allTimeEntries = timeEntries ?? [];
-  const allReports = reports ?? [];
-  const allUploads = uploads ?? [];
-  const allChangeOrders = changeOrders ?? [];
+  const allAssignments = assignments ?? [];
 
   const activeCrew = allTimeEntries.filter(
     (entry) => entry.status === "clocked_in"
@@ -130,25 +63,94 @@ export default async function JobHubPage({
   const customer = Array.isArray(job.customers)
     ? job.customers[0]
     : job.customers;
+  const foreman = Array.isArray(job.foreman_employee)
+    ? job.foreman_employee[0]
+    : job.foreman_employee;
+  const activeAssignments = allAssignments.filter((assignment) => assignment.is_active);
 
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border bg-white p-5 shadow-sm">
-        <h1 className="text-3xl font-semibold">
-          {job.job_number} · {job.name}
-        </h1>
-        <p className="text-zinc-600 mt-2">{job.status}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold">
+              {job.job_number} · {job.name}
+            </h1>
+            <p className="mt-2 text-zinc-600">{job.status}</p>
+          </div>
+          {!isForeman ? (
+            <Link href={`/dashboard/jobs/${job.id}/edit`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+              Edit Job
+            </Link>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Customer</h2>
+          <p className="mt-2">{customer?.name || "—"}</p>
+          <p className="mt-1 text-sm text-zinc-600">
+            {[customer?.contact_name, customer?.phone, customer?.email].filter(Boolean).join(" · ") || "No contact details"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Foreman</h2>
+          <p className="mt-2">{foreman?.full_name || "—"}</p>
+          <p className="mt-1 text-sm text-zinc-600">
+            {[foreman?.job_title, foreman?.crew_name].filter(Boolean).join(" · ") || "No foreman assigned"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Schedule</h2>
+          <p className="mt-2 text-sm text-zinc-700">Start: {formatDate(job.start_date)}</p>
+          <p className="mt-1 text-sm text-zinc-700">Target Finish: {formatDate(job.target_finish_date)}</p>
+        </div>
+
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Address</h2>
+          <p className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">{job.address || "—"}</p>
+        </div>
       </section>
 
       <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Customer</h2>
-        <p>{customer?.name}</p>
+        <h2 className="font-semibold">Description</h2>
+        <p className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">{job.description || "—"}</p>
       </section>
 
       <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Active Crew</h2>
-        <p>{activeCrew}</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Assigned Crew</h2>
+            <p className="mt-1 text-sm text-zinc-600">{activeCrew} currently clocked in</p>
+          </div>
+          <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600">
+            {activeAssignments.length} active assignments
+          </span>
+        </div>
+
+        <ul className="mt-4 space-y-3 text-sm">
+          {activeAssignments.map((assignment) => {
+            const employee = Array.isArray(assignment.employees) ? assignment.employees[0] : assignment.employees;
+            return (
+              <li key={assignment.id} className="rounded-2xl border p-3">
+                <p className="font-medium">{employee?.full_name || "Employee"}</p>
+                <p className="mt-1 text-zinc-600">
+                  {[assignment.assignment_role, employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ")}
+                </p>
+                <p className="mt-1 text-zinc-500">
+                  {formatDate(assignment.start_date)} to {formatDate(assignment.end_date)}
+                </p>
+              </li>
+            );
+          })}
+          {activeAssignments.length === 0 ? <li className="text-zinc-600">No active crew assignments yet.</li> : null}
+        </ul>
       </section>
+
+      {!isForeman ? <JobAssignmentsCard jobId={jobId} assignments={allAssignments} employeeOptions={employeeOptions} /> : null}
 
       <Link href="/dashboard/jobs" className="underline">
         Back to Jobs

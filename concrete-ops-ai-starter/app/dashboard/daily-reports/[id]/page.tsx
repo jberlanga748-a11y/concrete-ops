@@ -1,14 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getChangeOrderById,
-  getChangeOrderFiles,
-  getChangeOrderLineItems,
-  type ChangeOrderDetailRow,
-  type ChangeOrderFileRow,
-} from "@/lib/db/queries";
+import { getDailyReportById, getDailyReportCrewEntries, type DailyReportCrewEntryRow, type DailyReportDetailRow } from "@/lib/db/queries";
 
-function getJobLabel(jobs: ChangeOrderDetailRow["jobs"]) {
+function getJobLabel(jobs: DailyReportDetailRow["jobs"]) {
   if (!jobs) return "—";
   if (Array.isArray(jobs)) {
     const job = jobs[0];
@@ -18,115 +12,113 @@ function getJobLabel(jobs: ChangeOrderDetailRow["jobs"]) {
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
-function getReportLabel(reports: ChangeOrderDetailRow["daily_reports"]) {
-  if (!reports) return "—";
-  if (Array.isArray(reports)) {
-    const report = reports[0];
-    return report ? `${report.report_date} (${report.id})` : "—";
-  }
-
-  return `${reports.report_date} (${reports.id})`;
+function getSubmitter(users: DailyReportDetailRow["users"]) {
+  if (!users) return "—";
+  if (Array.isArray(users)) return users[0]?.full_name ?? "—";
+  return users.full_name;
 }
 
-function getProofFile(file: ChangeOrderFileRow["job_files"]) {
-  if (!file) return null;
-  if (Array.isArray(file)) return file[0] ?? null;
-  return file;
+function getCrewEmployee(entry: DailyReportCrewEntryRow["employees"]) {
+  if (!entry) return null;
+  if (Array.isArray(entry)) return entry[0] ?? null;
+  return entry;
 }
 
-export default async function ChangeOrderDetailPage({
+function formatDate(value: string | null | undefined) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
+}
+
+export default async function DailyReportDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  const [{ data: changeOrder }, { data: lineItems }, { data: proofFiles }] = await Promise.all([
-    getChangeOrderById(id),
-    getChangeOrderLineItems(id),
-    getChangeOrderFiles(id),
+  const [{ data: report }, { data: crewEntries }] = await Promise.all([
+    getDailyReportById(id),
+    getDailyReportCrewEntries(id),
   ]);
 
-  if (!changeOrder) notFound();
+  if (!report) notFound();
 
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold">{changeOrder.title}</h1>
-            <p className="mt-2 text-zinc-600">{getJobLabel(changeOrder.jobs)}</p>
+            <h1 className="text-3xl font-semibold">Daily Report</h1>
+            <p className="mt-2 text-zinc-600">{getJobLabel(report.jobs)}</p>
           </div>
-
-          <Link href="/dashboard/change-orders" className="rounded-xl border px-4 py-2 text-sm">
-            Back to Change Orders
-          </Link>
+          <div className="flex gap-3">
+            <Link href={`/dashboard/daily-reports/${report.id}/edit`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+              Edit Report
+            </Link>
+            <Link href="/dashboard/daily-reports" className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+              Back to Reports
+            </Link>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3 rounded-3xl border bg-white p-6 shadow-sm">
-        <p>
-          <span className="font-medium">Status:</span> {changeOrder.status}
-        </p>
-        <p>
-          <span className="font-medium">Linked Daily Report:</span>{" "}
-          {getReportLabel(changeOrder.daily_reports)}
-        </p>
-        <p>
-          <span className="font-medium">Description:</span> {changeOrder.description || "—"}
-        </p>
-        <p>
-          <span className="font-medium">Direct Cost Total:</span> {changeOrder.direct_cost_total}
-        </p>
-        <p>
-          <span className="font-medium">Markup Percent:</span> {changeOrder.markup_percent}
-        </p>
-        <p>
-          <span className="font-medium">Total Amount:</span> {changeOrder.total_amount}
-        </p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Summary</h2>
+          <p className="mt-2 text-sm text-zinc-700">Report Date: {formatDate(report.report_date)}</p>
+          <p className="mt-1 text-sm text-zinc-700">Submitted By: {getSubmitter(report.users)}</p>
+        </section>
+
+        <section className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Crew</h2>
+          <p className="mt-2 text-sm text-zinc-700">{(crewEntries ?? []).length} crew row{(crewEntries ?? []).length === 1 ? "" : "s"}</p>
+        </section>
       </div>
 
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Linked Field Proof</h2>
+      <section className="rounded-2xl border bg-white p-4 shadow-sm">
+        <h2 className="font-semibold">Work Completed</h2>
+        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.work_completed}</p>
+      </section>
 
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Delays / Issues</h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.delays_issues || "—"}</p>
+        </div>
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Materials / Deliveries</h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.materials_deliveries || "—"}</p>
+        </div>
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Safety Notes</h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.safety_notes || "—"}</p>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-white p-4 shadow-sm">
+        <h2 className="font-semibold">Crew Entries</h2>
         <ul className="mt-4 space-y-3 text-sm">
-          {(proofFiles ?? []).map((proof) => {
-            const file = getProofFile(proof.job_files);
-            if (!file) return null;
-
+          {(crewEntries ?? []).map((entry) => {
+            const employee = getCrewEmployee(entry.employees);
             return (
-              <li key={proof.id} className="rounded-2xl border p-3">
-                <p className="font-medium">{file.file_name}</p>
-                <p className="text-zinc-600">Tag: {file.tag}</p>
-                <p className="text-zinc-600">Note: {file.note || "—"}</p>
-                <p className="text-zinc-500">Uploaded: {file.created_at}</p>
-                <p className="text-zinc-500">Storage Path: {file.storage_path}</p>
+              <li key={entry.id} className="rounded-2xl border p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{employee?.full_name || "Employee"}</p>
+                    <p className="mt-1 text-zinc-600">{[employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ") || "—"}</p>
+                  </div>
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600">
+                    {entry.hours} hrs
+                  </span>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap text-zinc-700">{entry.notes || "—"}</p>
               </li>
             );
           })}
-
-          {(proofFiles ?? []).length === 0 ? (
-            <li className="text-zinc-600">No linked field proof files.</li>
-          ) : null}
+          {(crewEntries ?? []).length === 0 ? <li className="text-zinc-600">No crew rows added to this report.</li> : null}
         </ul>
-      </div>
-
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Line Items</h2>
-
-        <ul className="mt-4 space-y-2 text-sm">
-          {(lineItems ?? []).map((item) => (
-            <li key={item.id} className="rounded-2xl border p-3">
-              {item.description} · Qty {item.quantity} · Unit {item.unit_cost} · Total{" "}
-              {item.line_total}
-            </li>
-          ))}
-
-          {(lineItems ?? []).length === 0 ? (
-            <li className="text-zinc-600">No line items yet.</li>
-          ) : null}
-        </ul>
-      </div>
+      </section>
     </div>
   );
 }

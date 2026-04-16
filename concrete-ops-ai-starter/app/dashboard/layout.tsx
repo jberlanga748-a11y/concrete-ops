@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import type { AppRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
 const ADMIN_ROLES = new Set(["owner", "office_admin", "foreman"]);
@@ -14,11 +15,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login?next=/dashboard");
   }
 
-  const { data: appUser } = await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle();
+  const { data: appUser } = await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle<{ role: AppRole }>();
 
   if (appUser && !ADMIN_ROLES.has(appUser.role)) {
     redirect("/employee");
   }
 
-  return <AppShell>{children}</AppShell>;
+  return <AppShell role={appUser?.role}>{children}</AppShell>;
 }

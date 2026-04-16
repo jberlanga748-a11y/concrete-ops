@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getChangeOrders, getDailyReportJobOptions, type ChangeOrderListRow } from "@/lib/db/queries";
+import { createClient } from "@/lib/supabase/server";
 
 function getJobLabel(jobs: ChangeOrderListRow["jobs"]) {
   if (!jobs) return "—";
@@ -22,9 +23,17 @@ export default async function ChangeOrdersPage({
 }: {
   searchParams?: { jobId?: string; status?: string };
 }) {
+  const supabase = await createClient();
   const params = searchParams ?? {};
   const selectedJobId = params.jobId?.trim() || "";
   const selectedStatus = params.status?.trim() || "";
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: appUser } = user
+    ? await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle()
+    : { data: null };
+  const isForeman = appUser?.role === "foreman";
 
   const [{ data: changeOrders }, jobOptions] = await Promise.all([
     getChangeOrders({ jobId: selectedJobId || undefined, status: selectedStatus || undefined }),
@@ -77,9 +86,9 @@ export default async function ChangeOrdersPage({
               <th className="px-4 py-3 text-left">Job</th>
               <th className="px-4 py-3 text-left">Report</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Direct Cost</th>
-              <th className="px-4 py-3 text-left">Markup %</th>
-              <th className="px-4 py-3 text-left">Total</th>
+              {!isForeman ? <th className="px-4 py-3 text-left">Direct Cost</th> : null}
+              {!isForeman ? <th className="px-4 py-3 text-left">Markup %</th> : null}
+              {!isForeman ? <th className="px-4 py-3 text-left">Total</th> : null}
               <th className="px-4 py-3 text-left">Open</th>
             </tr>
           </thead>
@@ -90,9 +99,9 @@ export default async function ChangeOrdersPage({
                 <td className="px-4 py-4">{getJobLabel(co.jobs)}</td>
                 <td className="px-4 py-4">{getReportDate(co.daily_reports)}</td>
                 <td className="px-4 py-4">{co.status}</td>
-                <td className="px-4 py-4">{co.direct_cost_total}</td>
-                <td className="px-4 py-4">{co.markup_percent}</td>
-                <td className="px-4 py-4">{co.total_amount}</td>
+                {!isForeman ? <td className="px-4 py-4">{co.direct_cost_total}</td> : null}
+                {!isForeman ? <td className="px-4 py-4">{co.markup_percent}</td> : null}
+                {!isForeman ? <td className="px-4 py-4">{co.total_amount}</td> : null}
                 <td className="px-4 py-4">
                   <Link className="underline" href={`/dashboard/change-orders/${co.id}`}>
                     Open
@@ -102,7 +111,7 @@ export default async function ChangeOrdersPage({
             ))}
             {(changeOrders ?? []).length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={8}>
+                <td className="px-4 py-6 text-zinc-600" colSpan={isForeman ? 5 : 8}>
                   No change orders found. Start by creating a new change order.
                 </td>
               </tr>

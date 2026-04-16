@@ -145,6 +145,7 @@ export type DailyReportCrewEntry = {
   company_id: string;
   daily_report_id: string;
   employee_id: string;
+  hours: number;
   notes: string | null;
   created_at: string;
   updated_at: string;
