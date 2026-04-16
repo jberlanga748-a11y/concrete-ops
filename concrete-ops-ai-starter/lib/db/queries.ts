@@ -1,10 +1,13 @@
 import type {
+  AssignmentRole,
   ChangeOrder,
   ChangeOrderFile,
   ChangeOrderLineItem,
   Customer,
   DailyReport,
+  DailyReportCrewEntry,
   Employee,
+  JobAssignment,
   Job,
   JobFile,
   JobPhase,
@@ -15,6 +18,20 @@ import { createClient } from "@/lib/supabase/server";
 
 export type JobListRow = Pick<Job, "id" | "job_number" | "name" | "status"> & {
   customers: Pick<Customer, "name">[] | Pick<Customer, "name"> | null;
+};
+
+export type JobDetailRow = Pick<
+  Job,
+  "id" | "customer_id" | "job_number" | "name" | "address" | "status" | "foreman_employee_id" | "start_date" | "target_finish_date" | "description"
+> & {
+  customers:
+    | Pick<Customer, "id" | "name" | "contact_name" | "phone" | "email">[]
+    | Pick<Customer, "id" | "name" | "contact_name" | "phone" | "email">
+    | null;
+  foreman_employee:
+    | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name">[]
+    | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name">
+    | null;
 };
 
 export type JobTimeEntryRow = Pick<
@@ -37,6 +54,19 @@ export type DailyReportListRow = Pick<
 export type DailyReportDetailRow = DailyReport & {
   jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
   users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+};
+
+export type DailyReportCrewEntryRow = Pick<
+  DailyReportCrewEntry,
+  "id" | "daily_report_id" | "employee_id" | "hours" | "notes" | "created_at"
+> & {
+  employees: Pick<Employee, "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "full_name" | "job_title" | "crew_name"> | null;
+};
+
+export type JobAssignmentOptionRow = {
+  jobId: string;
+  employeeId: string;
+  employeeLabel: string;
 };
 
 export type JobFileRow = Pick<
@@ -69,8 +99,27 @@ export type ChangeOrderFileRow = ChangeOrderFile & {
   job_files: Pick<JobFile, "id" | "file_name" | "tag" | "note" | "storage_path" | "created_at">[] | Pick<JobFile, "id" | "file_name" | "tag" | "note" | "storage_path" | "created_at"> | null;
 };
 
+export type EmployeeListRow = Pick<
+  Employee,
+  "id" | "full_name" | "phone" | "email" | "crew_name" | "job_title" | "is_active" | "hire_date" | "created_at"
+>;
+
+export type CustomerListRow = Pick<
+  Customer,
+  "id" | "name" | "contact_name" | "email" | "phone" | "status" | "created_at"
+>;
+
+export type JobAssignmentRow = Pick<
+  JobAssignment,
+  "id" | "job_id" | "employee_id" | "assignment_role" | "start_date" | "end_date" | "is_active" | "created_at"
+> & {
+  employees: Pick<Employee, "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "full_name" | "job_title" | "crew_name"> | null;
+};
+
 export type TimeOption = { id: string; label: string };
 export type DailyReportOption = TimeOption & { jobId: string };
+export type EmployeeOption = TimeOption & { isActive: boolean };
+export type CustomerOption = TimeOption & { status: Customer["status"] };
 
 export async function getJobs() {
   const supabase = await createClient();
@@ -80,6 +129,125 @@ export async function getJobs() {
     ...result,
     data: (result.data ?? []) as JobListRow[],
   };
+}
+
+export async function getJobById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("jobs")
+    .select(
+      "id, customer_id, job_number, name, address, status, foreman_employee_id, start_date, target_finish_date, description, customers(id, name, contact_name, phone, email), foreman_employee:employees!jobs_foreman_fk(id, full_name, job_title, crew_name)",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as JobDetailRow | null };
+}
+
+export async function getEmployees(filters?: { isActive?: boolean }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("employees")
+    .select("id, full_name, phone, email, crew_name, job_title, is_active, hire_date, created_at")
+    .order("full_name", { ascending: true });
+
+  if (typeof filters?.isActive === "boolean") {
+    query = query.eq("is_active", filters.isActive);
+  }
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as EmployeeListRow[] };
+}
+
+export async function getEmployeeById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("employees")
+    .select("id, full_name, phone, email, crew_name, job_title, is_active, hire_date, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as Employee | null };
+}
+
+export async function getEmployeeOptions(includeInactive = false) {
+  const supabase = await createClient();
+
+  let query = supabase.from("employees").select("id, full_name, is_active").order("full_name", { ascending: true });
+  if (!includeInactive) {
+    query = query.eq("is_active", true);
+  }
+
+  const { data } = await query;
+  return (data ?? []).map((employee: Pick<Employee, "id" | "full_name" | "is_active">) => ({
+    id: employee.id,
+    label: employee.full_name,
+    isActive: employee.is_active,
+  })) as EmployeeOption[];
+}
+
+export async function getCustomerOptions(includeInactive = false) {
+  const supabase = await createClient();
+
+  let query = supabase.from("customers").select("id, name, status").order("name", { ascending: true });
+  if (!includeInactive) {
+    query = query.eq("status", "active");
+  }
+
+  const { data } = await query;
+  return (data ?? []).map((customer: Pick<Customer, "id" | "name" | "status">) => ({
+    id: customer.id,
+    label: customer.name,
+    status: customer.status,
+  })) as CustomerOption[];
+}
+
+export async function getCustomers(filters?: { status?: Customer["status"] }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("customers")
+    .select("id, name, contact_name, email, phone, status, created_at")
+    .order("name", { ascending: true });
+
+  if (filters?.status) {
+    query = query.eq("status", filters.status);
+  }
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as CustomerListRow[] };
+}
+
+export async function getCustomerById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("customers")
+    .select("id, name, contact_name, email, phone, billing_address, notes, status, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as Customer | null };
+}
+
+export async function getJobAssignments(jobId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("job_assignments")
+    .select("id, job_id, employee_id, assignment_role, start_date, end_date, is_active, created_at, employees(full_name, job_title, crew_name)")
+    .eq("job_id", jobId)
+    .order("is_active", { ascending: false })
+    .order("created_at", { ascending: true });
+
+  return { ...result, data: (result.data ?? []) as JobAssignmentRow[] };
+}
+
+export async function getAssignmentRoleOptions(): Promise<{ value: AssignmentRole; label: string }[]> {
+  return [
+    { value: "foreman", label: "Foreman" },
+    { value: "lead", label: "Lead" },
+    { value: "crew", label: "Crew" },
+  ];
 }
 
 export async function getTimeEntries(filters?: { jobId?: string; employeeId?: string }) {
@@ -161,6 +329,45 @@ export async function getDailyReportById(id: string) {
     .maybeSingle();
 
   return { ...result, data: (result.data ?? null) as DailyReportDetailRow | null };
+}
+
+export async function getDailyReportCrewEntries(dailyReportId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("daily_report_crew_entries")
+    .select("id, daily_report_id, employee_id, hours, notes, created_at, employees(full_name, job_title, crew_name)")
+    .eq("daily_report_id", dailyReportId)
+    .order("created_at", { ascending: true });
+
+  return { ...result, data: (result.data ?? []) as DailyReportCrewEntryRow[] };
+}
+
+export async function getActiveJobAssignmentOptions() {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("job_assignments")
+    .select("job_id, employee_id, employees(full_name)")
+    .eq("is_active", true)
+    .order("created_at", { ascending: true });
+
+  const seen = new Set<string>();
+
+  return (result.data ?? []).flatMap((assignment: {
+    job_id: string;
+    employee_id: string;
+    employees: Pick<Employee, "full_name">[] | Pick<Employee, "full_name"> | null;
+  }) => {
+    const dedupeKey = `${assignment.job_id}:${assignment.employee_id}`;
+    if (seen.has(dedupeKey)) return [];
+    seen.add(dedupeKey);
+
+    const employee = Array.isArray(assignment.employees) ? assignment.employees[0] : assignment.employees;
+    return [{
+      jobId: assignment.job_id,
+      employeeId: assignment.employee_id,
+      employeeLabel: employee?.full_name ?? "Employee",
+    }];
+  }) as JobAssignmentOptionRow[];
 }
 
 export async function getJobFiles(filters?: { jobId?: string; dailyReportId?: string; tag?: string }) {

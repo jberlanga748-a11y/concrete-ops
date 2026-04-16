@@ -7,6 +7,8 @@ import type { AppRole } from "@/lib/auth/roles";
 
 const adminNav = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard/employees", label: "Employees" },
+  { href: "/dashboard/customers", label: "Customers" },
   { href: "/dashboard/jobs", label: "Jobs" },
   { href: "/dashboard/time", label: "Time" },
   { href: "/dashboard/daily-reports", label: "Daily Reports" },
