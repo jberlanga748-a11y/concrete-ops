@@ -20,6 +20,13 @@ type CopilotAnswer = {
   citations: CopilotCitation[];
 };
 
+function citationTypeLabel(entityType: CopilotCitation["entityType"]) {
+  if (entityType === "job") return "Job";
+  if (entityType === "daily_report") return "Daily report";
+  if (entityType === "change_order") return "Change order";
+  return "Upload";
+}
+
 function confidenceTone(confidence: CopilotAnswer["confidence"]) {
   if (confidence === "high") return "bg-emerald-50 text-emerald-700 border-emerald-200";
   if (confidence === "medium") return "bg-amber-50 text-amber-700 border-amber-200";
@@ -31,6 +38,13 @@ function citationHref(citation: CopilotCitation) {
   if (citation.entityType === "daily_report") return `/dashboard/daily-reports/${citation.id}`;
   if (citation.entityType === "change_order") return `/dashboard/change-orders/${citation.id}`;
   return "/dashboard/uploads";
+}
+
+function citationCtaLabel(citation: CopilotCitation) {
+  if (citation.entityType === "job") return "Open job";
+  if (citation.entityType === "daily_report") return "Open report";
+  if (citation.entityType === "change_order") return "Open change order";
+  return "Open uploads";
 }
 
 export function AdminOpsCopilotCard() {
@@ -121,11 +135,18 @@ export function AdminOpsCopilotCard() {
 
       {answer ? (
         <div className="mt-5 space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-zinc-950">Answer</p>
-            <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${confidenceTone(answer.confidence)}`}>
-              {answer.confidence} confidence
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-zinc-950">Answer</p>
+              <span
+                className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${confidenceTone(answer.confidence)}`}
+              >
+                {answer.confidence} confidence
+              </span>
+            </div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-zinc-500">
+              {answer.citations.length} source{answer.citations.length === 1 ? "" : "s"}
+            </p>
           </div>
           <p className="text-sm leading-6 text-zinc-700">{answer.answer}</p>
           {answer.uncertaintyNote ? (
@@ -139,13 +160,18 @@ export function AdminOpsCopilotCard() {
               <ul className="space-y-2">
                 {answer.citations.map((citation) => (
                   <li key={`${citation.entityType}:${citation.id}`} className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium text-zinc-900">{citation.label}</span>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <span className="inline-flex rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-600">
+                          {citationTypeLabel(citation.entityType)}
+                        </span>
+                        <p className="font-medium text-zinc-900">{citation.label}</p>
+                      </div>
                       <Link href={citationHref(citation)} className="text-xs font-semibold text-orange-600 hover:text-orange-500">
-                        Open
+                        {citationCtaLabel(citation)}
                       </Link>
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-zinc-600">{citation.reason}</p>
+                    <p className="mt-2 text-xs leading-5 text-zinc-600">{citation.reason}</p>
                   </li>
                 ))}
               </ul>
