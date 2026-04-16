@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DailyReportForm } from "@/components/daily-reports/DailyReportForm";
+import { PageHeader, Section, StatCard, secondaryButtonClassName } from "@/components/ui/primitives";
 import {
   getActiveJobAssignmentOptions,
   getDailyReportById,
@@ -25,36 +26,44 @@ export default async function EditDailyReportPage({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Edit Daily Report</h1>
-            <p className="mt-2 text-zinc-600">Update field notes and crew rows without changing the larger reporting flow.</p>
-          </div>
-          <Link href={`/dashboard/daily-reports/${report.id}`} className="rounded-xl border px-4 py-2 text-sm">
+      <PageHeader
+        eyebrow="Daily Reports"
+        title="Edit Daily Report"
+        description="Update field notes and crew rows without changing the existing reporting workflow."
+        action={
+          <Link href={`/dashboard/daily-reports/${report.id}`} className={secondaryButtonClassName}>
             Back to Report
           </Link>
-        </div>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Job Options" value={jobOptions.length} hint="Available jobs for report editing." icon="hammer" tone="warning" />
+        <StatCard label="Crew Options" value={assignmentOptions.length} hint="Assigned crew available for crew rows." icon="users" tone="info" />
+        <StatCard label="Crew Rows" value={(crewEntries ?? []).length} hint="Existing rows already tied to this report." icon="check" tone="success" />
+        <StatCard label="Edit Goal" value="Keep it simple" hint="The form stays field-friendly on mobile and desktop." icon="truck" tone="neutral" />
       </div>
 
-      <DailyReportForm
-        reportId={report.id}
-        jobOptions={jobOptions}
-        assignmentOptions={assignmentOptions}
-        initialValues={{
-          jobId: report.job_id,
-          reportDate: report.report_date,
-          workCompleted: report.work_completed,
-          delaysIssues: report.delays_issues,
-          materialsDeliveries: report.materials_deliveries,
-          safetyNotes: report.safety_notes,
-          crewEntries: (crewEntries ?? []).map((entry) => ({
-            employeeId: entry.employee_id,
-            hours: entry.hours,
-            notes: entry.notes,
-          })),
-        }}
-      />
+      <Section title="Update the field story" description="Keep notes, materials, safety items, and crew hours aligned before saving the report.">
+        <DailyReportForm
+          reportId={report.id}
+          jobOptions={jobOptions}
+          assignmentOptions={assignmentOptions}
+          initialValues={{
+            jobId: report.job_id,
+            reportDate: report.report_date,
+            workCompleted: report.work_completed,
+            delaysIssues: report.delays_issues,
+            materialsDeliveries: report.materials_deliveries,
+            safetyNotes: report.safety_notes,
+            crewEntries: (crewEntries ?? []).map((entry) => ({
+              employeeId: entry.employee_id,
+              hours: entry.hours,
+              notes: entry.notes,
+            })),
+          }}
+        />
+      </Section>
     </div>
   );
 }

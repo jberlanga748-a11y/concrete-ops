@@ -2,7 +2,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { RecordDeliveryCard } from "@/components/exports/RecordDeliveryCard";
-import { getDailyReportById, getDailyReportCrewEntries, getDocumentsForEntity, type DailyReportCrewEntryRow, type DailyReportDetailRow } from "@/lib/db/queries";
+import { AppIcon } from "@/components/ui/icons";
+import {
+  PageHeader,
+  Section,
+  StatCard,
+  StatusPill,
+  secondaryButtonClassName,
+} from "@/components/ui/primitives";
+import {
+  getDailyReportById,
+  getDailyReportCrewEntries,
+  getDocumentsForEntity,
+  type DailyReportCrewEntryRow,
+  type DailyReportDetailRow,
+} from "@/lib/db/queries";
 
 function getJobLabel(jobs: DailyReportDetailRow["jobs"]) {
   if (!jobs) return "—";
@@ -47,56 +61,66 @@ export default async function DailyReportDetailPage({
 
   if (!report) notFound();
 
+  const reportCrewEntries = crewEntries ?? [];
+
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Daily Report</h1>
-            <p className="mt-2 text-zinc-600">{getJobLabel(report.jobs)}</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href={`/dashboard/daily-reports/${report.id}/edit`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+      <PageHeader
+        eyebrow="Daily Reports"
+        title={getJobLabel(report.jobs)}
+        description={`Field report for ${formatDate(report.report_date)} submitted by ${getSubmitter(report.users)}.`}
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link href={`/dashboard/daily-reports/${report.id}/edit`} className={secondaryButtonClassName}>
               Edit Report
             </Link>
-            <Link href="/dashboard/daily-reports" className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+            <Link href="/dashboard/daily-reports" className={secondaryButtonClassName}>
               Back to Reports
             </Link>
           </div>
-        </div>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Report Date" value={formatDate(report.report_date)} hint="Field activity for this day." icon="clipboard" tone="warning" />
+        <StatCard label="Submitted By" value={getSubmitter(report.users)} hint="Recorded from the field workflow." icon="users" tone="info" />
+        <StatCard label="Crew Rows" value={reportCrewEntries.length} hint="Crew members and hours captured here." icon="check" tone="success" />
+        <StatCard label="Documents" value={documents?.length ?? 0} hint="Linked photos and files for this report." icon="upload" tone="neutral" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Summary</h2>
-          <p className="mt-2 text-sm text-zinc-700">Report Date: {formatDate(report.report_date)}</p>
-          <p className="mt-1 text-sm text-zinc-700">Submitted By: {getSubmitter(report.users)}</p>
-        </section>
+      <div className="grid gap-4 lg:grid-cols-[1.3fr,0.7fr]">
+        <Section title="Work Completed" description="Primary field summary for the day.">
+          <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">{report.work_completed}</p>
+        </Section>
 
-        <section className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Crew</h2>
-          <p className="mt-2 text-sm text-zinc-700">{(crewEntries ?? []).length} crew row{(crewEntries ?? []).length === 1 ? "" : "s"}</p>
-        </section>
+        <Section title="Summary" description="Key report metadata at a glance.">
+          <div className="space-y-3 text-sm text-zinc-700">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+              <span>Job</span>
+              <span className="font-medium text-zinc-900">{getJobLabel(report.jobs)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+              <span>Submitted By</span>
+              <span className="font-medium text-zinc-900">{getSubmitter(report.users)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+              <span>Crew Count</span>
+              <StatusPill tone="success">{reportCrewEntries.length} rows</StatusPill>
+            </div>
+          </div>
+        </Section>
       </div>
-
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Work Completed</h2>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.work_completed}</p>
-      </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Delays / Issues</h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.delays_issues || "—"}</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Materials / Deliveries</h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.materials_deliveries || "—"}</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Safety Notes</h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{report.safety_notes || "—"}</p>
-        </div>
+        <Section title="Delays / Issues">
+          <p className="whitespace-pre-wrap text-sm text-zinc-700">{report.delays_issues || "—"}</p>
+        </Section>
+        <Section title="Materials / Deliveries">
+          <p className="whitespace-pre-wrap text-sm text-zinc-700">{report.materials_deliveries || "—"}</p>
+        </Section>
+        <Section title="Safety Notes">
+          <p className="whitespace-pre-wrap text-sm text-zinc-700">{report.safety_notes || "—"}</p>
+        </Section>
       </section>
 
       <RecordDeliveryCard
@@ -108,44 +132,67 @@ export default async function DailyReportDetailPage({
         defaultSubject={`Daily report ${report.report_date}`}
       />
 
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Crew Entries</h2>
-        <ul className="mt-4 space-y-3 text-sm">
-          {(crewEntries ?? []).map((entry) => {
+      <Section title="Crew Entries" description="Crew hours and notes tied to this report.">
+        <ul className="space-y-3 text-sm">
+          {reportCrewEntries.map((entry) => {
             const employee = getCrewEmployee(entry.employees);
             return (
-              <li key={entry.id} className="rounded-2xl border p-3">
+              <li key={entry.id} className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium">{employee?.full_name || "Employee"}</p>
-                    <p className="mt-1 text-zinc-600">{[employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ") || "—"}</p>
+                    <p className="font-medium text-zinc-900">{employee?.full_name || "Employee"}</p>
+                    <p className="mt-1 text-zinc-600">
+                      {[employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ") || "—"}
+                    </p>
                   </div>
-                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600">
-                    {entry.hours} hrs
-                  </span>
+                  <StatusPill tone="info">{entry.hours} hrs</StatusPill>
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-zinc-700">{entry.notes || "—"}</p>
               </li>
             );
           })}
-          {(crewEntries ?? []).length === 0 ? <li className="text-zinc-600">No crew rows added to this report.</li> : null}
+          {reportCrewEntries.length === 0 ? (
+            <li className="rounded-2xl border border-dashed border-zinc-200 px-4 py-6 text-zinc-600">
+              No crew rows added to this report yet.
+            </li>
+          ) : null}
         </ul>
-      </section>
+      </Section>
 
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-semibold">Documents</h2>
-            <p className="mt-1 text-sm text-zinc-600">Photos and files linked to this report.</p>
-          </div>
-          <Link href={`/dashboard/uploads?dailyReportId=${report.id}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+      <Section
+        title="Documents"
+        description="Photos and files linked to this report."
+        action={
+          <Link href={`/dashboard/uploads?dailyReportId=${report.id}`} className={secondaryButtonClassName}>
             View Uploads
           </Link>
+        }
+      >
+        <DocumentList documents={documents ?? []} emptyMessage="No documents linked to this daily report yet." />
+      </Section>
+
+      <Section title="Recent activity" description="The report now lives alongside PDF delivery, linked files, and crew hours.">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-700">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
+              <AppIcon icon="document" className="h-4 w-4" />
+            </div>
+            Open the PDF card to share or resend a report from the same screen.
+          </div>
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-700">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+              <AppIcon icon="upload" className="h-4 w-4" />
+            </div>
+            Linked documents stay visible here so the field story is easy to review.
+          </div>
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-700">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+              <AppIcon icon="users" className="h-4 w-4" />
+            </div>
+            Crew rows stay readable on mobile instead of falling into a dense table layout.
+          </div>
         </div>
-        <div className="mt-4">
-          <DocumentList documents={documents ?? []} emptyMessage="No documents linked to this daily report yet." />
-        </div>
-      </section>
+      </Section>
     </div>
   );
 }

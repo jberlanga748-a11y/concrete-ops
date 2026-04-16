@@ -1,7 +1,15 @@
 import { EmployeeClockCard } from "@/components/time/EmployeeClockCard";
 import { AdminLaborTable } from "@/components/time/AdminLaborTable";
+import { AppIcon } from "@/components/ui/icons";
+import {
+  PageHeader,
+  Section,
+  StatCard,
+  StatusPill,
+  primaryButtonClassName,
+  selectClassName,
+} from "@/components/ui/primitives";
 import { getTimeEntries, getTimeFilterOptions } from "@/lib/db/queries";
-import { PageHeader, selectClassName, primaryButtonClassName, SectionCard } from "@/components/ui/primitives";
 
 export default async function TimePage({
   searchParams,
@@ -21,12 +29,24 @@ export default async function TimePage({
     getTimeFilterOptions(),
   ]);
 
+  const timeEntries = entries ?? [];
+  const activeEntries = timeEntries.filter((entry) => entry.status === "clocked_in").length;
+  const completedEntries = timeEntries.filter((entry) => entry.status !== "clocked_in").length;
+
   return (
     <div className="space-y-6">
       <PageHeader
+        eyebrow="Field Ops"
         title="Time & Labor"
-        description="Employee clock in/out writes live time entries, and admin reads the same records below."
+        description="Run live clock-in workflows, review crew time with cleaner filters, and keep payroll-facing labor records readable on desktop and mobile."
       />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Filtered Entries" value={timeEntries.length} hint="Live results after your current filters." icon="clock" tone="warning" />
+        <StatCard label="Clocked In" value={activeEntries} hint="Crew members with an active entry right now." icon="users" tone="success" />
+        <StatCard label="Closed Entries" value={completedEntries} hint="Completed labor entries already captured." icon="check" tone="info" />
+        <StatCard label="Available Jobs" value={jobOptions.length} hint="Jobs ready for labor tracking." icon="hammer" tone="neutral" />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <EmployeeClockCard
@@ -35,8 +55,30 @@ export default async function TimePage({
           phaseOptions={phaseOptions}
         />
 
-        <SectionCard title="Admin Labor" description="Filter the live time table by job or employee.">
-          <form className="flex flex-wrap gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4" method="get">
+        <Section title="Admin Labor" description="Filter the live time table by job or employee and keep the field picture easy to scan.">
+          <div className="mb-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-orange-100 p-3 text-orange-600">
+                  <AppIcon icon="truck" className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-medium text-zinc-900">Field-first workflow</p>
+                  <p className="mt-1 text-sm text-zinc-600">Clock tools stay simple while office filters stay useful.</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4">
+              <StatusPill tone="info">Live sync</StatusPill>
+              <p className="mt-3 text-sm text-zinc-600">Employee and admin time tools update the same records.</p>
+            </div>
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4">
+              <StatusPill tone="warning">Mobile ready</StatusPill>
+              <p className="mt-3 text-sm text-zinc-600">Labor tables collapse into cards so review still works in the field.</p>
+            </div>
+          </div>
+
+          <form className="flex flex-wrap gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4" method="get">
             <select
               name="jobId"
               defaultValue={selectedJobId}
@@ -68,8 +110,10 @@ export default async function TimePage({
             </button>
           </form>
 
-          <AdminLaborTable entries={entries ?? []} />
-        </SectionCard>
+          <div className="mt-4">
+            <AdminLaborTable entries={timeEntries} />
+          </div>
+        </Section>
       </div>
     </div>
   );

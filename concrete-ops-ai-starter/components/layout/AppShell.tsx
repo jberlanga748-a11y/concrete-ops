@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { cn } from "@/components/ui/cn";
-import { AppIcon } from "@/components/ui/icons";
+import { AppIcon, ConcreteTruckIcon } from "@/components/ui/icons";
+import { appBackgroundClassName, brandPanelClassName } from "@/components/ui/primitives";
 import type { AppRole } from "@/lib/auth/roles";
 
 type NavItem = {
@@ -29,7 +30,7 @@ const adminPrimaryMobileNav: NavItem[] = [
 
 const adminSections: NavSection[] = [
   {
-    title: "Operations",
+    title: "Field Ops",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: "home" },
       { href: "/dashboard/jobs", label: "Jobs", icon: "hammer" },
@@ -37,34 +38,39 @@ const adminSections: NavSection[] = [
       { href: "/dashboard/daily-reports", label: "Daily Reports", icon: "clipboard" },
       { href: "/dashboard/uploads", label: "Uploads", icon: "upload" },
       { href: "/dashboard/change-orders", label: "Change Orders", icon: "document" },
-      { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
-      { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
     ],
   },
   {
-    title: "Commercial",
+    title: "Office",
     items: [
       { href: "/dashboard/customers", label: "Customers", icon: "briefcase" },
       { href: "/dashboard/estimates", label: "Estimates", icon: "calculator" },
       { href: "/dashboard/proposals", label: "Proposals", icon: "clipboard" },
       { href: "/dashboard/approvals", label: "Approvals", icon: "check" },
+      { href: "/dashboard/notifications", label: "Notifications", icon: "bell" },
     ],
   },
   {
-    title: "People & Compliance",
+    title: "Compliance",
     items: [
-      { href: "/dashboard/employees", label: "Employees", icon: "users" },
+      { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
+      { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
       { href: "/dashboard/policies", label: "Policies", icon: "shield" },
       { href: "/dashboard/ppe", label: "PPE", icon: "hardhat" },
-      { href: "/dashboard/notifications", label: "Notifications", icon: "bell" },
       { href: "/dashboard/audit-logs", label: "Audit Logs", icon: "list" },
+    ],
+  },
+  {
+    title: "Admin",
+    items: [
+      { href: "/dashboard/employees", label: "Employees", icon: "users" },
       { href: "/dashboard/settings", label: "Settings", icon: "gear" },
     ],
   },
 ];
 
 const ownerExtraSection: NavSection = {
-  title: "Owner Tools",
+  title: "Owner",
   items: [{ href: "/dashboard/setup", label: "Setup", icon: "wand" }],
 };
 
@@ -77,7 +83,7 @@ const foremanPrimaryMobileNav: NavItem[] = [
 
 const foremanSections: NavSection[] = [
   {
-    title: "Field Work",
+    title: "Field Ops",
     items: [
       { href: "/dashboard/foreman", label: "Foreman", icon: "home" },
       { href: "/dashboard/jobs", label: "Jobs", icon: "hammer" },
@@ -88,7 +94,7 @@ const foremanSections: NavSection[] = [
     ],
   },
   {
-    title: "Safety",
+    title: "Compliance",
     items: [
       { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
       { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
@@ -100,6 +106,7 @@ const foremanSections: NavSection[] = [
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
+  if (href === "/dashboard/foreman") return pathname === "/dashboard/foreman";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -107,22 +114,14 @@ function buildAdminSections(role?: AppRole) {
   return role === "owner" ? [...adminSections, ownerExtraSection] : adminSections;
 }
 
-function flattenItems(sections: NavSection[]) {
-  return sections.flatMap((section) => section.items);
+function getSections(role?: AppRole) {
+  return role === "foreman" ? foremanSections : buildAdminSections(role);
 }
 
 function getMobileNav(role?: AppRole) {
-  if (role === "foreman") {
-    const sections = foremanSections;
-    const primary = foremanPrimaryMobileNav;
-    const more = flattenItems(sections).filter((item) => !primary.some((primaryItem) => primaryItem.href === item.href));
-    return { sections, primary, more };
-  }
-
-  const sections = buildAdminSections(role);
-  const primary = adminPrimaryMobileNav;
-  const more = flattenItems(sections).filter((item) => !primary.some((primaryItem) => primaryItem.href === item.href));
-  return { sections, primary, more };
+  return role === "foreman"
+    ? { sections: foremanSections, primary: foremanPrimaryMobileNav }
+    : { sections: buildAdminSections(role), primary: adminPrimaryMobileNav };
 }
 
 function SidebarLink({
@@ -143,15 +142,17 @@ function SidebarLink({
         "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition",
         collapsed && "justify-center px-2",
         active
-          ? "bg-zinc-900 text-white shadow-[0_14px_32px_rgba(24,24,27,0.18)]"
-          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+          ? "bg-zinc-950 text-white shadow-[0_18px_36px_rgba(24,24,27,0.24)]"
+          : "text-zinc-600 hover:bg-orange-50 hover:text-zinc-950",
       )}
       title={collapsed ? item.label : undefined}
     >
       <span
         className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border transition",
-          active ? "border-white/20 bg-white/10" : "border-zinc-200 bg-white group-hover:border-zinc-300",
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition",
+          active
+            ? "border-white/10 bg-white/10 text-orange-300"
+            : "border-zinc-200 bg-white text-zinc-600 group-hover:border-orange-200 group-hover:bg-orange-50 group-hover:text-orange-600",
         )}
       >
         <AppIcon icon={item.icon} className="h-4 w-4" />
@@ -164,19 +165,25 @@ function SidebarLink({
 function MobileNav({
   pathname,
   primaryItems,
-  moreItems,
+  sections,
   title,
 }: {
   pathname: string;
   primaryItems: NavItem[];
-  moreItems: NavItem[];
+  sections: NavSection[];
   title: string;
 }) {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => !primaryItems.some((primary) => primary.href === item.href)),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] pt-3 backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/90 bg-white/95 px-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] pt-3 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-2">
           {primaryItems.map((item) => {
             const active = isActive(pathname, item.href);
@@ -186,7 +193,7 @@ function MobileNav({
                 href={item.href}
                 className={cn(
                   "rounded-2xl px-2 py-2 text-center text-[11px] font-medium transition",
-                  active ? "bg-zinc-900 text-white shadow-sm" : "bg-zinc-100 text-zinc-700",
+                  active ? "bg-zinc-950 text-white shadow-sm" : "bg-zinc-100 text-zinc-700",
                 )}
               >
                 <span className="flex flex-col items-center gap-1">
@@ -202,7 +209,9 @@ function MobileNav({
             onClick={() => setIsMoreOpen(true)}
             className={cn(
               "rounded-2xl px-2 py-2 text-center text-[11px] font-medium transition",
-              moreItems.some((item) => isActive(pathname, item.href)) ? "bg-zinc-900 text-white shadow-sm" : "bg-zinc-100 text-zinc-700",
+              moreSections.some((section) => section.items.some((item) => isActive(pathname, item.href)))
+                ? "bg-zinc-950 text-white shadow-sm"
+                : "bg-zinc-100 text-zinc-700",
             )}
           >
             <span className="flex flex-col items-center gap-1">
@@ -222,31 +231,47 @@ function MobileNav({
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-200" />
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{title}</p>
+                <p className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
+                  <ConcreteTruckIcon className="h-4 w-4 text-orange-500" />
+                  <span>{title}</span>
+                </p>
                 <h2 className="mt-1 text-xl font-semibold text-zinc-950">More</h2>
               </div>
-              <button type="button" onClick={() => setIsMoreOpen(false)} className="rounded-2xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700">
+              <button
+                type="button"
+                onClick={() => setIsMoreOpen(false)}
+                className="rounded-2xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700"
+              >
                 Close
               </button>
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {moreItems.map((item) => {
-                const active = isActive(pathname, item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMoreOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-medium transition",
-                      active ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100",
-                    )}
-                  >
-                    <AppIcon icon={item.icon} className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+            <div className="mt-5 space-y-5">
+              {moreSections.map((section) => (
+                <div key={section.title}>
+                  <p className="mb-3 text-[11px] uppercase tracking-[0.16em] text-zinc-400">{section.title}</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {section.items.map((item) => {
+                      const active = isActive(pathname, item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setIsMoreOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-medium transition",
+                            active
+                              ? "border-zinc-900 bg-zinc-900 text-white"
+                              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700",
+                          )}
+                        >
+                          <AppIcon icon={item.icon} className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -264,21 +289,27 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const { sections, primary, more } = getMobileNav(role);
-  const portalTitle = role === "foreman" ? "Foreman Portal" : "Admin Portal";
+  const sections = getSections(role);
+  const { primary } = getMobileNav(role);
+  const portalTitle = role === "foreman" ? "Foreman Portal" : "Operations Portal";
   const introCopy =
     role === "foreman"
-      ? "Field-first access to jobs, time, reports, and safety workflows."
-      : "Operations, compliance, and field visibility in one premium workspace.";
+      ? "Field-ready access to jobs, time, reports, and safety workflows."
+      : "A cleaner construction command center for field ops, office coordination, and compliance.";
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(24,24,27,0.08),_transparent_22%),linear-gradient(180deg,#f4f4f5_0%,#fafafa_100%)]">
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+      <div className={cn("min-h-screen", appBackgroundClassName)}>
+        <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops AI</p>
-              <p className="mt-1 text-xl font-semibold text-zinc-950">{portalTitle}</p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-950 text-orange-400 shadow-sm">
+                <ConcreteTruckIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops</p>
+                <p className="mt-1 text-xl font-semibold text-zinc-950">{portalTitle}</p>
+              </div>
             </div>
             <SignOutButton className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 disabled:opacity-50" />
           </div>
@@ -287,27 +318,35 @@ export function AppShell({
         <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
           <aside
             className={cn(
-              "hidden border-r border-zinc-200 bg-white/92 px-4 py-6 backdrop-blur lg:flex lg:flex-col",
-              collapsed ? "w-24" : "w-[320px]",
+              "hidden border-r border-zinc-200/80 px-4 py-6 backdrop-blur lg:flex lg:flex-col",
+              brandPanelClassName,
+              collapsed ? "w-24" : "w-[330px]",
             )}
           >
             <div className={cn("flex items-start justify-between gap-3", collapsed && "justify-center")}>
               {!collapsed ? (
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops AI</p>
-                  <h1 className="mt-3 text-2xl font-semibold text-zinc-950">{portalTitle}</h1>
-                  <p className="mt-2 max-w-xs text-sm leading-6 text-zinc-600">{introCopy}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-zinc-950 text-orange-400 shadow-[0_12px_24px_rgba(24,24,27,0.2)]">
+                      <ConcreteTruckIcon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops</p>
+                      <h1 className="mt-1 text-2xl font-semibold text-zinc-950">{portalTitle}</h1>
+                    </div>
+                  </div>
+                  <p className="mt-4 max-w-xs text-sm leading-6 text-zinc-600">{introCopy}</p>
                 </div>
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-zinc-900 text-white shadow-sm">
-                  <AppIcon icon="sparkles" className="h-5 w-5" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-zinc-950 text-orange-400 shadow-sm">
+                  <ConcreteTruckIcon className="h-5 w-5" />
                 </div>
               )}
 
               <button
                 type="button"
                 onClick={() => setCollapsed((current) => !current)}
-                className="rounded-2xl border border-zinc-200 bg-zinc-50 p-2 text-zinc-700 transition hover:bg-zinc-100"
+                className="rounded-2xl border border-zinc-200 bg-white/80 p-2 text-zinc-700 transition hover:bg-zinc-100"
               >
                 <AppIcon icon={collapsed ? "chevron-right" : "chevron-left"} className="h-4 w-4" />
               </button>
@@ -317,9 +356,7 @@ export function AppShell({
               {sections.map((section) => (
                 <div key={section.title}>
                   {!collapsed ? (
-                    <p className="mb-3 px-3 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400">
-                      {section.title}
-                    </p>
+                    <p className="mb-3 px-3 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400">{section.title}</p>
                   ) : null}
                   <div className="space-y-2">
                     {section.items.map((item) => (
@@ -334,12 +371,12 @@ export function AppShell({
               <Link
                 href="/employee"
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100",
+                  "flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white/85 px-3 py-3 text-sm font-medium text-zinc-700 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700",
                   collapsed && "justify-center px-2",
                 )}
                 title={collapsed ? "Employee Portal" : undefined}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-white">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-700">
                   <AppIcon icon="folder" className="h-4 w-4" />
                 </span>
                 {!collapsed ? <span>Employee Portal</span> : null}
@@ -358,7 +395,7 @@ export function AppShell({
           </main>
         </div>
 
-        <MobileNav pathname={pathname} primaryItems={primary} moreItems={more} title={portalTitle} />
+        <MobileNav pathname={pathname} primaryItems={primary} sections={sections} title={portalTitle} />
       </div>
     </ToastProvider>
   );

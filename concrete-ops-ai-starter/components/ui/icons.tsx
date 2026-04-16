@@ -21,7 +21,23 @@ type IconName =
   | "chevron-left"
   | "chevron-right"
   | "menu"
-  | "folder";
+  | "folder"
+  | "truck";
+
+export function ConcreteTruckIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <circle cx="7" cy="18" r="2.2" />
+      <circle cx="18" cy="18" r="2.2" />
+      <path d="M3 16V9.5A1.5 1.5 0 0 1 4.5 8H11l2.8-2.1a1.5 1.5 0 0 1 2.36.52L18 10h1.7A1.3 1.3 0 0 1 21 11.3V16" />
+      <path d="M9 8v5.5" />
+      <path d="M12.5 8.5 16 11" />
+      <path d="M3 16h1.8" />
+      <path d="M9.2 16H15.8" />
+      <path d="M20.2 16H21" />
+    </svg>
+  );
+}
 
 export function AppIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: string }) {
   switch (icon) {
@@ -69,6 +85,8 @@ export function AppIcon({ icon, className = "h-4 w-4" }: { icon: IconName; class
       return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>;
     case "folder":
       return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>;
+    case "truck":
+      return <ConcreteTruckIcon className={className} />;
     default:
       return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}><path d="M3 12h18"/><path d="M12 3v18"/></svg>;
   }

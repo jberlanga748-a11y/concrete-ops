@@ -3,6 +3,16 @@ import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { JobAssignmentsCard } from "@/components/jobs/JobAssignmentsCard";
 import { JobCostSnapshotCard } from "@/components/jobs/JobCostSnapshotCard";
+import { AppIcon } from "@/components/ui/icons";
+import {
+  PageHeader,
+  Section,
+  StatCard,
+  StatusPill,
+  linkClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+} from "@/components/ui/primitives";
 import {
   getDocumentsForEntity,
   getJobById,
@@ -21,18 +31,6 @@ function formatDate(value: string | null | undefined) {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(parsed);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
   }).format(parsed);
 }
 
@@ -56,141 +54,150 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
     ? getJobCostSnapshot(jobId)
     : Promise.resolve({ data: null });
 
-  const [{ data: timeEntries }, { data: assignments }, employeeOptions, { data: documents }, { data: costSnapshot }] = await Promise.all([
-    getTimeEntries({ jobId }),
-    getJobAssignments(jobId),
-    getEmployeeOptions(),
-    getDocumentsForEntity("job", jobId),
-    costSnapshotPromise,
-  ]);
+  const [{ data: timeEntries }, { data: assignments }, employeeOptions, { data: documents }, { data: costSnapshot }] =
+    await Promise.all([
+      getTimeEntries({ jobId }),
+      getJobAssignments(jobId),
+      getEmployeeOptions(),
+      getDocumentsForEntity("job", jobId),
+      costSnapshotPromise,
+    ]);
 
   const allTimeEntries = timeEntries ?? [];
   const allAssignments = assignments ?? [];
-
-  const activeCrew = allTimeEntries.filter(
-    (entry) => entry.status === "clocked_in"
-  ).length;
-
-  const customer = Array.isArray(job.customers)
-    ? job.customers[0]
-    : job.customers;
-  const foreman = Array.isArray(job.foreman_employee)
-    ? job.foreman_employee[0]
-    : job.foreman_employee;
+  const activeCrew = allTimeEntries.filter((entry) => entry.status === "clocked_in").length;
+  const customer = Array.isArray(job.customers) ? job.customers[0] : job.customers;
+  const foreman = Array.isArray(job.foreman_employee) ? job.foreman_employee[0] : job.foreman_employee;
   const activeAssignments = allAssignments.filter((assignment) => assignment.is_active);
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border bg-white p-5 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold">
-              {job.job_number} · {job.name}
-            </h1>
-            <p className="mt-2 text-zinc-600">{job.status}</p>
-          </div>
-          {!isForeman ? (
-            <div className="flex gap-3">
-              <Link href={`/dashboard/incidents/new?jobId=${job.id}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
-                Report Incident
-              </Link>
-              <Link href={`/dashboard/jobs/${job.id}/edit`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
-                Edit Job
-              </Link>
-            </div>
-          ) : null}
-          {isForeman ? (
-            <Link href={`/dashboard/incidents/new?jobId=${job.id}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+      <PageHeader
+        eyebrow="Job Hub"
+        title={`${job.job_number} · ${job.name}`}
+        description="The premium operations view for this project: crew, field reporting, documents, incidents, and schedule details in one place."
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link href={`/dashboard/incidents/new?jobId=${job.id}`} className={isForeman ? primaryButtonClassName : secondaryButtonClassName}>
               Report Incident
             </Link>
-          ) : null}
-        </div>
-      </section>
+            {!isForeman ? (
+              <Link href={`/dashboard/jobs/${job.id}/edit`} className={primaryButtonClassName}>
+                Edit Job
+              </Link>
+            ) : null}
+          </div>
+        }
+      />
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Customer</h2>
-          <p className="mt-2">{customer?.name || "—"}</p>
-          <p className="mt-1 text-sm text-zinc-600">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Status" value={job.status} hint="Current phase of the project lifecycle." icon="hammer" tone="warning" />
+        <StatCard label="Active Crew" value={activeCrew} hint="Crew currently clocked in on this job." icon="users" tone="success" />
+        <StatCard label="Assignments" value={activeAssignments.length} hint="Active foreman and crew assignments." icon="clipboard" tone="info" />
+        <StatCard label="Documents" value={documents?.length ?? 0} hint="Shared uploads linked to the job." icon="upload" tone="neutral" />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Section title="Customer" description="Primary customer and contact details for this job.">
+          <p className="text-lg font-semibold text-zinc-950">{customer?.name || "—"}</p>
+          <p className="mt-2 text-sm text-zinc-600">
             {[customer?.contact_name, customer?.phone, customer?.email].filter(Boolean).join(" · ") || "No contact details"}
           </p>
-        </div>
+        </Section>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Foreman</h2>
-          <p className="mt-2">{foreman?.full_name || "—"}</p>
-          <p className="mt-1 text-sm text-zinc-600">
+        <Section title="Foreman" description="Assigned foreman leading this project in the field.">
+          <p className="text-lg font-semibold text-zinc-950">{foreman?.full_name || "—"}</p>
+          <p className="mt-2 text-sm text-zinc-600">
             {[foreman?.job_title, foreman?.crew_name].filter(Boolean).join(" · ") || "No foreman assigned"}
           </p>
-        </div>
+        </Section>
+      </div>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Schedule</h2>
-          <p className="mt-2 text-sm text-zinc-700">Start: {formatDate(job.start_date)}</p>
-          <p className="mt-1 text-sm text-zinc-700">Target Finish: {formatDate(job.target_finish_date)}</p>
-        </div>
+      <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+        <Section title="Job Summary" description="Description, address, and schedule details that should stay easy to reference in the field.">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4">
+              <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Start Date</p>
+              <p className="mt-2 text-sm font-medium text-zinc-900">{formatDate(job.start_date)}</p>
+            </div>
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4">
+              <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Target Finish</p>
+              <p className="mt-2 text-sm font-medium text-zinc-900">{formatDate(job.target_finish_date)}</p>
+            </div>
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 md:col-span-2">
+              <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Address</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{job.address || "—"}</p>
+            </div>
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 md:col-span-2">
+              <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Description</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{job.description || "—"}</p>
+            </div>
+          </div>
+        </Section>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Address</h2>
-          <p className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">{job.address || "—"}</p>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Description</h2>
-        <p className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">{job.description || "—"}</p>
-      </section>
+        <Section title="Quick Actions" description="High-frequency actions related to this job.">
+          <div className="space-y-3">
+            <Link href={`/dashboard/daily-reports/new?jobId=${job.id}`} className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-4 text-sm font-medium text-zinc-800 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+              <AppIcon icon="clipboard" className="h-4 w-4" />
+              <span>Create Daily Report</span>
+            </Link>
+            <Link href={`/dashboard/uploads?jobId=${job.id}`} className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-4 text-sm font-medium text-zinc-800 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+              <AppIcon icon="upload" className="h-4 w-4" />
+              <span>Review Uploads</span>
+            </Link>
+            <Link href={`/dashboard/change-orders?jobId=${job.id}`} className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-4 text-sm font-medium text-zinc-800 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+              <AppIcon icon="document" className="h-4 w-4" />
+              <span>Open Change Orders</span>
+            </Link>
+          </div>
+        </Section>
+      </div>
 
       {canViewCosts ? <JobCostSnapshotCard jobId={jobId} snapshot={costSnapshot} /> : null}
 
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-semibold">Assigned Crew</h2>
-            <p className="mt-1 text-sm text-zinc-600">{activeCrew} currently clocked in</p>
-          </div>
-          <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600">
-            {activeAssignments.length} active assignments
-          </span>
+      <Section title="Assigned Crew" description="Live assignments and who is currently clocked in on this job.">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <StatusPill tone="success">{activeCrew} clocked in</StatusPill>
+          <StatusPill tone="info">{activeAssignments.length} active assignments</StatusPill>
         </div>
-
-        <ul className="mt-4 space-y-3 text-sm">
+        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {activeAssignments.map((assignment) => {
             const employee = Array.isArray(assignment.employees) ? assignment.employees[0] : assignment.employees;
             return (
-              <li key={assignment.id} className="rounded-2xl border p-3">
-                <p className="font-medium">{employee?.full_name || "Employee"}</p>
-                <p className="mt-1 text-zinc-600">
+              <li key={assignment.id} className="rounded-[24px] border border-zinc-200 bg-zinc-50/80 p-4">
+                <p className="font-medium text-zinc-900">{employee?.full_name || "Employee"}</p>
+                <p className="mt-1 text-sm text-zinc-600">
                   {[assignment.assignment_role, employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ")}
                 </p>
-                <p className="mt-1 text-zinc-500">
+                <p className="mt-2 text-sm text-zinc-500">
                   {formatDate(assignment.start_date)} to {formatDate(assignment.end_date)}
                 </p>
               </li>
             );
           })}
-          {activeAssignments.length === 0 ? <li className="text-zinc-600">No active crew assignments yet.</li> : null}
+          {activeAssignments.length === 0 ? (
+            <li className="rounded-2xl border border-dashed border-zinc-200 px-4 py-6 text-zinc-600">
+              No active crew assignments yet.
+            </li>
+          ) : null}
         </ul>
-      </section>
+      </Section>
 
-      <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-semibold">Documents</h2>
-            <p className="mt-1 text-sm text-zinc-600">Shared uploads linked to this job.</p>
-          </div>
-          <Link href={`/dashboard/uploads?jobId=${jobId}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+      <Section
+        title="Documents"
+        description="Shared uploads linked to this job."
+        action={
+          <Link href={`/dashboard/uploads?jobId=${jobId}`} className={secondaryButtonClassName}>
             View All Uploads
           </Link>
-        </div>
-        <div className="mt-4">
-          <DocumentList documents={documents ?? []} emptyMessage="No documents linked to this job yet." />
-        </div>
-      </section>
+        }
+      >
+        <DocumentList documents={documents ?? []} emptyMessage="No documents linked to this job yet." />
+      </Section>
 
       {!isForeman ? <JobAssignmentsCard jobId={jobId} assignments={allAssignments} employeeOptions={employeeOptions} /> : null}
 
-      <Link href="/dashboard/jobs" className="underline">
+      <Link href="/dashboard/jobs" className={linkClassName}>
         Back to Jobs
       </Link>
     </div>
