@@ -1,27 +1,45 @@
 name: CI
 
 on:
-  pull_request:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
+
       - name: Install dependencies
-        run: npm install
-      
-      - name: Type check
-        run: npm run typecheck
-      
-      - name: Build
-        run: npm run build
+        run: |
+          set -e
+          npm ci
+
+      - name: Run build
+        run: |
+          set -e
+          npm run build
+
+      - name: Run tests
+        run: |
+          set -e
+          npm test
+          echo 'Tests completed successfully.'
+
+      - name: Debug information
+        run: |
+          echo 'Node version:'
+          node -v
+          echo 'NPM version:'
+          npm -v
