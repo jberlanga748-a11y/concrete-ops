@@ -1,6 +1,6 @@
 "use server";
 
-import type { AssignmentRole, CustomerStatus, JobStatus } from "@/lib/db/schema";
+import type { ApprovalStatus, ApprovalType, AppRole, AssignmentRole, CustomerStatus, DocumentLinkType, EstimateLineItemType, EstimateStatus, IncidentStatus, IncidentType, JobStatus, NotificationPriority, NotificationType, PPEItemStatus, ProposalSectionType, ProposalStatus } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 
 async function getCurrentAppUser() {
@@ -12,7 +12,7 @@ async function getCurrentAppUser() {
 
   const { data: appUser, error: appUserError } = await supabase
     .from("users")
-    .select("id, company_id")
+    .select("id, company_id, role")
     .eq("auth_user_id", authResult.user.id)
     .single();
 
@@ -21,6 +21,10 @@ async function getCurrentAppUser() {
   }
 
   return { supabase, appUser };
+}
+
+function isOfficeAdminRole(role?: AppRole | null) {
+  return role === "owner" || role === "office_admin";
 }
 
 async function syncForemanAssignment(args: {
@@ -80,6 +84,212 @@ async function syncForemanAssignment(args: {
     employee_id: foremanEmployeeId,
     assignment_role: "foreman",
     is_active: true,
+  });
+
+  if (error) return { error: error.message };
+  return { data: true };
+}
+
+async function ensureDocumentForJobFile(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  jobFileId: string;
+}) {
+  const { supabase, companyId, jobFileId } = args;
+
+  const { data: existingDocument, error: existingError } = await supabase
+    .from("documents")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("source_job_file_id", jobFileId)
+    .maybeSingle();
+
+  if (existingError) return { error: existingError.message };
+  if (existingDocument) return { data: existingDocument };
+
+  const { data: jobFile, error: jobFileError } = await supabase
+    .from("job_files")
+    .select("id, company_id, job_id, daily_report_id, uploaded_by_user_id, uploaded_by_employee_id, file_name, file_type, storage_path, tag, note, created_at")
+    .eq("company_id", companyId)
+    .eq("id", jobFileId)
+    .single();
+
+  if (jobFileError || !jobFile) {
+    return { error: jobFileError?.message || "Job file not found." };
+  }
+
+  const { data: document, error: insertError } = await supabase
+    .from("documents")
+    .insert({
+      company_id: companyId,
+      source_job_file_id: jobFile.id,
+      job_id: jobFile.job_id,
+      daily_report_id: jobFile.daily_report_id,
+      uploaded_by_user_id: jobFile.uploaded_by_user_id,
+      uploaded_by_employee_id: jobFile.uploaded_by_employee_id,
+      file_name: jobFile.file_name,
+      file_type: jobFile.file_type,
+      storage_bucket: "job-uploads",
+      storage_path: jobFile.storage_path,
+      tag: jobFile.tag,
+      note: jobFile.note,
+      created_at: jobFile.created_at,
+    })
+    .select("id")
+    .single();
+
+  if (insertError) return { error: insertError.message };
+  return { data: document };
+}
+
+async function upsertDocumentLink(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  documentId: string;
+  linkType: DocumentLinkType;
+  linkedRecordId: string;
+}) {
+  const { supabase, companyId, documentId, linkType, linkedRecordId } = args;
+  const { error } = await supabase.from("document_links").upsert(
+    {
+      company_id: companyId,
+      document_id: documentId,
+      link_type: linkType,
+      linked_record_id: linkedRecordId,
+    },
+    { onConflict: "document_id,link_type,linked_record_id" },
+  );
+
+  if (error) return { error: error.message };
+  return { data: true };
+}
+
+async function syncPolicyAcknowledgments(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  policyId: string;
+}) {
+  const { supabase, companyId, policyId } = args;
+
+  const [{ data: activeUsers, error: usersError }, { data: activeEmployees, error: employeesError }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("status", "active"),
+    supabase
+      .from("employees")
+      .select("id, user_id")
+      .eq("company_id", companyId)
+      .eq("is_active", true),
+  ]);
+
+  if (usersError) return { error: usersError.message };
+  if (employeesError) return { error: employeesError.message };
+
+  const userRows = (activeUsers ?? []).map((user: { id: string }) => ({
+    company_id: companyId,
+    policy_id: policyId,
+    user_id: user.id,
+    status: "unsigned",
+  }));
+
+  const employeeRows = (activeEmployees ?? [])
+    .filter((employee: { id: string; user_id: string | null }) => !employee.user_id)
+    .map((employee: { id: string }) => ({
+      company_id: companyId,
+      policy_id: policyId,
+      employee_id: employee.id,
+      status: "unsigned",
+    }));
+
+  if (userRows.length > 0) {
+    const { error } = await supabase.from("policy_acknowledgments").upsert(userRows, { onConflict: "policy_id,user_id" });
+    if (error) return { error: error.message };
+  }
+
+  if (employeeRows.length > 0) {
+    const { error } = await supabase.from("policy_acknowledgments").upsert(employeeRows, { onConflict: "policy_id,employee_id" });
+    if (error) return { error: error.message };
+  }
+
+  return { data: true };
+}
+
+async function createAdminNotifications(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  notificationType: NotificationType;
+  title: string;
+  body: string;
+  relatedTable?: string;
+  relatedId?: string;
+  priority?: NotificationPriority;
+}) {
+  const { supabase, companyId, notificationType, title, body, relatedTable, relatedId, priority = "normal" } = args;
+
+  const { data: recipients, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("status", "active")
+    .in("role", ["owner", "office_admin"]);
+
+  if (error) return { error: error.message };
+  if (!recipients?.length) return { data: true };
+
+  const { error: insertError } = await supabase.from("notifications").insert(
+    recipients.map((recipient: { id: string }) => ({
+      company_id: companyId,
+      user_id: recipient.id,
+      notification_type: notificationType,
+      title,
+      body,
+      related_table: relatedTable || null,
+      related_id: relatedId || null,
+      priority,
+    })),
+  );
+
+  if (insertError) return { error: insertError.message };
+  return { data: true };
+}
+
+async function getActorEmployeeId(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  userId: string;
+}) {
+  const { supabase, companyId, userId } = args;
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return employee?.id ?? null;
+}
+
+async function createAuditLog(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  actorUserId?: string | null;
+  actorEmployeeId?: string | null;
+  actionType: string;
+  targetTable: string;
+  targetId: string;
+  summary: string;
+}) {
+  const { supabase, companyId, actorUserId, actorEmployeeId, actionType, targetTable, targetId, summary } = args;
+  const { error } = await supabase.from("audit_logs").insert({
+    company_id: companyId,
+    actor_user_id: actorUserId || null,
+    actor_employee_id: actorEmployeeId || null,
+    action_type: actionType,
+    target_table: targetTable,
+    target_id: targetId,
+    summary,
   });
 
   if (error) return { error: error.message };
@@ -191,6 +401,35 @@ export async function createDailyReport(input: DailyReportInput) {
     if (crewError) return { error: crewError.message };
   }
 
+  const notification = await createAdminNotifications({
+    supabase,
+    companyId: appUser.company_id,
+    notificationType: "daily_report_submitted",
+    title: "New daily report submitted",
+    body: `A daily report was submitted for ${input.reportDate}.`,
+    relatedTable: "daily_reports",
+    relatedId: data.id,
+    priority: "normal",
+  });
+  if (notification.error) return { error: notification.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "daily_report.created",
+    targetTable: "daily_reports",
+    targetId: data.id,
+    summary: `Created daily report for ${input.reportDate}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
   return { data };
 }
 
@@ -244,6 +483,23 @@ export async function updateDailyReport(
     if (crewError) return { error: crewError.message };
   }
 
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "daily_report.updated",
+    targetTable: "daily_reports",
+    targetId: id,
+    summary: `Updated daily report for ${input.reportDate}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
   return { data };
 }
 
@@ -291,9 +547,965 @@ export async function createChangeOrder(input: ChangeOrderInput) {
     );
 
     if (proofError) return { error: proofError.message };
+
+    for (const jobFileId of proofFileIds) {
+      const ensuredDocument = await ensureDocumentForJobFile({
+        supabase,
+        companyId: appUser.company_id,
+        jobFileId,
+      });
+      if (ensuredDocument.error || !ensuredDocument.data) {
+        return { error: ensuredDocument.error || "Failed to create linked document." };
+      }
+
+      const linked = await upsertDocumentLink({
+        supabase,
+        companyId: appUser.company_id,
+        documentId: ensuredDocument.data.id,
+        linkType: "change_order",
+        linkedRecordId: changeOrder.id,
+      });
+      if (linked.error) return { error: linked.error };
+    }
   }
 
+  const notification = await createAdminNotifications({
+    supabase,
+    companyId: appUser.company_id,
+    notificationType: "change_order_created",
+    title: "New change order created",
+    body: input.title.trim(),
+    relatedTable: "change_orders",
+    relatedId: changeOrder.id,
+    priority: "high",
+  });
+  if (notification.error) return { error: notification.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "change_order.created",
+    targetTable: "change_orders",
+    targetId: changeOrder.id,
+    summary: `Created change order "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
   return { data: changeOrder };
+}
+
+export async function createDocumentLink(input: { documentId: string; linkType: DocumentLinkType; linkedRecordId: string }) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  return upsertDocumentLink({
+    supabase,
+    companyId: appUser.company_id,
+    documentId: input.documentId,
+    linkType: input.linkType,
+    linkedRecordId: input.linkedRecordId,
+  });
+}
+
+type IncidentInput = {
+  jobId?: string;
+  employeeId?: string;
+  incidentType: IncidentType;
+  incidentDate: string;
+  description: string;
+  correctiveAction?: string;
+  status: IncidentStatus;
+};
+
+export async function createIncident(input: IncidentInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data: reportingEmployee } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("user_id", appUser.id)
+    .maybeSingle();
+
+  const payload = {
+    company_id: appUser.company_id,
+    job_id: input.jobId || null,
+    employee_id: input.employeeId || null,
+    reported_by_user_id: appUser.id,
+    reported_by_employee_id: reportingEmployee?.id ?? null,
+    incident_type: input.incidentType,
+    incident_date: input.incidentDate,
+    description: input.description.trim(),
+    corrective_action: input.correctiveAction?.trim() || null,
+    status: input.status,
+  };
+
+  const { data, error } = await supabase.from("incidents").insert(payload).select("id").single();
+  if (error) return { error: error.message };
+
+  const notification = await createAdminNotifications({
+    supabase,
+    companyId: appUser.company_id,
+    notificationType: "incident_created",
+    title: "New incident reported",
+    body: `${input.incidentType.replace(/_/g, " ")} logged for ${input.incidentDate}.`,
+    relatedTable: "incidents",
+    relatedId: data.id,
+    priority: input.incidentType === "injury" ? "high" : "normal",
+  });
+  if (notification.error) return { error: notification.error };
+
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId: reportingEmployee?.id ?? null,
+    actionType: "incident.created",
+    targetTable: "incidents",
+    targetId: data.id,
+    summary: `Created ${input.incidentType.replace(/_/g, " ")} incident for ${input.incidentDate}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+type PolicyInput = {
+  title: string;
+  category?: string;
+  versionLabel?: string;
+  content: string;
+  isActive: boolean;
+};
+
+export async function createPolicy(input: PolicyInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("policies")
+    .insert({
+      company_id: appUser.company_id,
+      title: input.title.trim(),
+      category: input.category?.trim() || null,
+      version_label: input.versionLabel?.trim() || null,
+      content: input.content.trim(),
+      is_active: input.isActive,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: error?.message || "Failed to create policy." };
+
+  const synced = await syncPolicyAcknowledgments({
+    supabase,
+    companyId: appUser.company_id,
+    policyId: data.id,
+  });
+  if (synced.error) return { error: synced.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "policy.created",
+    targetTable: "policies",
+    targetId: data.id,
+    summary: `Created policy "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function updatePolicy(id: string, input: PolicyInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("policies")
+    .update({
+      title: input.title.trim(),
+      category: input.category?.trim() || null,
+      version_label: input.versionLabel?.trim() || null,
+      content: input.content.trim(),
+      is_active: input.isActive,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: error?.message || "Failed to update policy." };
+
+  const synced = await syncPolicyAcknowledgments({
+    supabase,
+    companyId: appUser.company_id,
+    policyId: id,
+  });
+  if (synced.error) return { error: synced.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "policy.updated",
+    targetTable: "policies",
+    targetId: id,
+    summary: `Updated policy "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function signMyPolicyAcknowledgment(policyId: string) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("user_id", appUser.id)
+    .maybeSingle();
+
+  let query = supabase
+    .from("policy_acknowledgments")
+    .update({
+      status: "signed",
+      acknowledged_at: new Date().toISOString(),
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("policy_id", policyId)
+    .eq("user_id", appUser.id);
+
+  const { data, error } = await query.select("id").maybeSingle();
+  if (!error && data) return { data };
+
+  if (employee?.id) {
+    const fallback = await supabase
+      .from("policy_acknowledgments")
+      .update({
+        status: "signed",
+        acknowledged_at: new Date().toISOString(),
+      })
+      .eq("company_id", appUser.company_id)
+      .eq("policy_id", policyId)
+      .eq("employee_id", employee.id)
+      .select("id")
+      .maybeSingle();
+
+    if (!fallback.error && fallback.data) return { data: fallback.data };
+  }
+
+  return { error: error?.message || "Could not find a policy acknowledgment for your account." };
+}
+
+type PPEItemInput = {
+  employeeId: string;
+  itemName: string;
+  status: PPEItemStatus;
+  fitNotes?: string;
+  issuedAt?: string;
+  replacementDueAt?: string;
+};
+
+type EstimateLineItemInput = {
+  itemType: EstimateLineItemType;
+  description: string;
+  quantity: number;
+  unit?: string;
+  unitCost: number;
+};
+
+type EstimateInput = {
+  customerId: string;
+  jobId?: string;
+  title: string;
+  status: EstimateStatus;
+  notes?: string;
+  lineItems: EstimateLineItemInput[];
+};
+
+type ProposalSectionInput = {
+  sectionType: ProposalSectionType;
+  heading?: string;
+  content: string;
+};
+
+type ProposalInput = {
+  customerId: string;
+  jobId?: string;
+  title: string;
+  status: ProposalStatus;
+  notes?: string;
+  sections: ProposalSectionInput[];
+};
+
+type ApprovalInput = {
+  approvalType: ApprovalType;
+  relatedId: string;
+};
+
+function normalizeEstimateLineItems(lineItems: EstimateLineItemInput[]) {
+  return lineItems
+    .filter((item) => item.description.trim())
+    .map((item) => {
+      const quantity = Number(item.quantity) || 0;
+      const unitCost = Number(item.unitCost) || 0;
+      return {
+        item_type: item.itemType,
+        description: item.description.trim(),
+        quantity,
+        unit: item.unit?.trim() || null,
+        unit_cost: unitCost,
+        line_total: Number((quantity * unitCost).toFixed(2)),
+      };
+    });
+}
+
+function normalizeProposalSections(sections: ProposalSectionInput[]) {
+  return sections
+    .filter((section) => section.content.trim())
+    .map((section, index) => ({
+      section_type: section.sectionType,
+      heading: section.heading?.trim() || null,
+      content: section.content.trim(),
+      sort_order: index,
+    }));
+}
+
+export async function createPPEItem(input: PPEItemInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("ppe_items")
+    .insert({
+      company_id: appUser.company_id,
+      employee_id: input.employeeId,
+      item_name: input.itemName.trim(),
+      status: input.status,
+      fit_notes: input.fitNotes?.trim() || null,
+      issued_at: input.issuedAt || null,
+      replacement_due_at: input.replacementDueAt || null,
+    })
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+
+  if (input.status !== "issued") {
+    const notification = await createAdminNotifications({
+      supabase,
+      companyId: appUser.company_id,
+      notificationType: "ppe_attention",
+      title: "PPE item needs attention",
+      body: `${input.itemName.trim()} was logged as ${input.status.replace(/_/g, " ")}.`,
+      relatedTable: "ppe_items",
+      relatedId: data.id,
+      priority: "normal",
+    });
+    if (notification.error) return { error: notification.error };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "ppe_item.created",
+    targetTable: "ppe_items",
+    targetId: data.id,
+    summary: `Created PPE item "${input.itemName.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function updatePPEItem(id: string, input: PPEItemInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("ppe_items")
+    .update({
+      employee_id: input.employeeId,
+      item_name: input.itemName.trim(),
+      status: input.status,
+      fit_notes: input.fitNotes?.trim() || null,
+      issued_at: input.issuedAt || null,
+      replacement_due_at: input.replacementDueAt || null,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+
+  if (input.status !== "issued") {
+    const notification = await createAdminNotifications({
+      supabase,
+      companyId: appUser.company_id,
+      notificationType: "ppe_attention",
+      title: "PPE item needs attention",
+      body: `${input.itemName.trim()} is marked ${input.status.replace(/_/g, " ")}.`,
+      relatedTable: "ppe_items",
+      relatedId: id,
+      priority: "normal",
+    });
+    if (notification.error) return { error: notification.error };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "ppe_item.updated",
+    targetTable: "ppe_items",
+    targetId: id,
+    summary: `Updated PPE item "${input.itemName.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function markNotificationRead(notificationId: string) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("company_id", appUser.company_id)
+    .eq("user_id", appUser.id)
+    .eq("id", notificationId)
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+  return { data };
+}
+
+export async function markAllNotificationsRead() {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("company_id", appUser.company_id)
+    .eq("user_id", appUser.id)
+    .eq("is_read", false);
+
+  if (error) return { error: error.message };
+  return { data: true };
+}
+
+export async function createEstimate(input: EstimateInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const normalizedLineItems = normalizeEstimateLineItems(input.lineItems);
+  const subtotal = Number(
+    normalizedLineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2),
+  );
+
+  const { data: estimate, error: estimateError } = await supabase
+    .from("estimates")
+    .insert({
+      company_id: appUser.company_id,
+      customer_id: input.customerId,
+      job_id: input.jobId || null,
+      created_by_user_id: appUser.id,
+      title: input.title.trim(),
+      status: input.status,
+      notes: input.notes?.trim() || null,
+      subtotal,
+    })
+    .select("id")
+    .single();
+
+  if (estimateError || !estimate) return { error: estimateError?.message || "Failed to create estimate." };
+
+  if (normalizedLineItems.length > 0) {
+    const { error: lineItemsError } = await supabase.from("estimate_line_items").insert(
+      normalizedLineItems.map((item) => ({
+        company_id: appUser.company_id,
+        estimate_id: estimate.id,
+        ...item,
+      })),
+    );
+
+    if (lineItemsError) return { error: lineItemsError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "estimate.created",
+    targetTable: "estimates",
+    targetId: estimate.id,
+    summary: `Created estimate "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: estimate };
+}
+
+export async function updateEstimate(id: string, input: EstimateInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const normalizedLineItems = normalizeEstimateLineItems(input.lineItems);
+  const subtotal = Number(
+    normalizedLineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2),
+  );
+
+  const { data: estimate, error: estimateError } = await supabase
+    .from("estimates")
+    .update({
+      customer_id: input.customerId,
+      job_id: input.jobId || null,
+      title: input.title.trim(),
+      status: input.status,
+      notes: input.notes?.trim() || null,
+      subtotal,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (estimateError || !estimate) return { error: estimateError?.message || "Failed to update estimate." };
+
+  const { error: deleteError } = await supabase
+    .from("estimate_line_items")
+    .delete()
+    .eq("company_id", appUser.company_id)
+    .eq("estimate_id", id);
+
+  if (deleteError) return { error: deleteError.message };
+
+  if (normalizedLineItems.length > 0) {
+    const { error: lineItemsError } = await supabase.from("estimate_line_items").insert(
+      normalizedLineItems.map((item) => ({
+        company_id: appUser.company_id,
+        estimate_id: id,
+        ...item,
+      })),
+    );
+
+    if (lineItemsError) return { error: lineItemsError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "estimate.updated",
+    targetTable: "estimates",
+    targetId: id,
+    summary: `Updated estimate "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: estimate };
+}
+
+export async function createProposal(input: ProposalInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const normalizedSections = normalizeProposalSections(input.sections);
+
+  const { data: proposal, error: proposalError } = await supabase
+    .from("proposals")
+    .insert({
+      company_id: appUser.company_id,
+      customer_id: input.customerId,
+      job_id: input.jobId || null,
+      created_by_user_id: appUser.id,
+      title: input.title.trim(),
+      status: input.status,
+      notes: input.notes?.trim() || null,
+    })
+    .select("id")
+    .single();
+
+  if (proposalError || !proposal) return { error: proposalError?.message || "Failed to create proposal." };
+
+  if (normalizedSections.length > 0) {
+    const { error: sectionsError } = await supabase.from("proposal_sections").insert(
+      normalizedSections.map((section) => ({
+        company_id: appUser.company_id,
+        proposal_id: proposal.id,
+        ...section,
+      })),
+    );
+
+    if (sectionsError) return { error: sectionsError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "proposal.created",
+    targetTable: "proposals",
+    targetId: proposal.id,
+    summary: `Created proposal "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: proposal };
+}
+
+export async function updateProposal(id: string, input: ProposalInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const normalizedSections = normalizeProposalSections(input.sections);
+
+  const { data: proposal, error: proposalError } = await supabase
+    .from("proposals")
+    .update({
+      customer_id: input.customerId,
+      job_id: input.jobId || null,
+      title: input.title.trim(),
+      status: input.status,
+      notes: input.notes?.trim() || null,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (proposalError || !proposal) return { error: proposalError?.message || "Failed to update proposal." };
+
+  const { error: deleteError } = await supabase
+    .from("proposal_sections")
+    .delete()
+    .eq("company_id", appUser.company_id)
+    .eq("proposal_id", id);
+
+  if (deleteError) return { error: deleteError.message };
+
+  if (normalizedSections.length > 0) {
+    const { error: sectionsError } = await supabase.from("proposal_sections").insert(
+      normalizedSections.map((section) => ({
+        company_id: appUser.company_id,
+        proposal_id: id,
+        ...section,
+      })),
+    );
+
+    if (sectionsError) return { error: sectionsError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "proposal.updated",
+    targetTable: "proposals",
+    targetId: id,
+    summary: `Updated proposal "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: proposal };
+}
+
+export async function createApproval(input: ApprovalInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const payload = {
+    company_id: appUser.company_id,
+    approval_type: input.approvalType,
+    proposal_id: input.approvalType === "proposal" ? input.relatedId : null,
+    change_order_id: input.approvalType === "change_order" ? input.relatedId : null,
+    created_by_user_id: appUser.id,
+    status: "sent" as ApprovalStatus,
+  };
+
+  const { data: approval, error } = await supabase.from("approvals").insert(payload).select("id").single();
+  if (error || !approval) return { error: error?.message || "Failed to create approval." };
+
+  if (input.approvalType === "proposal") {
+    const { error: proposalError } = await supabase
+      .from("proposals")
+      .update({ status: "sent" })
+      .eq("company_id", appUser.company_id)
+      .eq("id", input.relatedId);
+
+    if (proposalError) return { error: proposalError.message };
+  } else {
+    const { error: changeOrderError } = await supabase
+      .from("change_orders")
+      .update({ status: "submitted" })
+      .eq("company_id", appUser.company_id)
+      .eq("id", input.relatedId);
+
+    if (changeOrderError) return { error: changeOrderError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "approval.sent",
+    targetTable: "approvals",
+    targetId: approval.id,
+    summary: `Sent ${input.approvalType.replace(/_/g, " ")} approval.`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: approval };
+}
+
+export async function updateApprovalStatus(input: { approvalId: string; status: ApprovalStatus }) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data: approval, error: approvalError } = await supabase
+    .from("approvals")
+    .select("id, approval_type, proposal_id, change_order_id")
+    .eq("company_id", appUser.company_id)
+    .eq("id", input.approvalId)
+    .single();
+
+  if (approvalError || !approval) return { error: approvalError?.message || "Approval not found." };
+
+  const payload = {
+    status: input.status,
+    viewed_at: input.status === "viewed" || input.status === "approved" || input.status === "rejected" ? new Date().toISOString() : null,
+    decided_at: input.status === "approved" || input.status === "rejected" ? new Date().toISOString() : null,
+  };
+
+  const { data, error } = await supabase
+    .from("approvals")
+    .update(payload)
+    .eq("company_id", appUser.company_id)
+    .eq("id", input.approvalId)
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+
+  if (approval.approval_type === "proposal" && approval.proposal_id) {
+    const proposalStatus =
+      input.status === "approved" ? "approved" : input.status === "rejected" ? "rejected" : "sent";
+    const { error: proposalError } = await supabase
+      .from("proposals")
+      .update({ status: proposalStatus })
+      .eq("company_id", appUser.company_id)
+      .eq("id", approval.proposal_id);
+
+    if (proposalError) return { error: proposalError.message };
+  }
+
+  if (approval.approval_type === "change_order" && approval.change_order_id) {
+    const changeOrderStatus =
+      input.status === "approved" ? "approved" : input.status === "rejected" ? "rejected" : "submitted";
+    const { error: changeOrderError } = await supabase
+      .from("change_orders")
+      .update({ status: changeOrderStatus })
+      .eq("company_id", appUser.company_id)
+      .eq("id", approval.change_order_id);
+
+    if (changeOrderError) return { error: changeOrderError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: `approval.${input.status}`,
+    targetTable: "approvals",
+    targetId: input.approvalId,
+    summary: `${input.status.charAt(0).toUpperCase()}${input.status.slice(1)} approval.`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function refreshJobCostSnapshot(jobId: string) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  if (!isOfficeAdminRole(appUser.role)) {
+    return { error: "Only owner and office admin users can refresh cost snapshots." };
+  }
+
+  const [{ data: job, error: jobError }, { data: timeEntries, error: timeError }, { count: dailyReportCount, error: reportError }, { data: changeOrders, error: changeOrderError }] = await Promise.all([
+    supabase
+      .from("jobs")
+      .select("id, contract_value")
+      .eq("company_id", appUser.company_id)
+      .eq("id", jobId)
+      .single(),
+    supabase
+      .from("time_entries")
+      .select("id, total_hours, employees(hourly_rate)")
+      .eq("company_id", appUser.company_id)
+      .eq("job_id", jobId)
+      .not("total_hours", "is", null),
+    supabase
+      .from("daily_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", appUser.company_id)
+      .eq("job_id", jobId),
+    supabase
+      .from("change_orders")
+      .select("total_amount, status")
+      .eq("company_id", appUser.company_id)
+      .eq("job_id", jobId)
+      .in("status", ["approved", "executed"]),
+  ]);
+
+  if (jobError || !job) return { error: jobError?.message || "Job not found." };
+  if (timeError) return { error: timeError.message };
+  if (reportError) return { error: reportError.message };
+  if (changeOrderError) return { error: changeOrderError.message };
+
+  const actualLaborHours = (timeEntries ?? []).reduce((sum, entry: { total_hours: number | null }) => sum + Number(entry.total_hours || 0), 0);
+  const actualLaborCost = (timeEntries ?? []).reduce((sum, entry: { total_hours: number | null; employees: { hourly_rate: number | null }[] | { hourly_rate: number | null } | null }) => {
+    const employee = Array.isArray(entry.employees) ? entry.employees[0] : entry.employees;
+    return sum + Number(entry.total_hours || 0) * Number(employee?.hourly_rate || 0);
+  }, 0);
+  const approvedChangeOrderTotal = (changeOrders ?? []).reduce((sum, entry: { total_amount: number | null }) => sum + Number(entry.total_amount || 0), 0);
+  const projectedRevenueTotal = Number(job.contract_value || 0) + approvedChangeOrderTotal;
+
+  const payload = {
+    company_id: appUser.company_id,
+    job_id: jobId,
+    snapshot_date: new Date().toISOString().slice(0, 10),
+    actual_labor_hours: Number(actualLaborHours.toFixed(2)),
+    actual_labor_cost: Number(actualLaborCost.toFixed(2)),
+    approved_change_order_total: Number(approvedChangeOrderTotal.toFixed(2)),
+    projected_revenue_total: Number(projectedRevenueTotal.toFixed(2)),
+    time_entry_count: (timeEntries ?? []).length,
+    daily_report_count: dailyReportCount ?? 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("job_cost_snapshots")
+    .upsert(payload, { onConflict: "company_id,job_id" })
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "job_cost_snapshot.refreshed",
+    targetTable: "job_cost_snapshots",
+    targetId: data.id,
+    summary: "Refreshed job cost snapshot.",
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
 }
 
 type EmployeeInput = {
@@ -559,6 +1771,23 @@ export async function createJob(input: JobInput) {
   });
   if (syncResult.error) return { error: syncResult.error };
 
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "job.created",
+    targetTable: "jobs",
+    targetId: data.id,
+    summary: `Created job "${input.jobNumber.trim()} · ${input.name.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
   return { data };
 }
 
@@ -597,5 +1826,115 @@ export async function updateJob(id: string, input: JobInput) {
   });
   if (syncResult.error) return { error: syncResult.error };
 
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "job.updated",
+    targetTable: "jobs",
+    targetId: id,
+    summary: `Updated job "${input.jobNumber.trim()} · ${input.name.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+type ToolboxTalkInput = {
+  topic: string;
+  talkDate: string;
+  foremanEmployeeId?: string;
+  notes?: string;
+  attendeeEmployeeIds: string[];
+};
+
+export async function createToolboxTalk(input: ToolboxTalkInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const payload = {
+    company_id: appUser.company_id,
+    topic: input.topic.trim(),
+    talk_date: input.talkDate,
+    foreman_employee_id: input.foremanEmployeeId || null,
+    notes: input.notes?.trim() || null,
+  };
+
+  const { data, error } = await supabase.from("toolbox_talks").insert(payload).select("id").single();
+  if (error) return { error: error.message };
+
+  const attendeeEmployeeIds = Array.from(new Set(input.attendeeEmployeeIds.filter(Boolean)));
+  if (attendeeEmployeeIds.length > 0) {
+    const { error: attendeeError } = await supabase.from("toolbox_talk_attendees").insert(
+      attendeeEmployeeIds.map((employeeId) => ({
+        company_id: appUser.company_id,
+        toolbox_talk_id: data.id,
+        employee_id: employeeId,
+      })),
+    );
+
+    if (attendeeError) return { error: attendeeError.message };
+  }
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "toolbox_talk.created",
+    targetTable: "toolbox_talks",
+    targetId: data.id,
+    summary: `Created toolbox talk "${input.topic.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function createToolboxTalkAttendee(input: { toolboxTalkId: string; employeeId: string }) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("toolbox_talk_attendees")
+    .insert({
+      company_id: appUser.company_id,
+      toolbox_talk_id: input.toolboxTalkId,
+      employee_id: input.employeeId,
+    })
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+  return { data };
+}
+
+export async function updateToolboxTalkAttendeeSignedAt(input: { attendeeId: string; signed: boolean }) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const { data, error } = await supabase
+    .from("toolbox_talk_attendees")
+    .update({ signed_at: input.signed ? new Date().toISOString() : null })
+    .eq("company_id", appUser.company_id)
+    .eq("id", input.attendeeId)
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
   return { data };
 }

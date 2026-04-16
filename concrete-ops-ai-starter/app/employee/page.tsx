@@ -74,6 +74,8 @@ export default async function EmployeeHomePage() {
           <h2 className="text-lg font-semibold">Quick Links</h2>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link href="/employee/time" className="rounded-xl border px-4 py-2 text-sm">Time</Link>
+            <Link href="/employee/policies" className="rounded-xl border px-4 py-2 text-sm">Policies</Link>
+            <Link href="/employee/ppe" className="rounded-xl border px-4 py-2 text-sm">PPE</Link>
             <Link href="/employee/uploads" className="rounded-xl border px-4 py-2 text-sm">Uploads</Link>
           </div>
         </div>

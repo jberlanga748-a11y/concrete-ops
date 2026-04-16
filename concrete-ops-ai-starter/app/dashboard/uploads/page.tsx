@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getDailyReportOptions, getDailyReportJobOptions, getJobFiles, type JobFileRow } from "@/lib/db/queries";
+import { getDailyReportOptions, getDailyReportJobOptions, getDocuments, type DocumentRow } from "@/lib/db/queries";
 
-function getJobLabel(jobs: JobFileRow["jobs"]) {
+function getJobLabel(jobs: DocumentRow["jobs"]) {
   if (!jobs) return "—";
   if (Array.isArray(jobs)) {
     const job = jobs[0];
@@ -11,13 +11,13 @@ function getJobLabel(jobs: JobFileRow["jobs"]) {
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
-function getReportDate(dailyReports: JobFileRow["daily_reports"]) {
+function getReportDate(dailyReports: DocumentRow["daily_reports"]) {
   if (!dailyReports) return "—";
   if (Array.isArray(dailyReports)) return dailyReports[0]?.report_date ?? "—";
   return dailyReports.report_date;
 }
 
-function getUploader(users: JobFileRow["users"], employees: JobFileRow["employees"]) {
+function getUploader(users: DocumentRow["users"], employees: DocumentRow["employees"]) {
   if (users) {
     if (Array.isArray(users)) return users[0]?.full_name ?? "—";
     return users.full_name;
@@ -31,6 +31,13 @@ function getUploader(users: JobFileRow["users"], employees: JobFileRow["employee
   return "—";
 }
 
+function formatFileSize(bytes: number | null | undefined) {
+  if (!bytes || bytes <= 0) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default async function UploadsPage({
   searchParams,
 }: {
@@ -42,7 +49,7 @@ export default async function UploadsPage({
   const selectedTag = params.tag?.trim() || "";
 
   const [{ data: files }, jobOptions, dailyReportOptions] = await Promise.all([
-    getJobFiles({
+    getDocuments({
       jobId: selectedJobId || undefined,
       dailyReportId: selectedDailyReportId || undefined,
       tag: selectedTag || undefined,
@@ -108,8 +115,10 @@ export default async function UploadsPage({
               <th className="px-4 py-3 text-left">Daily Report</th>
               <th className="px-4 py-3 text-left">Tag</th>
               <th className="px-4 py-3 text-left">File</th>
+              <th className="px-4 py-3 text-left">Size</th>
               <th className="px-4 py-3 text-left">Uploader</th>
               <th className="px-4 py-3 text-left">Note</th>
+              <th className="px-4 py-3 text-left">Open</th>
             </tr>
           </thead>
           <tbody>
@@ -120,13 +129,19 @@ export default async function UploadsPage({
                 <td className="px-4 py-4">{getReportDate(file.daily_reports)}</td>
                 <td className="px-4 py-4">{file.tag}</td>
                 <td className="px-4 py-4">{file.file_name}</td>
+                <td className="px-4 py-4">{formatFileSize(file.file_size_bytes)}</td>
                 <td className="px-4 py-4">{getUploader(file.users, file.employees)}</td>
                 <td className="max-w-md truncate px-4 py-4">{file.note || "—"}</td>
+                <td className="px-4 py-4">
+                  <Link href={`/api/documents/${file.id}`} className="underline">
+                    Open
+                  </Link>
+                </td>
               </tr>
             ))}
             {(files ?? []).length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={7}>
+                <td className="px-4 py-6 text-zinc-600" colSpan={9}>
                   No uploads found. Try changing filters or add a new upload.
                 </td>
               </tr>

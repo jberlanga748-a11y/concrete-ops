@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DocumentList } from "@/components/documents/DocumentList";
 import { JobAssignmentsCard } from "@/components/jobs/JobAssignmentsCard";
+import { JobCostSnapshotCard } from "@/components/jobs/JobCostSnapshotCard";
 import {
+  getDocumentsForEntity,
   getJobById,
   getJobAssignments,
+  getJobCostSnapshot,
   getEmployeeOptions,
   getTimeEntries,
 } from "@/lib/db/queries";
@@ -42,15 +46,22 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
     ? await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle()
     : { data: null };
   const isForeman = appUser?.role === "foreman";
+  const canViewCosts = appUser?.role === "owner" || appUser?.role === "office_admin";
 
   const { data: job } = await getJobById(jobId);
 
   if (!job) notFound();
 
-  const [{ data: timeEntries }, { data: assignments }, employeeOptions] = await Promise.all([
+  const costSnapshotPromise = canViewCosts
+    ? getJobCostSnapshot(jobId)
+    : Promise.resolve({ data: null });
+
+  const [{ data: timeEntries }, { data: assignments }, employeeOptions, { data: documents }, { data: costSnapshot }] = await Promise.all([
     getTimeEntries({ jobId }),
     getJobAssignments(jobId),
     getEmployeeOptions(),
+    getDocumentsForEntity("job", jobId),
+    costSnapshotPromise,
   ]);
 
   const allTimeEntries = timeEntries ?? [];
@@ -79,8 +90,18 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
             <p className="mt-2 text-zinc-600">{job.status}</p>
           </div>
           {!isForeman ? (
-            <Link href={`/dashboard/jobs/${job.id}/edit`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
-              Edit Job
+            <div className="flex gap-3">
+              <Link href={`/dashboard/incidents/new?jobId=${job.id}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+                Report Incident
+              </Link>
+              <Link href={`/dashboard/jobs/${job.id}/edit`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+                Edit Job
+              </Link>
+            </div>
+          ) : null}
+          {isForeman ? (
+            <Link href={`/dashboard/incidents/new?jobId=${job.id}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+              Report Incident
             </Link>
           ) : null}
         </div>
@@ -120,6 +141,8 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
         <p className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">{job.description || "—"}</p>
       </section>
 
+      {canViewCosts ? <JobCostSnapshotCard jobId={jobId} snapshot={costSnapshot} /> : null}
+
       <section className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -148,6 +171,21 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
           })}
           {activeAssignments.length === 0 ? <li className="text-zinc-600">No active crew assignments yet.</li> : null}
         </ul>
+      </section>
+
+      <section className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Documents</h2>
+            <p className="mt-1 text-sm text-zinc-600">Shared uploads linked to this job.</p>
+          </div>
+          <Link href={`/dashboard/uploads?jobId=${jobId}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+            View All Uploads
+          </Link>
+        </div>
+        <div className="mt-4">
+          <DocumentList documents={documents ?? []} emptyMessage="No documents linked to this job yet." />
+        </div>
       </section>
 
       {!isForeman ? <JobAssignmentsCard jobId={jobId} assignments={allAssignments} employeeOptions={employeeOptions} /> : null}
