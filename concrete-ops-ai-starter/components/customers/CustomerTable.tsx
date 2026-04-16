@@ -1,5 +1,17 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 import type { CustomerListRow } from "@/lib/db/queries";
+import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import {
+  DataTable,
+  TableActionLink,
+  TableBody,
+  TableCell,
+  TableEmptyRow,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+  TableShell,
+} from "@/components/ui/table";
 
 function formatDate(value: string) {
   const parsed = new Date(value);
@@ -7,41 +19,57 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
-export function CustomerTable({ customers }: { customers: CustomerListRow[] }) {
+export function CustomerTable({
+  customers,
+  toolbar,
+}: {
+  customers: CustomerListRow[];
+  toolbar?: ReactNode;
+}) {
   return (
-    <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-      <table className="w-full text-sm">
-        <thead className="bg-zinc-100">
+    <TableShell toolbar={toolbar}>
+      <DataTable>
+        <TableHead>
           <tr>
-            <th className="px-4 py-3 text-left">Customer</th>
-            <th className="px-4 py-3 text-left">Primary Contact</th>
-            <th className="px-4 py-3 text-left">Status</th>
-            <th className="px-4 py-3 text-left">Created</th>
+            <TableHeadCell>Customer</TableHeadCell>
+            <TableHeadCell>Primary Contact</TableHeadCell>
+            <TableHeadCell>Status</TableHeadCell>
+            <TableHeadCell>Created</TableHeadCell>
+            <TableHeadCell className="w-32">Actions</TableHeadCell>
           </tr>
-        </thead>
-        <tbody>
+        </TableHead>
+        <TableBody>
           {customers.map((customer) => (
-            <tr key={customer.id} className="border-t">
-              <td className="px-4 py-4">
-                <Link href={`/dashboard/customers/${customer.id}`} className="font-medium hover:underline">
-                  {customer.name}
-                </Link>
-                <p className="mt-1 text-xs text-zinc-500">{customer.email || customer.phone || "No contact info"}</p>
-              </td>
-              <td className="px-4 py-4">{customer.contact_name || "—"}</td>
-              <td className="px-4 py-4">{customer.status}</td>
-              <td className="px-4 py-4">{formatDate(customer.created_at)}</td>
-            </tr>
+            <TableRow key={customer.id}>
+              <TableCell>
+                <p className="font-semibold text-zinc-950">{customer.name}</p>
+                <p className="mt-1 text-sm text-zinc-600">{customer.email || customer.phone || "No contact info"}</p>
+              </TableCell>
+              <TableCell>{customer.contact_name || "—"}</TableCell>
+              <TableCell>
+                <StatusChip tone={customer.status === "active" ? "success" : "warning"}>
+                  {customer.status}
+                </StatusChip>
+              </TableCell>
+              <TableCell>{formatDate(customer.created_at)}</TableCell>
+              <TableCell>
+                <TableActionLink href={`/dashboard/customers/${customer.id}`} label="Edit" />
+              </TableCell>
+            </TableRow>
           ))}
           {customers.length === 0 ? (
-            <tr>
-              <td className="px-4 py-6 text-zinc-600" colSpan={4}>
-                No customers found yet.
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={5}>
+              <EmptyState
+                icon="briefcase"
+                title="No customers found"
+                description="Add a customer to start building jobs, estimates, proposals, and the rest of the office workflow around a real account."
+                actionHref="/dashboard/customers/new"
+                actionLabel="Add customer"
+              />
+            </TableEmptyRow>
           ) : null}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </DataTable>
+    </TableShell>
   );
 }

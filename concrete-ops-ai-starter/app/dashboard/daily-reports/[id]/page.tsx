@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { RecordDeliveryCard } from "@/components/exports/RecordDeliveryCard";
+import { EmptyState } from "@/components/ui/feedback";
 import { getDailyReportById, getDailyReportCrewEntries, getDocumentsForEntity, type DailyReportCrewEntryRow, type DailyReportDetailRow } from "@/lib/db/queries";
 
 function getJobLabel(jobs: DailyReportDetailRow["jobs"]) {
@@ -128,7 +129,17 @@ export default async function DailyReportDetailPage({
               </li>
             );
           })}
-          {(crewEntries ?? []).length === 0 ? <li className="text-zinc-600">No crew rows added to this report.</li> : null}
+          {(crewEntries ?? []).length === 0 ? (
+            <li>
+              <EmptyState
+                icon="users"
+                title="No crew rows on this report"
+                description="Crew rows are optional, but they help the office understand who was on site and how many hours were worked."
+                actionHref={`/dashboard/daily-reports/${report.id}/edit`}
+                actionLabel="Add crew rows"
+              />
+            </li>
+          ) : null}
         </ul>
       </section>
 

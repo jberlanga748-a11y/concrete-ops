@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { JobAssignmentsCard } from "@/components/jobs/JobAssignmentsCard";
 import { JobCostSnapshotCard } from "@/components/jobs/JobCostSnapshotCard";
+import { EmptyState } from "@/components/ui/feedback";
 import {
   getDocumentsForEntity,
   getEmployeeOptions,
@@ -246,8 +247,14 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
               );
             })}
             {recentTimeEntries.length === 0 ? (
-              <li className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-zinc-600">
-                No time activity has been logged for this job yet.
+              <li>
+                <EmptyState
+                  icon="clock"
+                  title="No time activity yet"
+                  description="Once the crew starts clocking time on this job, the latest movement will show up here for quick review."
+                  actionHref="/dashboard/time"
+                  actionLabel="Open time board"
+                />
               </li>
             ) : null}
           </ul>
@@ -281,8 +288,12 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
             );
           })}
           {activeAssignments.length === 0 ? (
-            <li className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 p-5 text-sm text-zinc-600">
-              No active crew assignments yet.
+            <li className="lg:col-span-2">
+              <EmptyState
+                icon="users"
+                title="No active crew assignments"
+                description="Add assignments below so the Job Hub, time board, and daily report crew rows all line up around the same team."
+              />
             </li>
           ) : null}
         </ul>
