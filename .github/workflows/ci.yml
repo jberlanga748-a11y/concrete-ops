@@ -11,6 +11,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: concrete-ops-ai-starter
 
     steps:
       - name: Checkout code
@@ -19,7 +22,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: concrete-ops-ai-starter/package-lock.json
+
+      - name: Guard npm lockfile as source of truth
+        run: |
+          set -e
+          if [ -f pnpm-lock.yaml ]; then
+            echo "pnpm-lock.yaml should not be committed in concrete-ops-ai-starter. Use npm and package-lock.json only."
+            exit 1
+          fi
 
       - name: Install dependencies
         run: |
