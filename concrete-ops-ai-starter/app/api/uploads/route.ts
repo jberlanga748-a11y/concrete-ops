@@ -74,5 +74,59 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 400 });
   }
 
+  const { data: jobFile, error: jobFileError } = await supabase
+    .from("job_files")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("storage_path", storagePath)
+    .single();
+
+  if (jobFileError || !jobFile) {
+    await supabase.storage.from(BUCKET).remove([storagePath]);
+    return NextResponse.json({ error: jobFileError?.message || "Upload metadata was not created." }, { status: 400 });
+  }
+
+  const { data: document, error: documentError } = await supabase
+    .from("documents")
+    .insert({
+      company_id: appUser.company_id,
+      source_job_file_id: jobFile.id,
+      job_id: jobId,
+      daily_report_id: dailyReportIdRaw || null,
+      uploaded_by_user_id: appUser.id,
+      uploaded_by_employee_id: employee?.id ?? null,
+      file_name: file.name,
+      file_type: file.type || "application/octet-stream",
+      storage_bucket: BUCKET,
+      storage_path: storagePath,
+      file_size_bytes: file.size,
+      tag,
+      note: note || null,
+    })
+    .select("id")
+    .single();
+
+  if (documentError || !document) {
+    await supabase.from("job_files").delete().eq("company_id", appUser.company_id).eq("id", jobFile.id);
+    await supabase.storage.from(BUCKET).remove([storagePath]);
+    return NextResponse.json({ error: documentError?.message || "Document record was not created." }, { status: 400 });
+  }
+
+  const documentLinks = [
+    { company_id: appUser.company_id, document_id: document.id, link_type: "job", linked_record_id: jobId },
+    ...(dailyReportIdRaw
+      ? [{ company_id: appUser.company_id, document_id: document.id, link_type: "daily_report", linked_record_id: dailyReportIdRaw }]
+      : []),
+  ];
+
+  const { error: linkError } = await supabase.from("document_links").insert(documentLinks);
+
+  if (linkError) {
+    await supabase.from("documents").delete().eq("company_id", appUser.company_id).eq("id", document.id);
+    await supabase.from("job_files").delete().eq("company_id", appUser.company_id).eq("id", jobFile.id);
+    await supabase.storage.from(BUCKET).remove([storagePath]);
+    return NextResponse.json({ error: linkError.message }, { status: 400 });
+  }
+
   return NextResponse.json({ ok: true });
 }

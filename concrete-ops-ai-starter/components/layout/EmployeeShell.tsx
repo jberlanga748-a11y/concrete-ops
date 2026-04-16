@@ -7,6 +7,8 @@ import { SignOutButton } from "@/components/auth/SignOutButton";
 const nav = [
   { href: "/employee", label: "Home" },
   { href: "/employee/time", label: "Time" },
+  { href: "/employee/policies", label: "Policies" },
+  { href: "/employee/ppe", label: "PPE" },
   { href: "/employee/uploads", label: "Uploads" },
 ];
 
@@ -61,7 +63,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-white p-3 shadow-[0_-10px_24px_rgba(0,0,0,0.08)] lg:hidden">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {nav.map((item) => {
             const active = isActive(pathname, item.href);
             return (

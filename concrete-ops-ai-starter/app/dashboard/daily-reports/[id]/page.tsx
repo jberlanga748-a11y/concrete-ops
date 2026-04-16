@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDailyReportById, getDailyReportCrewEntries, type DailyReportCrewEntryRow, type DailyReportDetailRow } from "@/lib/db/queries";
+import { DocumentList } from "@/components/documents/DocumentList";
+import { RecordDeliveryCard } from "@/components/exports/RecordDeliveryCard";
+import { getDailyReportById, getDailyReportCrewEntries, getDocumentsForEntity, type DailyReportCrewEntryRow, type DailyReportDetailRow } from "@/lib/db/queries";
 
 function getJobLabel(jobs: DailyReportDetailRow["jobs"]) {
   if (!jobs) return "—";
@@ -37,9 +39,10 @@ export default async function DailyReportDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ data: report }, { data: crewEntries }] = await Promise.all([
+  const [{ data: report }, { data: crewEntries }, { data: documents }] = await Promise.all([
     getDailyReportById(id),
     getDailyReportCrewEntries(id),
+    getDocumentsForEntity("daily_report", id),
   ]);
 
   if (!report) notFound();
@@ -96,6 +99,15 @@ export default async function DailyReportDetailPage({
         </div>
       </section>
 
+      <RecordDeliveryCard
+        title="PDF + Email"
+        description="Open a field-ready daily report PDF or send/resend it by email."
+        recordType="daily_report"
+        recordId={report.id}
+        pdfUrl={`/api/daily-reports/${report.id}/pdf`}
+        defaultSubject={`Daily report ${report.report_date}`}
+      />
+
       <section className="rounded-2xl border bg-white p-4 shadow-sm">
         <h2 className="font-semibold">Crew Entries</h2>
         <ul className="mt-4 space-y-3 text-sm">
@@ -118,6 +130,21 @@ export default async function DailyReportDetailPage({
           })}
           {(crewEntries ?? []).length === 0 ? <li className="text-zinc-600">No crew rows added to this report.</li> : null}
         </ul>
+      </section>
+
+      <section className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Documents</h2>
+            <p className="mt-1 text-sm text-zinc-600">Photos and files linked to this report.</p>
+          </div>
+          <Link href={`/dashboard/uploads?dailyReportId=${report.id}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+            View Uploads
+          </Link>
+        </div>
+        <div className="mt-4">
+          <DocumentList documents={documents ?? []} emptyMessage="No documents linked to this daily report yet." />
+        </div>
       </section>
     </div>
   );

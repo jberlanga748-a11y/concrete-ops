@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ApprovalsCard } from "@/components/approvals/ApprovalsCard";
+import { DocumentList } from "@/components/documents/DocumentList";
+import { RecordDeliveryCard } from "@/components/exports/RecordDeliveryCard";
 import {
   getChangeOrderById,
-  getChangeOrderFiles,
+  getApprovalsForEntity,
+  getDocumentsForEntity,
   getChangeOrderLineItems,
   type ChangeOrderDetailRow,
-  type ChangeOrderFileRow,
 } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,12 +30,6 @@ function getReportLabel(reports: ChangeOrderDetailRow["daily_reports"]) {
   return `${reports.report_date} (${reports.id})`;
 }
 
-function getProofFile(file: ChangeOrderFileRow["job_files"]) {
-  if (!file) return null;
-  if (Array.isArray(file)) return file[0] ?? null;
-  return file;
-}
-
 export default async function ChangeOrderDetailPage({
   params,
 }: {
@@ -48,11 +45,12 @@ export default async function ChangeOrderDetailPage({
     : { data: null };
   const isForeman = appUser?.role === "foreman";
 
-  const [{ data: changeOrder }, { data: lineItems }, { data: proofFiles }] =
+  const [{ data: changeOrder }, { data: lineItems }, { data: documents }, { data: approvals }] =
     await Promise.all([
       getChangeOrderById(id),
       getChangeOrderLineItems(id),
-      getChangeOrderFiles(id),
+      getDocumentsForEntity("change_order", id),
+      getApprovalsForEntity({ approvalType: "change_order", relatedId: id }),
     ]);
 
   if (!changeOrder) notFound();
@@ -107,27 +105,21 @@ export default async function ChangeOrderDetailPage({
 
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">Linked Field Proof</h2>
-        <ul className="mt-4 space-y-3 text-sm">
-          {(proofFiles ?? []).map((proof) => {
-            const file = getProofFile(proof.job_files);
-            if (!file) return null;
-
-            return (
-              <li key={proof.id} className="rounded-2xl border p-3">
-                <p className="font-medium">{file.file_name}</p>
-                <p className="text-zinc-600">Tag: {file.tag}</p>
-                <p className="text-zinc-600">Note: {file.note || "—"}</p>
-                <p className="text-zinc-500">Uploaded: {file.created_at}</p>
-                <p className="text-zinc-500">Storage Path: {file.storage_path}</p>
-              </li>
-            );
-          })}
-
-          {(proofFiles ?? []).length === 0 ? (
-            <li className="text-zinc-600">No linked field proof files.</li>
-          ) : null}
-        </ul>
+        <div className="mt-4">
+          <DocumentList documents={documents ?? []} emptyMessage="No linked field proof files." />
+        </div>
       </div>
+
+      <RecordDeliveryCard
+        title="PDF + Email"
+        description="Export a clean change order PDF or send/resend it by email."
+        recordType="change_order"
+        recordId={changeOrder.id}
+        pdfUrl={`/api/change-orders/${changeOrder.id}/pdf`}
+        defaultSubject={`${changeOrder.title} change order`}
+      />
+
+      <ApprovalsCard approvalType="change_order" relatedId={changeOrder.id} approvals={approvals ?? []} />
 
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">Line Items</h2>

@@ -1,4 +1,5 @@
 import type {
+  Approval,
   AssignmentRole,
   ChangeOrder,
   ChangeOrderFile,
@@ -6,12 +7,28 @@ import type {
   Customer,
   DailyReport,
   DailyReportCrewEntry,
+  Document,
+  DocumentLink,
+  DocumentLinkType,
   Employee,
+  Estimate,
+  EstimateLineItem,
+  Incident,
+  JobCostSnapshot,
+  AuditLog,
+  Notification,
+  PPEItem,
+  Policy,
+  PolicyAcknowledgment,
+  Proposal,
+  ProposalSection,
   JobAssignment,
   Job,
   JobFile,
   JobPhase,
   TimeEntry,
+  ToolboxTalk,
+  ToolboxTalkAttendee,
   User,
 } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -69,6 +86,38 @@ export type JobAssignmentOptionRow = {
   employeeLabel: string;
 };
 
+export type ToolboxTalkListRow = Pick<
+  ToolboxTalk,
+  "id" | "topic" | "talk_date" | "foreman_employee_id" | "created_at"
+> & {
+  foreman_employee:
+    | Pick<Employee, "full_name">[]
+    | Pick<Employee, "full_name">
+    | null;
+};
+
+export type ToolboxTalkDetailRow = ToolboxTalk & {
+  foreman_employee:
+    | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name">[]
+    | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name">
+    | null;
+};
+
+export type ToolboxTalkAttendeeRow = Pick<
+  ToolboxTalkAttendee,
+  "id" | "toolbox_talk_id" | "employee_id" | "signed_at" | "created_at"
+> & {
+  employees:
+    | Pick<Employee, "full_name" | "job_title" | "crew_name">[]
+    | Pick<Employee, "full_name" | "job_title" | "crew_name">
+    | null;
+};
+
+export type ToolboxTalkAttendeeOptionRow = {
+  employeeId: string;
+  employeeLabel: string;
+};
+
 export type JobFileRow = Pick<
   JobFile,
   "id" | "job_id" | "daily_report_id" | "file_name" | "file_type" | "storage_path" | "tag" | "note" | "created_at"
@@ -78,6 +127,21 @@ export type JobFileRow = Pick<
   users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
   employees: Pick<Employee, "full_name">[] | Pick<Employee, "full_name"> | null;
 };
+
+export type DocumentLinkRow = Pick<DocumentLink, "id" | "link_type" | "linked_record_id">;
+
+export type DocumentRow = Pick<
+  Document,
+  "id" | "source_job_file_id" | "job_id" | "daily_report_id" | "file_name" | "file_type" | "storage_bucket" | "storage_path" | "file_size_bytes" | "tag" | "note" | "created_at"
+> & {
+  jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
+  daily_reports: Pick<DailyReport, "report_date">[] | Pick<DailyReport, "report_date"> | null;
+  users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+  employees: Pick<Employee, "full_name">[] | Pick<Employee, "full_name"> | null;
+  document_links: DocumentLinkRow[] | null;
+};
+
+export type DocumentDetailRow = DocumentRow & Pick<Document, "company_id">;
 
 export type ChangeOrderListRow = Pick<
   ChangeOrder,
@@ -98,6 +162,106 @@ export type ChangeOrderLineItemRow = ChangeOrderLineItem;
 export type ChangeOrderFileRow = ChangeOrderFile & {
   job_files: Pick<JobFile, "id" | "file_name" | "tag" | "note" | "storage_path" | "created_at">[] | Pick<JobFile, "id" | "file_name" | "tag" | "note" | "storage_path" | "created_at"> | null;
 };
+
+export type IncidentListRow = Pick<
+  Incident,
+  "id" | "job_id" | "employee_id" | "incident_type" | "incident_date" | "status" | "created_at"
+> & {
+  jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
+  incident_employee: Pick<Employee, "full_name">[] | Pick<Employee, "full_name"> | null;
+};
+
+export type IncidentDetailRow = Incident & {
+  jobs: Pick<Job, "id" | "job_number" | "name">[] | Pick<Job, "id" | "job_number" | "name"> | null;
+  incident_employee: Pick<Employee, "id" | "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name"> | null;
+  reported_by_user: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+  reported_by_employee: Pick<Employee, "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "full_name" | "job_title" | "crew_name"> | null;
+};
+
+export type PolicyListRow = Pick<
+  Policy,
+  "id" | "title" | "category" | "version_label" | "is_active" | "created_at"
+>;
+
+export type PolicyDetailRow = Policy;
+
+export type PolicyAcknowledgmentRow = Pick<
+  PolicyAcknowledgment,
+  "id" | "policy_id" | "employee_id" | "user_id" | "status" | "acknowledged_at" | "created_at"
+> & {
+  employees: Pick<Employee, "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "full_name" | "job_title" | "crew_name"> | null;
+  users: Pick<User, "full_name" | "email" | "role">[] | Pick<User, "full_name" | "email" | "role"> | null;
+};
+
+export type PPEItemRow = Pick<
+  PPEItem,
+  "id" | "employee_id" | "item_name" | "status" | "fit_notes" | "issued_at" | "replacement_due_at" | "created_at"
+> & {
+  employees: Pick<Employee, "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "full_name" | "job_title" | "crew_name"> | null;
+};
+
+export type PPEDetailRow = PPEItem & {
+  employees: Pick<Employee, "id" | "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "id" | "full_name" | "job_title" | "crew_name"> | null;
+};
+
+export type NotificationRow = Pick<
+  Notification,
+  "id" | "notification_type" | "title" | "body" | "related_table" | "related_id" | "priority" | "is_read" | "created_at"
+>;
+
+export type AuditLogRow = Pick<
+  AuditLog,
+  "id" | "actor_user_id" | "actor_employee_id" | "action_type" | "target_table" | "target_id" | "summary" | "created_at"
+> & {
+  actor_user: Pick<User, "full_name" | "email" | "role">[] | Pick<User, "full_name" | "email" | "role"> | null;
+  actor_employee: Pick<Employee, "full_name" | "job_title" | "crew_name">[] | Pick<Employee, "full_name" | "job_title" | "crew_name"> | null;
+};
+
+export type EstimateListRow = Pick<
+  Estimate,
+  "id" | "customer_id" | "job_id" | "title" | "status" | "subtotal" | "created_at"
+> & {
+  customers: Pick<Customer, "name">[] | Pick<Customer, "name"> | null;
+  jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
+};
+
+export type EstimateDetailRow = Estimate & {
+  customers: Pick<Customer, "id" | "name" | "contact_name" | "email" | "phone">[] | Pick<Customer, "id" | "name" | "contact_name" | "email" | "phone"> | null;
+  jobs: Pick<Job, "id" | "job_number" | "name">[] | Pick<Job, "id" | "job_number" | "name"> | null;
+  users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+};
+
+export type EstimateLineItemRow = EstimateLineItem;
+
+export type ProposalListRow = Pick<
+  Proposal,
+  "id" | "customer_id" | "job_id" | "title" | "status" | "created_at"
+> & {
+  customers: Pick<Customer, "name">[] | Pick<Customer, "name"> | null;
+  jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null;
+};
+
+export type ProposalDetailRow = Proposal & {
+  customers: Pick<Customer, "id" | "name" | "contact_name" | "email" | "phone">[] | Pick<Customer, "id" | "name" | "contact_name" | "email" | "phone"> | null;
+  jobs: Pick<Job, "id" | "job_number" | "name">[] | Pick<Job, "id" | "job_number" | "name"> | null;
+  users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+};
+
+export type ProposalSectionRow = ProposalSection;
+
+export type ApprovalRow = Pick<
+  Approval,
+  "id" | "approval_type" | "proposal_id" | "change_order_id" | "status" | "sent_at" | "viewed_at" | "decided_at" | "created_at"
+> & {
+  proposals: Pick<Proposal, "id" | "title" | "status">[] | Pick<Proposal, "id" | "title" | "status"> | null;
+  change_orders: Pick<ChangeOrder, "id" | "title" | "status">[] | Pick<ChangeOrder, "id" | "title" | "status"> | null;
+  users: Pick<User, "full_name">[] | Pick<User, "full_name"> | null;
+};
+
+export type JobCostSnapshotRow = Pick<
+  JobCostSnapshot,
+  "id" | "job_id" | "snapshot_date" | "actual_labor_hours" | "actual_labor_cost" | "approved_change_order_total" | "projected_revenue_total" | "time_entry_count" | "daily_report_count" | "updated_at"
+>;
 
 export type EmployeeListRow = Pick<
   Employee,
@@ -129,6 +293,71 @@ export async function getJobs() {
     ...result,
     data: (result.data ?? []) as JobListRow[],
   };
+}
+
+export async function getToolboxTalks(filters?: { date?: string; foremanEmployeeId?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("toolbox_talks")
+    .select("id, topic, talk_date, foreman_employee_id, created_at, foreman_employee:employees!toolbox_talks_foreman_fk(full_name)")
+    .order("talk_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (filters?.date) query = query.eq("talk_date", filters.date);
+  if (filters?.foremanEmployeeId) query = query.eq("foreman_employee_id", filters.foremanEmployeeId);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as ToolboxTalkListRow[] };
+}
+
+export async function getToolboxTalkById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("toolbox_talks")
+    .select("id, company_id, topic, talk_date, foreman_employee_id, notes, created_at, foreman_employee:employees!toolbox_talks_foreman_fk(id, full_name, job_title, crew_name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as ToolboxTalkDetailRow | null };
+}
+
+export async function getToolboxTalkAttendees(toolboxTalkId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("toolbox_talk_attendees")
+    .select("id, toolbox_talk_id, employee_id, signed_at, created_at, employees(full_name, job_title, crew_name)")
+    .eq("toolbox_talk_id", toolboxTalkId)
+    .order("created_at", { ascending: true });
+
+  return { ...result, data: (result.data ?? []) as ToolboxTalkAttendeeRow[] };
+}
+
+export async function getToolboxTalkAttendeeOptions() {
+  const [employeeOptions, assignmentOptions] = await Promise.all([
+    getEmployeeOptions(),
+    getActiveJobAssignmentOptions(),
+  ]);
+
+  const options = new Map<string, ToolboxTalkAttendeeOptionRow>();
+
+  for (const employee of employeeOptions) {
+    options.set(employee.id, {
+      employeeId: employee.id,
+      employeeLabel: employee.label,
+    });
+  }
+
+  for (const assignment of assignmentOptions) {
+    if (!options.has(assignment.employeeId)) {
+      options.set(assignment.employeeId, {
+        employeeId: assignment.employeeId,
+        employeeLabel: assignment.employeeLabel,
+      });
+    }
+  }
+
+  return Array.from(options.values()).sort((a, b) => a.employeeLabel.localeCompare(b.employeeLabel));
 }
 
 export async function getJobById(id: string) {
@@ -384,6 +613,405 @@ export async function getJobFiles(filters?: { jobId?: string; dailyReportId?: st
 
   const result = await query;
   return { ...result, data: (result.data ?? []) as JobFileRow[] };
+}
+
+type DocumentFilters = {
+  jobId?: string;
+  dailyReportId?: string;
+  changeOrderId?: string;
+  incidentId?: string;
+  tag?: string;
+};
+
+const DOCUMENT_SELECT =
+  "id, company_id, source_job_file_id, job_id, daily_report_id, file_name, file_type, storage_bucket, storage_path, file_size_bytes, tag, note, created_at, jobs(job_number, name), daily_reports(report_date), users(full_name), employees(full_name), document_links(id, link_type, linked_record_id)";
+
+export async function getDocuments(filters?: DocumentFilters) {
+  const supabase = await createClient();
+
+  let linkedDocumentIds: string[] | null = null;
+
+  if (filters?.changeOrderId || filters?.incidentId) {
+    const linkType: DocumentLinkType = filters.changeOrderId ? "change_order" : "incident";
+    const linkedRecordId = filters.changeOrderId || filters.incidentId || "";
+    const { data: links, error } = await supabase
+      .from("document_links")
+      .select("document_id")
+      .eq("link_type", linkType)
+      .eq("linked_record_id", linkedRecordId);
+
+    if (error) {
+      return { data: [] as DocumentRow[], error };
+    }
+
+    linkedDocumentIds = Array.from(new Set((links ?? []).map((link: { document_id: string }) => link.document_id)));
+    if (linkedDocumentIds.length === 0) {
+      return { data: [] as DocumentRow[], error: null };
+    }
+  }
+
+  let query = supabase.from("documents").select(DOCUMENT_SELECT).order("created_at", { ascending: false });
+
+  if (filters?.jobId) query = query.eq("job_id", filters.jobId);
+  if (filters?.dailyReportId) query = query.eq("daily_report_id", filters.dailyReportId);
+  if (filters?.tag) query = query.eq("tag", filters.tag);
+  if (linkedDocumentIds) query = query.in("id", linkedDocumentIds);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as DocumentRow[] };
+}
+
+export async function getDocumentById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase.from("documents").select(DOCUMENT_SELECT).eq("id", id).maybeSingle();
+  return { ...result, data: (result.data ?? null) as DocumentDetailRow | null };
+}
+
+export async function getDocumentsForEntity(entityType: DocumentLinkType, entityId: string) {
+  if (entityType === "job") return getDocuments({ jobId: entityId });
+  if (entityType === "daily_report") return getDocuments({ dailyReportId: entityId });
+  if (entityType === "change_order") return getDocuments({ changeOrderId: entityId });
+  return getDocuments({ incidentId: entityId });
+}
+
+export async function getIncidents(filters?: { jobId?: string; status?: string; incidentType?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("incidents")
+    .select("id, job_id, employee_id, incident_type, incident_date, status, created_at, jobs(job_number, name), incident_employee:employees!incidents_employee_fk(full_name)")
+    .order("incident_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (filters?.jobId) query = query.eq("job_id", filters.jobId);
+  if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.incidentType) query = query.eq("incident_type", filters.incidentType);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as IncidentListRow[] };
+}
+
+export async function getIncidentById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("incidents")
+    .select(
+      "id, company_id, job_id, employee_id, reported_by_user_id, reported_by_employee_id, incident_type, incident_date, description, corrective_action, status, created_at, updated_at, jobs(id, job_number, name), incident_employee:employees!incidents_employee_fk(id, full_name, job_title, crew_name), reported_by_user:users(full_name), reported_by_employee:employees!incidents_reported_employee_fk(full_name, job_title, crew_name)",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as IncidentDetailRow | null };
+}
+
+export async function getIncidentTypeOptions() {
+  return [
+    { value: "near_miss", label: "Near Miss" },
+    { value: "injury", label: "Injury" },
+    { value: "property_damage", label: "Property Damage" },
+    { value: "observation", label: "Observation" },
+  ] as const;
+}
+
+export async function getIncidentStatusOptions() {
+  return [
+    { value: "open", label: "Open" },
+    { value: "under_review", label: "Under Review" },
+    { value: "closed", label: "Closed" },
+  ] as const;
+}
+
+export async function getPolicies(filters?: { isActive?: boolean }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("policies")
+    .select("id, title, category, version_label, is_active, created_at")
+    .order("is_active", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (typeof filters?.isActive === "boolean") {
+    query = query.eq("is_active", filters.isActive);
+  }
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as PolicyListRow[] };
+}
+
+export async function getPolicyById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("policies")
+    .select("id, company_id, title, category, version_label, content, is_active, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as PolicyDetailRow | null };
+}
+
+export async function getPolicyAcknowledgments(policyId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("policy_acknowledgments")
+    .select("id, policy_id, employee_id, user_id, status, acknowledged_at, created_at, employees(full_name, job_title, crew_name), users(full_name, email, role)")
+    .eq("policy_id", policyId)
+    .order("status", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return { ...result, data: (result.data ?? []) as PolicyAcknowledgmentRow[] };
+}
+
+export async function getMyPolicyAcknowledgments() {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("policy_acknowledgments")
+    .select("id, policy_id, employee_id, user_id, status, acknowledged_at, created_at, employees(full_name, job_title, crew_name), users(full_name, email, role), policies(id, title, category, version_label, content, is_active, created_at, updated_at)")
+    .order("created_at", { ascending: false });
+
+  return {
+    ...result,
+    data: (result.data ?? []) as (PolicyAcknowledgmentRow & {
+      policies: PolicyDetailRow[] | PolicyDetailRow | null;
+    })[],
+  };
+}
+
+export async function getPPEItems(filters?: { employeeId?: string; status?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("ppe_items")
+    .select("id, employee_id, item_name, status, fit_notes, issued_at, replacement_due_at, created_at, employees(full_name, job_title, crew_name)")
+    .order("replacement_due_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  if (filters?.employeeId) query = query.eq("employee_id", filters.employeeId);
+  if (filters?.status) query = query.eq("status", filters.status);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as PPEItemRow[] };
+}
+
+export async function getPPEItemById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("ppe_items")
+    .select("id, company_id, employee_id, item_name, status, fit_notes, issued_at, replacement_due_at, created_at, updated_at, employees(id, full_name, job_title, crew_name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as PPEDetailRow | null };
+}
+
+export async function getMyPPEItems() {
+  return getPPEItems();
+}
+
+export async function getPPEStatusOptions() {
+  return [
+    { value: "issued", label: "Issued" },
+    { value: "needs_replacement", label: "Needs Replacement" },
+    { value: "pending_fit_check", label: "Pending Fit Check" },
+  ] as const;
+}
+
+export async function getNotifications(filters?: { unreadOnly?: boolean }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("notifications")
+    .select("id, notification_type, title, body, related_table, related_id, priority, is_read, created_at")
+    .order("is_read", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (filters?.unreadOnly) {
+    query = query.eq("is_read", false);
+  }
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as NotificationRow[] };
+}
+
+export async function getAuditLogs(filters?: { actionType?: string; targetTable?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("audit_logs")
+    .select("id, actor_user_id, actor_employee_id, action_type, target_table, target_id, summary, created_at, actor_user:users(full_name, email, role), actor_employee:employees(full_name, job_title, crew_name)")
+    .order("created_at", { ascending: false });
+
+  if (filters?.actionType) query = query.eq("action_type", filters.actionType);
+  if (filters?.targetTable) query = query.eq("target_table", filters.targetTable);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as AuditLogRow[] };
+}
+
+export async function getEstimates(filters?: { customerId?: string; status?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("estimates")
+    .select("id, customer_id, job_id, title, status, subtotal, created_at, customers(name), jobs(job_number, name)")
+    .order("created_at", { ascending: false });
+
+  if (filters?.customerId) query = query.eq("customer_id", filters.customerId);
+  if (filters?.status) query = query.eq("status", filters.status);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as EstimateListRow[] };
+}
+
+export async function getEstimateById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("estimates")
+    .select("id, company_id, customer_id, job_id, created_by_user_id, title, status, notes, subtotal, created_at, updated_at, customers(id, name, contact_name, email, phone), jobs(id, job_number, name), users(full_name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as EstimateDetailRow | null };
+}
+
+export async function getEstimateLineItems(estimateId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("estimate_line_items")
+    .select("id, company_id, estimate_id, item_type, description, quantity, unit, unit_cost, line_total, created_at, updated_at")
+    .eq("estimate_id", estimateId)
+    .order("created_at", { ascending: true });
+
+  return { ...result, data: (result.data ?? []) as EstimateLineItemRow[] };
+}
+
+export async function getEstimateStatusOptions() {
+  return [
+    { value: "draft", label: "Draft" },
+    { value: "sent", label: "Sent" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+  ] as const;
+}
+
+export async function getEstimateLineItemTypeOptions() {
+  return [
+    { value: "labor", label: "Labor" },
+    { value: "material", label: "Material" },
+    { value: "equipment", label: "Equipment" },
+    { value: "other", label: "Other" },
+  ] as const;
+}
+
+export async function getProposals(filters?: { customerId?: string; status?: string }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("proposals")
+    .select("id, customer_id, job_id, title, status, created_at, customers(name), jobs(job_number, name)")
+    .order("created_at", { ascending: false });
+
+  if (filters?.customerId) query = query.eq("customer_id", filters.customerId);
+  if (filters?.status) query = query.eq("status", filters.status);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as ProposalListRow[] };
+}
+
+export async function getProposalById(id: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("proposals")
+    .select("id, company_id, customer_id, job_id, created_by_user_id, title, status, notes, created_at, updated_at, customers(id, name, contact_name, email, phone), jobs(id, job_number, name), users(full_name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as ProposalDetailRow | null };
+}
+
+export async function getProposalSections(proposalId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("proposal_sections")
+    .select("id, company_id, proposal_id, section_type, heading, content, sort_order, created_at, updated_at")
+    .eq("proposal_id", proposalId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return { ...result, data: (result.data ?? []) as ProposalSectionRow[] };
+}
+
+export async function getProposalStatusOptions() {
+  return [
+    { value: "draft", label: "Draft" },
+    { value: "sent", label: "Sent" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+  ] as const;
+}
+
+export async function getProposalSectionTypeOptions() {
+  return [
+    { value: "scope", label: "Scope" },
+    { value: "exclusion", label: "Exclusion" },
+    { value: "term", label: "Term" },
+  ] as const;
+}
+
+export async function getApprovals(filters?: { approvalType?: "proposal" | "change_order"; status?: "sent" | "viewed" | "approved" | "rejected" }) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("approvals")
+    .select("id, approval_type, proposal_id, change_order_id, status, sent_at, viewed_at, decided_at, created_at, proposals(id, title, status), change_orders(id, title, status), users(full_name)")
+    .order("created_at", { ascending: false });
+
+  if (filters?.approvalType) query = query.eq("approval_type", filters.approvalType);
+  if (filters?.status) query = query.eq("status", filters.status);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as ApprovalRow[] };
+}
+
+export async function getJobCostSnapshot(jobId: string) {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("job_cost_snapshots")
+    .select("id, job_id, snapshot_date, actual_labor_hours, actual_labor_cost, approved_change_order_total, projected_revenue_total, time_entry_count, daily_report_count, updated_at")
+    .eq("job_id", jobId)
+    .maybeSingle();
+
+  return { ...result, data: (result.data ?? null) as JobCostSnapshotRow | null };
+}
+
+export async function getApprovalsForEntity(input: { approvalType: "proposal" | "change_order"; relatedId: string }) {
+  const supabase = await createClient();
+  let query = supabase
+    .from("approvals")
+    .select("id, approval_type, proposal_id, change_order_id, status, sent_at, viewed_at, decided_at, created_at, proposals(id, title, status), change_orders(id, title, status), users(full_name)")
+    .order("created_at", { ascending: false });
+
+  query = input.approvalType === "proposal"
+    ? query.eq("proposal_id", input.relatedId)
+    : query.eq("change_order_id", input.relatedId);
+
+  const result = await query;
+  return { ...result, data: (result.data ?? []) as ApprovalRow[] };
+}
+
+export async function getApprovalTypeOptions() {
+  return [
+    { value: "proposal", label: "Proposal" },
+    { value: "change_order", label: "Change Order" },
+  ] as const;
+}
+
+export async function getApprovalStatusOptions() {
+  return [
+    { value: "sent", label: "Sent" },
+    { value: "viewed", label: "Viewed" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+  ] as const;
 }
 
 export async function getChangeOrders(filters?: { jobId?: string; status?: string }) {

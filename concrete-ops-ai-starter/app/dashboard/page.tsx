@@ -1,7 +1,7 @@
 // trigger redeploy marker 2
 // trigger redeploy marker
 import Link from "next/link";
-import { getDailyReports, getJobFiles, getTimeEntries, type DailyReportListRow, type JobFileRow, type JobTimeEntryRow } from "@/lib/db/queries";
+import { getDailyReports, getJobFiles, getNotifications, getTimeEntries, type DailyReportListRow, type JobFileRow, type JobTimeEntryRow } from "@/lib/db/queries";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -53,15 +53,17 @@ function formatDateTime(value: string | null | undefined) {
 }
 
 export default async function DashboardPage() {
-  const [{ data: timeEntries }, { data: reports }, { data: uploads }] = await Promise.all([
+  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
     getTimeEntries(),
     getDailyReports(),
     getJobFiles(),
+    getNotifications({ unreadOnly: true }),
   ]);
 
   const allTimeEntries = timeEntries ?? [];
   const allReports = reports ?? [];
   const allUploads = uploads ?? [];
+  const allUnreadNotifications = unreadNotifications ?? [];
 
   const recentTimeEntries = allTimeEntries.slice(0, 6);
   const recentReports = allReports.slice(0, 6);
@@ -98,6 +100,11 @@ export default async function DashboardPage() {
           <p className="mt-2 text-2xl font-semibold text-zinc-900">Review Queue</p>
           <p className="mt-1 text-xs text-zinc-500">Go to change orders to review status.</p>
         </div>
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-zinc-500">Notifications</p>
+          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allUnreadNotifications.length}</p>
+          <p className="mt-1 text-xs text-zinc-500">Unread office updates.</p>
+        </div>
       </section>
 
       <section className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
@@ -109,6 +116,7 @@ export default async function DashboardPage() {
           <Link href="/dashboard/change-orders/new" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Start Change Order</Link>
           <Link href="/dashboard/jobs" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">View Jobs</Link>
           <Link href="/dashboard/change-orders" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Review Change Orders</Link>
+          <Link href="/dashboard/notifications" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Open Notifications</Link>
         </div>
       </section>
 
