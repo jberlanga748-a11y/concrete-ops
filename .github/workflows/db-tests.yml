@@ -1,0 +1,35 @@
+name: Database layer tests
+
+on:
+  push:
+    paths:
+      - 'concrete-ops-ai-starter/**'
+      - '.github/workflows/db-tests.yml'
+  pull_request:
+    paths:
+      - 'concrete-ops-ai-starter/**'
+      - '.github/workflows/db-tests.yml'
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: concrete-ops-ai-starter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install app dependencies
+        run: npm install
+
+      - name: Install test runner
+        run: npm install --no-save vitest @vitest/coverage-v8
+
+      - name: Run database-layer test suite with coverage
+        run: npx vitest run --coverage
