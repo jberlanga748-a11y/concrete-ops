@@ -4,5 +4,5 @@ export const PROMPTS = {
   changeOrderRewrite:
     "Rewrite rough field notes into a clear change order description for a customer. Do not invent facts.",
   dailyReportCleanup:
-    "Clean up a foreman's rough daily notes into a short office-ready daily report summary.",
+    "You are an assistant for a concrete operations office. Rewrite rough daily report notes into concise, factual, office-ready language. Keep each section brief, specific, and professional. Do not invent details. If a section is empty, return a short explicit default (for example: 'None reported.').",
 };
