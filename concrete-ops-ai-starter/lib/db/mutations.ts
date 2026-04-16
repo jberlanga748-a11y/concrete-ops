@@ -1,6 +1,7 @@
 "use server";
 
 import type { ApprovalStatus, ApprovalType, AppRole, AssignmentRole, CustomerStatus, DocumentLinkType, EstimateLineItemType, EstimateStatus, IncidentStatus, IncidentType, JobStatus, NotificationPriority, NotificationType, PPEItemStatus, ProposalSectionType, ProposalStatus } from "@/lib/db/schema";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 async function getCurrentAppUser() {
@@ -25,6 +26,103 @@ async function getCurrentAppUser() {
 
 function isOfficeAdminRole(role?: AppRole | null) {
   return role === "owner" || role === "office_admin";
+}
+
+function canManageOwnerRole(currentRole: AppRole, targetRole: AppRole) {
+  if (targetRole !== "owner") return true;
+  return currentRole === "owner";
+}
+
+function getInviteRedirectTo() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configuredUrl) return `${configuredUrl.replace(/\/$/, "")}/login`;
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) return `https://${vercelUrl.replace(/\/$/, "")}/login`;
+
+  return undefined;
+}
+
+async function syncEmployeeUserLink(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  userId: string;
+  employeeId?: string;
+}) {
+  const { supabase, companyId, userId, employeeId } = args;
+
+  const { data: selectedEmployee, error: selectedError } = employeeId
+    ? await supabase
+        .from("employees")
+        .select("id, user_id")
+        .eq("company_id", companyId)
+        .eq("id", employeeId)
+        .maybeSingle()
+    : { data: null, error: null };
+
+  if (selectedError) return { error: selectedError.message };
+  if (employeeId && !selectedEmployee) return { error: "Selected employee was not found." };
+  if (selectedEmployee?.user_id && selectedEmployee.user_id !== userId) {
+    return { error: "That employee is already linked to another user." };
+  }
+
+  const clearQuery = supabase
+    .from("employees")
+    .update({ user_id: null })
+    .eq("company_id", companyId)
+    .eq("user_id", userId);
+
+  if (employeeId) {
+    const { error } = await clearQuery.neq("id", employeeId);
+    if (error) return { error: error.message };
+
+    const { error: linkError } = await supabase
+      .from("employees")
+      .update({ user_id: userId })
+      .eq("company_id", companyId)
+      .eq("id", employeeId);
+
+    if (linkError) return { error: linkError.message };
+    return { data: true };
+  }
+
+  const { error } = await clearQuery;
+  if (error) return { error: error.message };
+  return { data: true };
+}
+
+async function ensureOwnerSafety(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  currentUserRole: AppRole;
+  existingRole: AppRole;
+  nextRole: AppRole;
+  nextStatus: "invited" | "active" | "inactive";
+  userId: string;
+}) {
+  const { supabase, companyId, currentUserRole, existingRole, nextRole, nextStatus, userId } = args;
+
+  if ((existingRole === "owner" || nextRole === "owner") && currentUserRole !== "owner") {
+    return { error: "Only an owner can create or edit owner users." };
+  }
+
+  const wouldRemoveOwner = existingRole === "owner" && (nextRole !== "owner" || nextStatus === "inactive");
+  if (!wouldRemoveOwner) return { data: true };
+
+  const { count, error } = await supabase
+    .from("users")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("role", "owner")
+    .neq("status", "inactive")
+    .neq("id", userId);
+
+  if (error) return { error: error.message };
+  if ((count ?? 0) < 1) {
+    return { error: "At least one active owner must remain assigned." };
+  }
+
+  return { data: true };
 }
 
 async function syncForemanAssignment(args: {
@@ -1936,5 +2034,254 @@ export async function updateToolboxTalkAttendeeSignedAt(input: { attendeeId: str
     .single();
 
   if (error) return { error: error.message };
+  return { data };
+}
+
+type InviteUserInput = {
+  fullName: string;
+  email: string;
+  phone?: string;
+  role: AppRole;
+  employeeId?: string;
+};
+
+export async function inviteAppUser(input: InviteUserInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  if (!isOfficeAdminRole(appUser.role)) {
+    return { error: "Only owner and office admin users can invite users." };
+  }
+
+  if (input.role === "owner") {
+    return { error: "Owner access cannot be assigned from this UI." };
+  }
+
+  if (!canManageOwnerRole(appUser.role, input.role)) {
+    return { error: "Only an owner can invite another owner." };
+  }
+
+  const email = input.email.trim().toLowerCase();
+  const fullName = input.fullName.trim();
+
+  if (!email || !fullName) {
+    return { error: "Full name and email are required." };
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return { error: "Invites are not configured. Set SUPABASE_SERVICE_ROLE_KEY first." };
+  }
+
+  const { data: existingUser, error: existingError } = await supabase
+    .from("users")
+    .select("id, auth_user_id")
+    .eq("company_id", appUser.company_id)
+    .ilike("email", email)
+    .maybeSingle();
+
+  if (existingError) return { error: existingError.message };
+  if (existingUser?.auth_user_id) {
+    return { error: "A real app user already exists for this email. Edit the existing user instead." };
+  }
+
+  const { data: inviteResult, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: fullName },
+    redirectTo: getInviteRedirectTo(),
+  });
+
+  if (inviteError) return { error: inviteError.message };
+
+  const payload = {
+    company_id: appUser.company_id,
+    auth_user_id: inviteResult.user?.id ?? null,
+    full_name: fullName,
+    email,
+    phone: input.phone?.trim() || null,
+    role: input.role,
+    status: "invited" as const,
+  };
+
+  const { data: userRecord, error: userError } = existingUser
+    ? await supabase
+        .from("users")
+        .update(payload)
+        .eq("company_id", appUser.company_id)
+        .eq("id", existingUser.id)
+        .select("id")
+        .single()
+    : await supabase
+        .from("users")
+        .insert(payload)
+        .select("id")
+        .single();
+
+  if (userError || !userRecord) {
+    return { error: userError?.message || "Could not save the invited user record." };
+  }
+
+  const link = await syncEmployeeUserLink({
+    supabase,
+    companyId: appUser.company_id,
+    userId: userRecord.id,
+    employeeId: input.employeeId,
+  });
+  if (link.error) return { error: link.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "user.invited",
+    targetTable: "users",
+    targetId: userRecord.id,
+    summary: `Invited ${email} as ${input.role}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: userRecord };
+}
+
+export async function resendAppUserInvite(userId: string) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  if (!isOfficeAdminRole(appUser.role)) {
+    return { error: "Only owner and office admin users can resend invites." };
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return { error: "Invites are not configured. Set SUPABASE_SERVICE_ROLE_KEY first." };
+  }
+
+  const { data: managedUser, error } = await supabase
+    .from("users")
+    .select("id, email, full_name, role")
+    .eq("company_id", appUser.company_id)
+    .eq("id", userId)
+    .single();
+
+  if (error || !managedUser) return { error: error?.message || "User not found." };
+  if (!canManageOwnerRole(appUser.role, managedUser.role)) {
+    return { error: "Only an owner can resend an owner invite." };
+  }
+
+  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(managedUser.email, {
+    data: { full_name: managedUser.full_name },
+    redirectTo: getInviteRedirectTo(),
+  });
+
+  if (inviteError) return { error: inviteError.message };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "user.invite_resent",
+    targetTable: "users",
+    targetId: managedUser.id,
+    summary: `Resent invite to ${managedUser.email}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: true };
+}
+
+type UpdateManagedUserInput = {
+  fullName: string;
+  phone?: string;
+  role: AppRole;
+  status: "invited" | "active" | "inactive";
+  employeeId?: string;
+};
+
+export async function updateManagedUser(userId: string, input: UpdateManagedUserInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  if (!isOfficeAdminRole(appUser.role)) {
+    return { error: "Only owner and office admin users can update users." };
+  }
+
+  const { data: existingUser, error: existingError } = await supabase
+    .from("users")
+    .select("id, role, status")
+    .eq("company_id", appUser.company_id)
+    .eq("id", userId)
+    .single();
+
+  if (existingError || !existingUser) return { error: existingError?.message || "User not found." };
+
+  if (input.role === "owner" && existingUser.role !== "owner") {
+    return { error: "Owner access cannot be assigned from this UI." };
+  }
+
+  const ownerSafety = await ensureOwnerSafety({
+    supabase,
+    companyId: appUser.company_id,
+    currentUserRole: appUser.role,
+    existingRole: existingUser.role,
+    nextRole: input.role,
+    nextStatus: input.status,
+    userId,
+  });
+  if (ownerSafety.error) return { error: ownerSafety.error };
+
+  const { data, error } = await supabase
+    .from("users")
+    .update({
+      full_name: input.fullName.trim(),
+      phone: input.phone?.trim() || null,
+      role: input.role,
+      status: input.status,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", userId)
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: error?.message || "Failed to update user." };
+
+  const link = await syncEmployeeUserLink({
+    supabase,
+    companyId: appUser.company_id,
+    userId,
+    employeeId: input.employeeId,
+  });
+  if (link.error) return { error: link.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "user.updated",
+    targetTable: "users",
+    targetId: userId,
+    summary: `Updated user access for ${input.fullName.trim()}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
   return { data };
 }
