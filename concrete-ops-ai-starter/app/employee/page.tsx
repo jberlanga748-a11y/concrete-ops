@@ -96,25 +96,25 @@ export default async function EmployeeHomePage() {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <section className="rounded-[32px] border border-zinc-900 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 p-6 text-white shadow-[0_30px_90px_rgba(24,24,27,0.28)] sm:p-8">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+      <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-300">Employee Portal</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Know your shift, your uploads, and your next task at a glance.</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Employee Portal</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Know your shift, your uploads, and your next task at a glance.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
               This home screen keeps the basics in reach so you can clock time, upload field proof, and stay current on required safety items without hunting around the app.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href="/employee/time"
-              className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-orange-400"
+              className="inline-flex items-center justify-center rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
             >
               Go to Time Entry
             </Link>
             <Link
               href="/employee/uploads"
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-700 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
             >
               Open Uploads
             </Link>

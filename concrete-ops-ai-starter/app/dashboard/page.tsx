@@ -62,27 +62,6 @@ function formatRelativeCount(value: number, singular: string, plural = `${singul
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
-function ConcreteTruckWatermark() {
-  return (
-    <svg
-      viewBox="0 0 120 120"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      className="h-28 w-28 text-white/10"
-    >
-      <circle cx="34" cy="88" r="10" />
-      <circle cx="82" cy="88" r="10" />
-      <path d="M18 76V38c0-4.4 3.6-8 8-8h34l15-11c5.3-3.9 12.8-2.1 15.8 3.5L99 46h7c4.4 0 8 3.6 8 8v22" />
-      <path d="M50 30v32" />
-      <path d="M69 33 87 47" />
-      <path d="M18 76h6" />
-      <path d="M44 76h25" />
-      <path d="M92 76h22" />
-    </svg>
-  );
-}
-
 export default async function DashboardPage() {
   const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
     getTimeEntries(),
@@ -136,28 +115,25 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-zinc-900 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 p-6 text-white shadow-[0_30px_90px_rgba(24,24,27,0.28)] sm:p-8">
-        <div className="absolute right-0 top-0 hidden translate-x-8 -translate-y-2 lg:block">
-          <ConcreteTruckWatermark />
-        </div>
-        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+      <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-300">Operations Command</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Run today&apos;s field and office workflow from one place.</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Operations Command</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Run today&apos;s field and office workflow from one place.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
               Watch labor, reports, uploads, and approvals without bouncing between modules. This dashboard is your daily control center for keeping crews moving and office follow-up tight.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href="/dashboard/daily-reports/new"
-              className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-orange-400"
+              className="inline-flex items-center justify-center rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
             >
               Create Daily Report
             </Link>
             <Link
               href="/dashboard/jobs"
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-700 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
             >
               View Job Board
             </Link>

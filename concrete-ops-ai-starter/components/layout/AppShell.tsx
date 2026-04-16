@@ -97,21 +97,6 @@ const foremanSections: NavSection[] = [
   },
 ];
 
-function ConcreteTruckIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <circle cx="7" cy="18" r="2.1" />
-      <circle cx="18" cy="18" r="2.1" />
-      <path d="M3 16V9.5A1.5 1.5 0 0 1 4.5 8H11l2.9-2.1a1.4 1.4 0 0 1 2.2.48L18 10h1.7A1.3 1.3 0 0 1 21 11.3V16" />
-      <path d="M9 8v5.5" />
-      <path d="M12.5 8.5 16 11" />
-      <path d="M3 16h1.9" />
-      <path d="M9.1 16H15.8" />
-      <path d="M20.1 16H21" />
-    </svg>
-  );
-}
-
 function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: string }) {
   switch (icon) {
     case "users":
@@ -198,15 +183,10 @@ export function AppShell({
       <div className="mx-auto flex min-h-screen w-full max-w-[1680px]">
         <aside className="hidden w-[308px] border-r border-zinc-800 bg-zinc-950 px-5 py-6 text-zinc-100 lg:block">
           <div className="rounded-[28px] border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950 p-5 shadow-[0_24px_60px_rgba(0,0,0,0.35)]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-[0_12px_30px_rgba(249,115,22,0.32)]">
-                <ConcreteTruckIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Construction Operations</p>
-                <h1 className="mt-1 text-xl font-semibold tracking-tight text-white">Concrete Ops AI</h1>
-                <p className="mt-2 text-sm font-medium text-zinc-200">{portalTitle}</p>
-              </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Construction Operations</p>
+              <h1 className="mt-1 text-xl font-semibold tracking-tight text-white">Concrete Ops AI</h1>
+              <p className="mt-2 text-sm font-medium text-zinc-200">{portalTitle}</p>
             </div>
 
             <p className="mt-4 text-sm leading-6 text-zinc-400">{portalDescription}</p>
@@ -259,7 +239,7 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="flex-1 px-4 pb-28 pt-4 md:px-6 md:pt-6 lg:bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.08),_transparent_20%),linear-gradient(180deg,#f4f4f5_0%,#fafafa_100%)] lg:p-8 lg:pb-8">
+        <main className="flex-1 px-4 pb-28 pt-6 md:px-6 lg:bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.08),_transparent_20%),linear-gradient(180deg,#f4f4f5_0%,#fafafa_100%)] lg:p-8">
           {children}
         </main>
       </div>
