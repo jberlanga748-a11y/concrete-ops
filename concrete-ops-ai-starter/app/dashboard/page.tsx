@@ -1,7 +1,13 @@
-// trigger redeploy marker 2
-// trigger redeploy marker
 import Link from "next/link";
-import { getDailyReports, getJobFiles, getNotifications, getTimeEntries, type DailyReportListRow, type JobFileRow, type JobTimeEntryRow } from "@/lib/db/queries";
+import {
+  getDailyReports,
+  getJobFiles,
+  getNotifications,
+  getTimeEntries,
+  type DailyReportListRow,
+  type JobFileRow,
+  type JobTimeEntryRow,
+} from "@/lib/db/queries";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -53,124 +59,214 @@ function formatDateTime(value: string | null | undefined) {
 }
 
 export default async function DashboardPage() {
-  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
-    getTimeEntries(),
-    getDailyReports(),
-    getJobFiles(),
-    getNotifications({ unreadOnly: true }),
-  ]);
+  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] =
+    await Promise.all([
+      getTimeEntries(),
+      getDailyReports(),
+      getJobFiles(),
+      getNotifications({ unreadOnly: true }),
+    ]);
 
   const allTimeEntries = timeEntries ?? [];
   const allReports = reports ?? [];
   const allUploads = uploads ?? [];
   const allUnreadNotifications = unreadNotifications ?? [];
 
-  const recentTimeEntries = allTimeEntries.slice(0, 6);
-  const recentReports = allReports.slice(0, 6);
-  const recentUploads = allUploads.slice(0, 6);
+  const recentTimeEntries = allTimeEntries.slice(0, 5);
+  const recentReports = allReports.slice(0, 5);
+  const recentUploads = allUploads.slice(0, 5);
 
   const activeClocks = allTimeEntries.filter((entry) => entry.status === "clocked_in").length;
 
+  const stats = [
+    {
+      label: "Time Entries",
+      value: allTimeEntries.length,
+      hint: `${activeClocks} currently clocked in`,
+    },
+    {
+      label: "Daily Reports",
+      value: allReports.length,
+      hint: `Latest ${formatDate(recentReports[0]?.report_date)}`,
+    },
+    {
+      label: "Uploads",
+      value: allUploads.length,
+      hint: `Latest ${formatDateTime(recentUploads[0]?.created_at)}`,
+    },
+    {
+      label: "Notifications",
+      value: allUnreadNotifications.length,
+      hint: "Unread office updates",
+    },
+  ];
+
+  const quickActions = [
+    { href: "/dashboard/daily-reports/new", label: "Create Daily Report" },
+    { href: "/dashboard/time", label: "Open Time Board" },
+    { href: "/dashboard/jobs", label: "View Jobs" },
+    { href: "/dashboard/change-orders/new", label: "Start Change Order" },
+    { href: "/dashboard/uploads/new", label: "Add Upload" },
+    { href: "/dashboard/notifications", label: "Open Notifications" },
+  ];
+
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Contractor Command Center</p>
-        <h1 className="mt-2 text-2xl font-semibold text-zinc-900 sm:text-3xl">Admin Dashboard</h1>
-        <p className="mt-2 text-sm text-zinc-600 sm:text-base">Monitor today&apos;s activity across labor, reports, and field uploads.</p>
-      </section>
+      <section className="overflow-hidden rounded-[32px] border border-zinc-200 bg-[linear-gradient(135deg,#18181b_0%,#27272a_55%,#3f3f46_100%)] px-6 py-7 text-white shadow-[0_24px_60px_rgba(24,24,27,0.18)] sm:px-8">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.22em] text-orange-200">Contractor Command Center</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Admin Dashboard</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
+              Track labor, reports, uploads, and notifications from one place so the office can keep the field moving.
+            </p>
+          </div>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Time Entries</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allTimeEntries.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">{activeClocks} currently clocked in</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Daily Reports</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allReports.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">Latest: {formatDate(recentReports[0]?.report_date)}</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Uploads</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allUploads.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">Latest: {formatDateTime(recentUploads[0]?.created_at)}</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Open Change Orders</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">Review Queue</p>
-          <p className="mt-1 text-xs text-zinc-500">Go to change orders to review status.</p>
-        </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Notifications</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-900">{allUnreadNotifications.length}</p>
-          <p className="mt-1 text-xs text-zinc-500">Unread office updates.</p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard/daily-reports/new"
+              className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
+            >
+              Create Daily Report
+            </Link>
+            <Link
+              href="/dashboard/jobs"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+            >
+              View Jobs
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="text-lg font-semibold text-zinc-900">Quick Actions</h2>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <Link href="/dashboard/time" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Open Time Board</Link>
-          <Link href="/dashboard/daily-reports/new" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Create Daily Report</Link>
-          <Link href="/dashboard/uploads/new" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Add Upload</Link>
-          <Link href="/dashboard/change-orders/new" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Start Change Order</Link>
-          <Link href="/dashboard/jobs" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">View Jobs</Link>
-          <Link href="/dashboard/change-orders" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Review Change Orders</Link>
-          <Link href="/dashboard/notifications" className="rounded-xl border bg-zinc-50 px-4 py-3 text-sm font-medium hover:bg-zinc-100">Open Notifications</Link>
-        </div>
+      <section className="grid gap-4 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_32px_rgba(24,24,27,0.06)]"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{stat.label}</p>
+            <p className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950">{stat.value}</p>
+            <p className="mt-3 text-sm leading-6 text-zinc-600">{stat.hint}</p>
+          </div>
+        ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)]">
+        <div className="rounded-[30px] border border-zinc-200 bg-white p-5 shadow-[0_16px_36px_rgba(24,24,27,0.06)] sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900">Recent Time Activity</h3>
-            <Link href="/dashboard/time" className="text-xs font-medium text-zinc-600 underline">View all</Link>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Today</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Recent Activity</h2>
+            </div>
+            <Link href="/dashboard/time" className="text-sm font-medium text-orange-600 transition hover:text-orange-700">
+              View all
+            </Link>
           </div>
-          <ul className="mt-3 space-y-2 text-sm">
-            {recentTimeEntries.map((entry) => (
-              <li key={entry.id} className="rounded-xl border p-3">
-                <p className="font-medium text-zinc-900">{getEmployeeName(entry.employees)}</p>
-                <p className="text-zinc-600">{getJobLabel(entry.jobs)}</p>
-                <p className="text-xs text-zinc-500">{formatDateTime(entry.clock_in_at)} · {entry.status}</p>
-              </li>
-            ))}
-            {recentTimeEntries.length === 0 ? <li className="rounded-xl border p-3 text-zinc-600">No time activity yet.</li> : null}
-          </ul>
+
+          <div className="mt-5 grid gap-4 xl:grid-cols-3">
+            <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/80 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-zinc-700">Time Activity</h3>
+                <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] font-semibold text-zinc-700">
+                  {recentTimeEntries.length}
+                </span>
+              </div>
+              <ul className="mt-4 space-y-3 text-sm">
+                {recentTimeEntries.map((entry) => (
+                  <li key={entry.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
+                    <p className="font-medium text-zinc-950">{getEmployeeName(entry.employees)}</p>
+                    <p className="mt-1 text-zinc-600">{getJobLabel(entry.jobs)}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.14em] text-zinc-500">
+                      {formatDateTime(entry.clock_in_at)} · {entry.status}
+                    </p>
+                  </li>
+                ))}
+                {recentTimeEntries.length === 0 ? (
+                  <li className="rounded-2xl border border-dashed border-zinc-300 bg-white p-3 text-zinc-600">
+                    No time activity yet.
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+
+            <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/80 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-zinc-700">Daily Reports</h3>
+                <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] font-semibold text-zinc-700">
+                  {recentReports.length}
+                </span>
+              </div>
+              <ul className="mt-4 space-y-3 text-sm">
+                {recentReports.map((report) => (
+                  <li key={report.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
+                    <p className="font-medium text-zinc-950">{getJobLabel(report.jobs)}</p>
+                    <p className="mt-1 text-zinc-600">{getSubmitter(report.users)}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.14em] text-zinc-500">{formatDate(report.report_date)}</p>
+                  </li>
+                ))}
+                {recentReports.length === 0 ? (
+                  <li className="rounded-2xl border border-dashed border-zinc-300 bg-white p-3 text-zinc-600">
+                    No daily reports yet.
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+
+            <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/80 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-zinc-700">Uploads</h3>
+                <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] font-semibold text-zinc-700">
+                  {recentUploads.length}
+                </span>
+              </div>
+              <ul className="mt-4 space-y-3 text-sm">
+                {recentUploads.map((upload) => (
+                  <li key={upload.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
+                    <p className="font-medium text-zinc-950">{upload.file_name}</p>
+                    <p className="mt-1 text-zinc-600">{getJobLabel(upload.jobs)}</p>
+                    <p className="mt-1 text-zinc-600">{getSubmitter(upload.users, upload.employees)}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.14em] text-zinc-500">
+                      {formatDateTime(upload.created_at)}
+                    </p>
+                  </li>
+                ))}
+                {recentUploads.length === 0 ? (
+                  <li className="rounded-2xl border border-dashed border-zinc-300 bg-white p-3 text-zinc-600">
+                    No uploads yet.
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          </div>
         </div>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-[30px] border border-zinc-200 bg-white p-5 shadow-[0_16px_36px_rgba(24,24,27,0.06)] sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900">Recent Daily Reports</h3>
-            <Link href="/dashboard/daily-reports" className="text-xs font-medium text-zinc-600 underline">View all</Link>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Runbook</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Quick Actions</h2>
+            </div>
+            <Link href="/dashboard/change-orders" className="text-sm font-medium text-orange-600 transition hover:text-orange-700">
+              Review queue
+            </Link>
           </div>
-          <ul className="mt-3 space-y-2 text-sm">
-            {recentReports.map((report) => (
-              <li key={report.id} className="rounded-xl border p-3">
-                <p className="font-medium text-zinc-900">{getJobLabel(report.jobs)}</p>
-                <p className="text-zinc-600">{getSubmitter(report.users)}</p>
-                <p className="text-xs text-zinc-500">{formatDate(report.report_date)}</p>
-              </li>
-            ))}
-            {recentReports.length === 0 ? <li className="rounded-xl border p-3 text-zinc-600">No daily reports yet.</li> : null}
-          </ul>
-        </div>
 
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900">Recent Uploads</h3>
-            <Link href="/dashboard/uploads" className="text-xs font-medium text-zinc-600 underline">View all</Link>
-          </div>
-          <ul className="mt-3 space-y-2 text-sm">
-            {recentUploads.map((upload) => (
-              <li key={upload.id} className="rounded-xl border p-3">
-                <p className="font-medium text-zinc-900">{upload.file_name}</p>
-                <p className="text-zinc-600">{getJobLabel(upload.jobs)}</p>
-                <p className="text-zinc-600">{getSubmitter(upload.users, upload.employees)}</p>
-                <p className="text-xs text-zinc-500">{formatDateTime(upload.created_at)}</p>
-              </li>
+          <div className="mt-5 grid gap-3">
+            {quickActions.map((action, index) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className={`rounded-2xl border px-4 py-4 text-sm font-medium transition ${
+                  index === 0
+                    ? "border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
+                }`}
+              >
+                {action.label}
+              </Link>
             ))}
-            {recentUploads.length === 0 ? <li className="rounded-xl border p-3 text-zinc-600">No uploads yet.</li> : null}
-          </ul>
+          </div>
         </div>
       </section>
     </div>
