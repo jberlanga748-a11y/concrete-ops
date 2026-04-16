@@ -54,3 +54,17 @@ export async function requireOfficeUser() {
 
   return appUser;
 }
+
+export async function requireOwnerUser() {
+  const appUser = await getCurrentAppUserContext();
+
+  if (!appUser) {
+    redirect("/login?next=/dashboard/setup");
+  }
+
+  if (appUser.role !== "owner") {
+    redirect(appUser.role === "employee" ? "/employee" : "/dashboard");
+  }
+
+  return appUser;
+}
