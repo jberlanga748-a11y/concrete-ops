@@ -1,10 +1,9 @@
 import Link from "next/link";
 import type { JobListRow } from "@/lib/db/queries";
 import {
+  DataTable,
   EmptyState,
   tableCellClassName,
-  tableHeaderClassName,
-  tableShellClassName,
 } from "@/components/ui/primitives";
 
 function getCustomerName(customers: JobListRow["customers"]) {
@@ -19,23 +18,31 @@ export function JobList({ jobs }: { jobs: JobListRow[] }) {
       <EmptyState
         title="No jobs yet"
         description="Create the first job to start assigning crews, collecting reports, and tracking field activity."
-        action={<Link href="/dashboard/jobs/new" className="inline-flex items-center justify-center rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white">New Job</Link>}
       />
     );
   }
 
   return (
-    <div className={tableShellClassName}>
-      <table className="w-full text-sm">
-        <thead className={tableHeaderClassName}>
-          <tr>
-            <th className="px-4 py-3 text-left">Job</th>
-            <th className="px-4 py-3 text-left">Customer</th>
-            <th className="px-4 py-3 text-left">Status</th>
-          </tr>
-        </thead>
-        <tbody>
+    <DataTable
+      headers={["Job", "Customer", "Status"]}
+      emptyState={null}
+      mobileCards={
+        <div className="space-y-3">
           {jobs.map((job) => (
+            <Link key={job.id} href={`/dashboard/jobs/${job.id}`} className="block rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">{job.job_number}</p>
+              <p className="mt-2 text-lg font-semibold text-zinc-950">{job.name}</p>
+              <p className="mt-2 text-sm text-zinc-600">{getCustomerName(job.customers)}</p>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">{job.status}</span>
+                <span className="text-sm font-medium text-zinc-700">Open Job Hub</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      }
+    >
+      {jobs.map((job) => (
             <tr key={job.id} className="border-t border-zinc-200 transition hover:bg-zinc-50">
               <td className={tableCellClassName}>
                 <Link href={`/dashboard/jobs/${job.id}`} className="font-medium hover:underline">
@@ -47,9 +54,7 @@ export function JobList({ jobs }: { jobs: JobListRow[] }) {
                 <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">{job.status}</span>
               </td>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      ))}
+    </DataTable>
   );
 }

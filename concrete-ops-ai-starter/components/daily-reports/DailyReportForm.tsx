@@ -241,9 +241,11 @@ export function DailyReportForm({
           <textarea value={safetyNotes} onChange={(e) => setSafetyNotes(e.target.value)} placeholder="Safety observations or incidents" className={`${textareaClassName} min-h-20`} />
         </div>
 
-        <button onClick={handleSubmit} disabled={loading} className={primaryButtonClassName}>
-          {loading ? "Saving..." : reportId ? "Save Daily Report" : "Submit Daily Report"}
-        </button>
+        <div className="sticky bottom-24 z-10 -mx-2 rounded-3xl border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+          <button onClick={handleSubmit} disabled={loading} className={primaryButtonClassName}>
+            {loading ? "Saving..." : reportId ? "Save Daily Report" : "Submit Daily Report"}
+          </button>
+        </div>
 
         {message ? (
           <InlineNotice tone={messageType === "error" ? "error" : messageType === "success" ? "success" : "neutral"}>

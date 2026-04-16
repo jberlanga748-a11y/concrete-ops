@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/components/ui/cn";
+import { AppIcon } from "@/components/ui/icons";
 
 export const surfaceClassName = "rounded-3xl border border-zinc-200 bg-white shadow-sm";
 export const mutedSurfaceClassName = "rounded-2xl border border-zinc-200 bg-zinc-50";
@@ -75,22 +76,59 @@ export function SectionCard({
   );
 }
 
-export function MetricCard({
+export function StatCard({
   label,
   value,
   hint,
+  icon = "sparkles",
+  tone = "neutral",
 }: {
   label: string;
   value: React.ReactNode;
   hint?: React.ReactNode;
+  icon?: Parameters<typeof AppIcon>[0]["icon"];
+  tone?: "neutral" | "success" | "warning";
 }) {
   return (
-    <div className={cn(surfaceClassName, "rounded-2xl p-4")}>
-      <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">{label}</p>
-      <p className="mt-3 text-2xl font-semibold text-zinc-900">{value}</p>
-      {hint ? <p className="mt-2 text-xs text-zinc-500">{hint}</p> : null}
+    <div
+      className={cn(
+        surfaceClassName,
+        "relative overflow-hidden rounded-[28px] p-5",
+        tone === "neutral" && "bg-[radial-gradient(circle_at_top_right,_rgba(24,24,27,0.06),_transparent_42%),linear-gradient(180deg,#ffffff_0%,#fafafa_100%)]",
+        tone === "success" && "bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.16),_transparent_42%),linear-gradient(180deg,#ffffff_0%,#f5fffb_100%)]",
+        tone === "warning" && "bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.16),_transparent_42%),linear-gradient(180deg,#ffffff_0%,#fffaf3_100%)]",
+      )}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+          <p className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950">{value}</p>
+          {hint ? <p className="mt-3 text-sm text-zinc-600">{hint}</p> : null}
+        </div>
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-3 text-zinc-700 shadow-sm">
+          <AppIcon icon={icon} className="h-5 w-5" />
+        </div>
+      </div>
     </div>
   );
+}
+
+export const MetricCard = StatCard;
+
+export function Section({
+  title,
+  description,
+  action,
+  children,
+  className,
+}: {
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <SectionCard title={title} description={description} action={action} className={className}>{children}</SectionCard>;
 }
 
 export function EmptyState({
@@ -139,5 +177,51 @@ export function PageActionLink({ href, children }: { href: string; children: Rea
     <Link href={href} className={primaryButtonClassName}>
       {children}
     </Link>
+  );
+}
+
+export function DataTable({
+  title,
+  description,
+  headers,
+  mobileCards,
+  children,
+  emptyState,
+}: {
+  title?: string;
+  description?: string;
+  headers: string[];
+  mobileCards: React.ReactNode;
+  children: React.ReactNode;
+  emptyState?: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      {title || description ? (
+        <div>
+          {title ? <h2 className="text-lg font-semibold text-zinc-900">{title}</h2> : null}
+          {description ? <p className="mt-1 text-sm text-zinc-600">{description}</p> : null}
+        </div>
+      ) : null}
+
+      <div className="md:hidden">
+        {mobileCards || emptyState}
+      </div>
+
+      <div className="hidden md:block">
+        <div className={tableShellClassName}>
+          <table className="w-full text-sm">
+            <thead className={tableHeaderClassName}>
+              <tr>
+                {headers.map((header) => (
+                  <th key={header} className="px-4 py-3 text-left">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>{children}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

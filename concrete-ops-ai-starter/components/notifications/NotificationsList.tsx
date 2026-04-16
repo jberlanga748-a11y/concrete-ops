@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/db/mutations";
-import { EmptyState, primaryButtonClassName, secondaryButtonClassName, SectionCard } from "@/components/ui/primitives";
+import { EmptyState, secondaryButtonClassName, SectionCard } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { NotificationRow } from "@/lib/db/queries";
 

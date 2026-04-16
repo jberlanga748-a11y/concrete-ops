@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { EmployeeListRow } from "@/lib/db/queries";
-import { EmptyState, tableCellClassName, tableHeaderClassName, tableShellClassName } from "@/components/ui/primitives";
+import { DataTable, EmptyState, tableCellClassName } from "@/components/ui/primitives";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -21,38 +21,43 @@ export function EmployeeTable({ employees }: { employees: EmployeeListRow[] }) {
   }
 
   return (
-    <div className={tableShellClassName}>
-      <table className="w-full text-sm">
-        <thead className={tableHeaderClassName}>
-          <tr>
-            <th className="px-4 py-3 text-left">Employee</th>
-            <th className="px-4 py-3 text-left">Crew</th>
-            <th className="px-4 py-3 text-left">Title</th>
-            <th className="px-4 py-3 text-left">Status</th>
-            <th className="px-4 py-3 text-left">Hire Date</th>
-          </tr>
-        </thead>
-        <tbody>
+    <DataTable
+      headers={["Employee", "Crew", "Title", "Status", "Hire Date"]}
+      emptyState={null}
+      mobileCards={
+        <div className="space-y-3">
           {employees.map((employee) => (
-            <tr key={employee.id} className="border-t border-zinc-200 transition hover:bg-zinc-50">
-              <td className={tableCellClassName}>
-                <Link href={`/dashboard/employees/${employee.id}`} className="font-medium hover:underline">
-                  {employee.full_name}
-                </Link>
-                <p className="mt-1 text-xs text-zinc-500">{employee.email || employee.phone || "No contact info"}</p>
-              </td>
-              <td className={tableCellClassName}>{employee.crew_name || "—"}</td>
-              <td className={tableCellClassName}>{employee.job_title || "—"}</td>
-              <td className={tableCellClassName}>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">
-                  {employee.is_active ? "Active" : "Inactive"}
-                </span>
-              </td>
-              <td className={tableCellClassName}>{formatDate(employee.hire_date)}</td>
-            </tr>
+            <Link key={employee.id} href={`/dashboard/employees/${employee.id}`} className="block rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <p className="text-lg font-semibold text-zinc-950">{employee.full_name}</p>
+              <p className="mt-2 text-sm text-zinc-600">{employee.job_title || "No title"} · {employee.crew_name || "No crew"}</p>
+              <p className="mt-1 text-sm text-zinc-500">{employee.email || employee.phone || "No contact info"}</p>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">{employee.is_active ? "Active" : "Inactive"}</span>
+                <span className="text-xs text-zinc-500">{formatDate(employee.hire_date)}</span>
+              </div>
+            </Link>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </div>
+      }
+    >
+      {employees.map((employee) => (
+        <tr key={employee.id} className="border-t border-zinc-200 transition hover:bg-zinc-50">
+          <td className={tableCellClassName}>
+            <Link href={`/dashboard/employees/${employee.id}`} className="font-medium hover:underline">
+              {employee.full_name}
+            </Link>
+            <p className="mt-1 text-xs text-zinc-500">{employee.email || employee.phone || "No contact info"}</p>
+          </td>
+          <td className={tableCellClassName}>{employee.crew_name || "—"}</td>
+          <td className={tableCellClassName}>{employee.job_title || "—"}</td>
+          <td className={tableCellClassName}>
+            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700">
+              {employee.is_active ? "Active" : "Inactive"}
+            </span>
+          </td>
+          <td className={tableCellClassName}>{formatDate(employee.hire_date)}</td>
+        </tr>
+      ))}
+    </DataTable>
   );
 }

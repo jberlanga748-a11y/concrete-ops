@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/lib/db/schema";
-import { EmptyState, PageActionLink, PageHeader, SectionCard, surfaceClassName } from "@/components/ui/primitives";
+import { EmptyState, PageActionLink, PageHeader, Section, StatCard, surfaceClassName } from "@/components/ui/primitives";
+import { AppIcon } from "@/components/ui/icons";
 
 function getJobLabel(jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null) {
   if (!jobs) return "—";
@@ -53,46 +54,85 @@ export default async function EmployeeHomePage() {
   ]);
 
   const isClockedIn = Boolean(openEntry);
+  const uploadCount = (uploads ?? []).length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Personal Workspace"
         title="Employee Home"
-        description="Check your current shift, jump into everyday tasks, and keep your recent field uploads close at hand."
-        action={<PageActionLink href="/employee/time">Open Time</PageActionLink>}
+        description="Check your shift status, jump into the day’s tasks, and keep uploads and compliance work close at hand."
+        action={
+          <div className="flex flex-wrap gap-3">
+            <PageActionLink href="/employee/time">Open Time</PageActionLink>
+            <Link href="/employee/uploads" className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">
+              Add Upload
+            </Link>
+          </div>
+        }
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className={`${surfaceClassName} rounded-2xl p-4`}>
-          <p className="text-sm text-zinc-500">Current Clock Status</p>
-          <p className="mt-2 text-2xl font-semibold">{isClockedIn ? "Clocked In" : "Not Clocked In"}</p>
-          <p className="mt-1 text-sm text-zinc-600">{openEntry ? `Since ${openEntry.clock_in_at}` : "No active shift."}</p>
-          <Link href="/employee/time" className="mt-4 inline-block rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
-            Go to Time Entry
-          </Link>
-        </div>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Shift Status" value={isClockedIn ? "Clocked In" : "Not Clocked In"} hint={openEntry ? `Since ${openEntry.clock_in_at}` : "No active shift right now"} icon="clock" tone={isClockedIn ? "success" : "neutral"} />
+        <StatCard label="Recent Uploads" value={uploadCount} hint="Latest files you sent from the field" icon="upload" />
+        <StatCard label="Policies" value="Review" hint="Open policies whenever a signature is needed" icon="shield" />
+        <StatCard label="PPE" value="Status" hint="Check issued items and replacement dates" icon="hardhat" />
+      </section>
 
-        <div className={`${surfaceClassName} rounded-2xl p-4`}>
-          <h2 className="text-lg font-semibold">Quick Links</h2>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Link href="/employee/time" className="rounded-xl border px-4 py-2 text-sm">Time</Link>
-            <Link href="/employee/policies" className="rounded-xl border px-4 py-2 text-sm">Policies</Link>
-            <Link href="/employee/ppe" className="rounded-xl border px-4 py-2 text-sm">PPE</Link>
-            <Link href="/employee/uploads" className="rounded-xl border px-4 py-2 text-sm">Uploads</Link>
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Section title="Today’s focus" description="The essentials for getting through the shift cleanly on mobile or desktop.">
+          <div className="grid gap-3">
+            <div className={`${surfaceClassName} rounded-2xl p-4`}>
+              <div className="flex items-start gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700">
+                  <AppIcon icon="clock" className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-zinc-950">{isClockedIn ? "You’re on the clock" : "Start your shift"}</p>
+                  <p className="mt-1 text-sm text-zinc-600">
+                    {isClockedIn ? "Use the time screen to switch jobs or clock out when the shift wraps." : "Pick your job and clock in from the time screen to start tracking today’s hours."}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className={`${surfaceClassName} rounded-2xl p-4`}>
+              <div className="flex items-start gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700">
+                  <AppIcon icon="upload" className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-zinc-950">Upload field proof while it’s fresh</p>
+                  <p className="mt-1 text-sm text-zinc-600">Photos and documents are easiest to keep organized when they’re uploaded right from the work area.</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </Section>
+
+        <Section title="Quick Links" description="Everyday employee tasks, without extra navigation.">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            <Link href="/employee/time" className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">Time</Link>
+            <Link href="/employee/policies" className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">Policies</Link>
+            <Link href="/employee/ppe" className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">PPE</Link>
+            <Link href="/employee/uploads" className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">Uploads</Link>
+          </div>
+        </Section>
       </div>
 
-      <SectionCard title="My Recent Uploads" description="Your latest photos and supporting documents live here.">
+      <Section title="My Recent Uploads" description="Your latest photos and supporting documents live here.">
         <ul className="mt-3 space-y-3 text-sm">
           {(uploads ?? []).map((upload) => (
-            <li key={upload.id} className="rounded-xl border p-3">
-              <p className="font-medium">{upload.file_name}</p>
-              <p className="text-zinc-600">{getJobLabel(upload.jobs as Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null)}</p>
+            <li key={upload.id} className="rounded-2xl border border-zinc-200 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-zinc-950">{upload.file_name}</p>
+                  <p className="text-zinc-600">{getJobLabel(upload.jobs as Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null)}</p>
+                </div>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-zinc-700">{upload.tag}</span>
+              </div>
               <p className="text-zinc-600">Tag: {upload.tag}</p>
               <p className="text-zinc-600">{upload.note || "—"}</p>
-              <p className="text-zinc-500">{upload.created_at}</p>
+              <p className="mt-2 text-xs text-zinc-500">{upload.created_at}</p>
             </li>
           ))}
           {(uploads ?? []).length === 0 ? (
@@ -105,7 +145,7 @@ export default async function EmployeeHomePage() {
             </li>
           ) : null}
         </ul>
-      </SectionCard>
+      </Section>
     </div>
   );
 }
