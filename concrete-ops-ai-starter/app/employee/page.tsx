@@ -80,7 +80,7 @@ export default async function EmployeeHomePage() {
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Section title="Today’s focus" description="The essentials for getting through the shift cleanly on mobile or desktop.">
+        <Section title="Today" description="The essentials for getting through the shift cleanly on desktop." action={<Link href="/employee/time" className="text-sm font-medium text-zinc-600 underline">View all</Link>}>
           <div className="grid gap-3">
             <div className={`${surfaceClassName} rounded-2xl p-4`}>
               <div className="flex items-start gap-3">
@@ -119,7 +119,7 @@ export default async function EmployeeHomePage() {
         </Section>
       </div>
 
-      <Section title="My Recent Uploads" description="Your latest photos and supporting documents live here.">
+      <Section title="Recent Activity" description="Your latest photos and supporting documents live here." action={<Link href="/employee/uploads" className="text-sm font-medium text-zinc-600 underline">View all</Link>}>
         <ul className="mt-3 space-y-3 text-sm">
           {(uploads ?? []).map((upload) => (
             <li key={upload.id} className="rounded-2xl border border-zinc-200 p-4">

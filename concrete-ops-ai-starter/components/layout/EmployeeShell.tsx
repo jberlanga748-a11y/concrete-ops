@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -15,21 +15,26 @@ type NavItem = {
   icon: Parameters<typeof AppIcon>[0]["icon"];
 };
 
-const employeeSections = [
+type NavSection = {
+  title: string;
+  items: NavItem[];
+};
+
+const employeeSections: NavSection[] = [
   {
-    title: "My Work",
+    title: "Field Ops",
     items: [
       { href: "/employee", label: "Home", icon: "home" },
       { href: "/employee/time", label: "Time", icon: "clock" },
       { href: "/employee/uploads", label: "Uploads", icon: "upload" },
-    ] as NavItem[],
+    ],
   },
   {
     title: "Compliance",
     items: [
       { href: "/employee/policies", label: "Policies", icon: "shield" },
       { href: "/employee/ppe", label: "PPE", icon: "hardhat" },
-    ] as NavItem[],
+    ],
   },
 ];
 
@@ -45,15 +50,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function SidebarLink({
-  item,
-  pathname,
-  collapsed,
-}: {
-  item: NavItem;
-  pathname: string;
-  collapsed: boolean;
-}) {
+function SidebarLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = isActive(pathname, item.href);
 
   return (
@@ -61,16 +58,14 @@ function SidebarLink({
       href={item.href}
       className={cn(
         "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition",
-        collapsed && "justify-center px-2",
         active
-          ? "bg-zinc-950 text-white shadow-[0_18px_36px_rgba(24,24,27,0.24)]"
+          ? "bg-zinc-950 text-white shadow-[0_18px_36px_rgba(24,24,27,0.22)]"
           : "text-zinc-600 hover:bg-orange-50 hover:text-zinc-950",
       )}
-      title={collapsed ? item.label : undefined}
     >
       <span
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border transition",
           active
             ? "border-white/10 bg-white/10 text-orange-300"
             : "border-zinc-200 bg-white text-zinc-600 group-hover:border-orange-200 group-hover:bg-orange-50 group-hover:text-orange-600",
@@ -78,14 +73,41 @@ function SidebarLink({
       >
         <AppIcon icon={item.icon} className="h-4 w-4" />
       </span>
-      {!collapsed ? <span>{item.label}</span> : null}
+      <span>{item.label}</span>
     </Link>
+  );
+}
+
+function DesktopSection({
+  section,
+  pathname,
+  expanded,
+  onToggle,
+}: {
+  section: NavSection;
+  pathname: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <section className="rounded-[24px] border border-zinc-200/80 bg-white/75 p-3">
+      <button type="button" onClick={onToggle} className="flex w-full items-center justify-between rounded-2xl px-2 py-2 text-left">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{section.title}</span>
+        <AppIcon icon={expanded ? "chevron-left" : "chevron-right"} className={cn("h-4 w-4 text-zinc-400", expanded && "rotate-90")} />
+      </button>
+      {expanded ? (
+        <div className="mt-2 space-y-2">
+          {section.items.map((item) => (
+            <SidebarLink key={item.href} item={item} pathname={pathname} />
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
 export function EmployeeShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreSections = employeeSections
     .map((section) => ({
@@ -93,6 +115,20 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
       items: section.items.filter((item) => !primaryMobileNav.some((primary) => primary.href === item.href)),
     }))
     .filter((section) => section.items.length > 0);
+  const activeSectionTitle = useMemo(() => {
+    return employeeSections.find((section) => section.items.some((item) => isActive(pathname, item.href)))?.title ?? employeeSections[0]?.title;
+  }, [pathname]);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(employeeSections.map((section) => [section.title, section.title === "Field Ops" || section.title === activeSectionTitle])),
+  );
+
+  useEffect(() => {
+    if (!activeSectionTitle) return;
+    setExpandedSections((current) => ({
+      ...current,
+      [activeSectionTitle]: true,
+    }));
+  }, [activeSectionTitle]);
 
   return (
     <ToastProvider>
@@ -104,7 +140,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
                 <ConcreteTruckIcon className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops AI</p>
                 <p className="mt-1 text-xl font-semibold text-zinc-950">Employee Portal</p>
               </div>
             </div>
@@ -113,67 +149,40 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <div className="mx-auto flex min-h-screen w-full max-w-[1480px]">
-          <aside
-            className={cn(
-              "hidden border-r border-zinc-200/80 px-4 py-6 backdrop-blur lg:flex lg:flex-col",
-              brandPanelClassName,
-              collapsed ? "w-24" : "w-[300px]",
-            )}
-          >
-            <div className={cn("flex items-start justify-between gap-3", collapsed && "justify-center")}>
-              {!collapsed ? (
+          <aside className={cn("hidden w-[320px] border-r border-zinc-200/80 px-5 py-6 backdrop-blur lg:flex lg:flex-col", brandPanelClassName)}>
+            <div className="rounded-[28px] border border-zinc-200/80 bg-white/85 p-5 shadow-[0_16px_34px_rgba(24,24,27,0.08)]">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-zinc-950 text-orange-400 shadow-[0_12px_24px_rgba(24,24,27,0.18)]">
+                  <ConcreteTruckIcon className="h-6 w-6" />
+                </div>
                 <div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-zinc-950 text-orange-400 shadow-sm">
-                      <ConcreteTruckIcon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops</p>
-                      <h1 className="mt-1 text-2xl font-semibold text-zinc-950">Employee Portal</h1>
-                    </div>
-                  </div>
-                  <p className="mt-4 max-w-xs text-sm leading-6 text-zinc-600">
-                    Personal time, uploads, and compliance tasks in a cleaner field-friendly workspace.
-                  </p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Concrete Ops AI</p>
+                  <h1 className="mt-1 text-2xl font-semibold text-zinc-950">Employee Portal</h1>
                 </div>
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-zinc-950 text-orange-400 shadow-sm">
-                  <ConcreteTruckIcon className="h-5 w-5" />
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setCollapsed((current) => !current)}
-                className="rounded-2xl border border-zinc-200 bg-white/80 p-2 text-zinc-700 transition hover:bg-zinc-100"
-              >
-                <AppIcon icon={collapsed ? "chevron-right" : "chevron-left"} className="h-4 w-4" />
-              </button>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-zinc-600">
+                Personal time, uploads, and compliance tasks in a cleaner desktop workspace.
+              </p>
             </div>
 
-            <div className="mt-8 flex-1 space-y-6">
+            <div className="mt-6 flex-1 space-y-3">
               {employeeSections.map((section) => (
-                <div key={section.title}>
-                  {!collapsed ? (
-                    <p className="mb-3 px-3 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400">
-                      {section.title}
-                    </p>
-                  ) : null}
-                  <div className="space-y-2">
-                    {section.items.map((item) => (
-                      <SidebarLink key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
-                    ))}
-                  </div>
-                </div>
+                <DesktopSection
+                  key={section.title}
+                  section={section}
+                  pathname={pathname}
+                  expanded={Boolean(expandedSections[section.title])}
+                  onToggle={() =>
+                    setExpandedSections((current) => ({
+                      ...current,
+                      [section.title]: !current[section.title],
+                    }))
+                  }
+                />
               ))}
             </div>
 
-            <SignOutButton
-              className={cn(
-                "mt-6 w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50",
-                collapsed && "px-2",
-              )}
-            />
+            <SignOutButton className="mt-6 w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50" />
           </aside>
 
           <main className="flex-1 px-4 pb-28 pt-4 md:px-6 md:pt-6 lg:p-8 lg:pb-10">

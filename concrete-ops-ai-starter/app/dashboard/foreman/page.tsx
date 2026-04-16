@@ -44,7 +44,7 @@ export default async function ForemanHomePage() {
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Section title="Today’s field priorities" description="What needs attention first before the day gets away from you.">
+        <Section title="Today" description="What needs attention first before the day gets away from you." action={<Link href="/dashboard/daily-reports" className="text-sm font-medium text-zinc-600 underline">View all</Link>}>
           <div className="grid gap-3">
             <div className={`${surfaceClassName} rounded-2xl p-4`}>
               <div className="flex items-start gap-3">
@@ -81,7 +81,7 @@ export default async function ForemanHomePage() {
         </Section>
       </div>
 
-      <Section title="Assigned Jobs" description="Open the job hub, capture field updates, and keep work moving." action={<Link href="/dashboard/jobs" className="text-sm font-medium text-zinc-600 underline">Open full list</Link>}>
+      <Section title="Recent Activity" description="Open the job hub, capture field updates, and keep work moving." action={<Link href="/dashboard/jobs" className="text-sm font-medium text-zinc-600 underline">View all</Link>}>
 
         <ul className="mt-3 space-y-2 text-sm">
           {allJobs.slice(0, 15).map((job) => (
@@ -98,7 +98,7 @@ export default async function ForemanHomePage() {
                 </div>
               </div>
               <Link
-                className="rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white"
+                className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-medium text-white"
                 href={`/dashboard/jobs/${job.id}`}
               >
                 Job Hub

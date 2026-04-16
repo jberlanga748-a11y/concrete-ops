@@ -81,7 +81,7 @@ export default async function DashboardPage() {
       <PageHeader
         eyebrow="Contractor Command Center"
         title="Admin Dashboard"
-        description="Monitor today’s labor, field reporting, uploads, and office review work from one premium control center."
+        description="Monitor today’s labor, field reporting, uploads, and office review work from one premium construction control panel."
         action={
           <div className="flex flex-wrap gap-3">
             <PageActionLink href="/dashboard/jobs/new">New Job</PageActionLink>
@@ -92,18 +92,18 @@ export default async function DashboardPage() {
         }
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Active Crew" value={activeClocks} hint={`${allTimeEntries.length} total time entries on the board`} icon="clock" tone="success" />
         <StatCard label="Today's Reports" value={todaysReports} hint={`Latest: ${formatDate(recentReports[0]?.report_date)}`} icon="clipboard" />
         <StatCard label="Today's Uploads" value={todaysUploads} hint={`Latest: ${formatDateTime(recentUploads[0]?.created_at)}`} icon="upload" />
-        <StatCard label="Office Reviews" value="Queue" hint="Change orders and approvals are waiting here." icon="document" tone="warning" />
-        <StatCard label="Notifications" value={allUnreadNotifications.length} hint="Unread office updates" icon="bell" />
+        <StatCard label="Notifications" value={allUnreadNotifications.length} hint="Unread office updates and review work." icon="bell" tone="warning" />
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
         <Section
-          title="Today at a glance"
+          title="Today"
           description="The current pulse of labor, reporting, and field proof coming in from the team."
+          action={<Link href="/dashboard/time" className="text-sm font-medium text-zinc-600 underline">View all</Link>}
         >
           <div className="grid gap-3 md:grid-cols-3">
             <div className={`${surfaceClassName} rounded-2xl p-4`}>
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
       <section className="grid gap-4 xl:grid-cols-3">
         <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900">Recent Time Activity</h3>
+            <h3 className="font-semibold text-zinc-900">Recent Activity</h3>
             <Link href="/dashboard/time" className="text-xs font-medium text-zinc-600 underline">View all</Link>
           </div>
           <ul className="mt-3 space-y-2 text-sm">
@@ -180,7 +180,7 @@ export default async function DashboardPage() {
 
         <div className={`${surfaceClassName} rounded-2xl p-4`}>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900">Recent Daily Reports</h3>
+            <h3 className="font-semibold text-zinc-900">Recent Reports</h3>
             <Link href="/dashboard/daily-reports" className="text-xs font-medium text-zinc-600 underline">View all</Link>
           </div>
           <ul className="mt-3 space-y-2 text-sm">
