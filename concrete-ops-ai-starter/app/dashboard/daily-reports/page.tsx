@@ -20,15 +20,9 @@ function getSubmitter(users: DailyReportListRow["users"]) {
 export default async function DailyReportsPage({
   searchParams,
 }: {
-codex/setup-next.js-with-supabase-authentication-anp0qb
-  searchParams: { jobId?: string; date?: string };
+  searchParams?: { jobId?: string; date?: string };
 }) {
-  const params = searchParams;
-
-  searchParams: Promise<{ jobId?: string; date?: string }>;
-}) {
-  const params = await searchParams;
- main
+  const params = searchParams ?? {};
   const selectedJobId = params.jobId?.trim() || "";
   const selectedDate = params.date?.trim() || "";
 
@@ -55,13 +49,17 @@ codex/setup-next.js-with-supabase-authentication-anp0qb
         <select name="jobId" defaultValue={selectedJobId} className="rounded-xl border px-3 py-2 text-sm">
           <option value="">All jobs</option>
           {jobOptions.map((job) => (
-            <option key={job.id} value={job.id}>{job.label}</option>
+            <option key={job.id} value={job.id}>
+              {job.label}
+            </option>
           ))}
         </select>
 
         <input name="date" type="date" defaultValue={selectedDate} className="rounded-xl border px-3 py-2 text-sm" />
 
-        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">Apply filters</button>
+        <button type="submit" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+          Apply filters
+        </button>
       </form>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
@@ -83,13 +81,17 @@ codex/setup-next.js-with-supabase-authentication-anp0qb
                 <td className="px-4 py-4">{getSubmitter(report.users)}</td>
                 <td className="max-w-md truncate px-4 py-4">{report.work_completed}</td>
                 <td className="px-4 py-4">
-                  <Link className="text-zinc-900 underline" href={`/dashboard/daily-reports/${report.id}`}>Open</Link>
+                  <Link className="text-zinc-900 underline" href={`/dashboard/daily-reports/${report.id}`}>
+                    Open
+                  </Link>
                 </td>
               </tr>
             ))}
             {(reports ?? []).length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={5}>No daily reports found. Try clearing filters or create a new report.</td>
+                <td className="px-4 py-6 text-zinc-600" colSpan={5}>
+                  No daily reports found. Try clearing filters or create a new report.
+                </td>
               </tr>
             ) : null}
           </tbody>
