@@ -9,10 +9,12 @@ export function ChangeOrderForm({
   jobOptions,
   dailyReportOptions,
   proofFiles,
+  hideFinancials = false,
 }: {
   jobOptions: TimeOption[];
   dailyReportOptions: DailyReportOption[];
   proofFiles: JobFileRow[];
+  hideFinancials?: boolean;
 }) {
   const router = useRouter();
   const [jobId, setJobId] = useState("");
@@ -130,15 +132,17 @@ export function ChangeOrderForm({
           </select>
         </div>
 
-        <div className="rounded-2xl border p-4">
-          <p className="font-medium">Totals</p>
-          <p className="mt-1 text-sm text-zinc-600">Enter direct cost and markup. Total is previewed automatically.</p>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input type="number" min="0" step="0.01" value={directCostTotal} onChange={(e) => setDirectCostTotal(e.target.value)} placeholder="Direct cost total" className="w-full rounded-2xl border px-4 py-3" />
-            <input type="number" min="0" step="0.01" value={markupPercent} onChange={(e) => setMarkupPercent(e.target.value)} placeholder="Markup percent" className="w-full rounded-2xl border px-4 py-3" />
+        {!hideFinancials ? (
+          <div className="rounded-2xl border p-4">
+            <p className="font-medium">Totals</p>
+            <p className="mt-1 text-sm text-zinc-600">Enter direct cost and markup. Total is previewed automatically.</p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <input type="number" min="0" step="0.01" value={directCostTotal} onChange={(e) => setDirectCostTotal(e.target.value)} placeholder="Direct cost total" className="w-full rounded-2xl border px-4 py-3" />
+              <input type="number" min="0" step="0.01" value={markupPercent} onChange={(e) => setMarkupPercent(e.target.value)} placeholder="Markup percent" className="w-full rounded-2xl border px-4 py-3" />
+            </div>
+            <p className="mt-3 text-sm text-zinc-600">Total amount preview: {totalAmountPreview.toFixed(2)}</p>
           </div>
-          <p className="mt-3 text-sm text-zinc-600">Total amount preview: {totalAmountPreview.toFixed(2)}</p>
-        </div>
+        ) : null}
 
         <div className="rounded-2xl border p-4">
           <p className="font-medium">Link field proof (optional)</p>

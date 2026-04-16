@@ -7,6 +7,7 @@ import {
   type ChangeOrderDetailRow,
   type ChangeOrderFileRow,
 } from "@/lib/db/queries";
+import { createClient } from "@/lib/supabase/server";
 
 function getJobLabel(jobs: ChangeOrderDetailRow["jobs"]) {
   if (!jobs) return "—";
@@ -39,7 +40,15 @@ export default async function ChangeOrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const supabase = await createClient();
   const { id } = await params;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: appUser } = user
+    ? await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle()
+    : { data: null };
+  const isForeman = appUser?.role === "foreman";
 
   const [{ data: changeOrder }, { data: lineItems }, { data: proofFiles }] = await Promise.all([
     getChangeOrderById(id),
@@ -75,15 +84,21 @@ export default async function ChangeOrderDetailPage({
         <p>
           <span className="font-medium">Description:</span> {changeOrder.description || "—"}
         </p>
-        <p>
-          <span className="font-medium">Direct Cost Total:</span> {changeOrder.direct_cost_total}
-        </p>
-        <p>
-          <span className="font-medium">Markup Percent:</span> {changeOrder.markup_percent}
-        </p>
-        <p>
-          <span className="font-medium">Total Amount:</span> {changeOrder.total_amount}
-        </p>
+        {!isForeman ? (
+          <p>
+            <span className="font-medium">Direct Cost Total:</span> {changeOrder.direct_cost_total}
+          </p>
+        ) : null}
+        {!isForeman ? (
+          <p>
+            <span className="font-medium">Markup Percent:</span> {changeOrder.markup_percent}
+          </p>
+        ) : null}
+        {!isForeman ? (
+          <p>
+            <span className="font-medium">Total Amount:</span> {changeOrder.total_amount}
+          </p>
+        ) : null}
       </div>
 
       <div className="rounded-3xl border bg-white p-6 shadow-sm">

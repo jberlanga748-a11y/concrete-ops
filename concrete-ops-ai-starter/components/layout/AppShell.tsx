@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import type { AppRole } from "@/lib/auth/roles";
 
-const nav = [
+const adminNav = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/jobs", label: "Jobs" },
   { href: "/dashboard/time", label: "Time" },
@@ -14,16 +15,32 @@ const nav = [
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
-const mobileQuickNav = nav.slice(0, 4);
-const mobileMoreNav = nav.slice(4);
+const foremanNav = [
+  { href: "/dashboard/foreman", label: "Foreman" },
+  { href: "/dashboard/jobs", label: "Jobs" },
+  { href: "/dashboard/time", label: "Time" },
+  { href: "/dashboard/daily-reports", label: "Daily Reports" },
+  { href: "/dashboard/uploads", label: "Uploads" },
+  { href: "/dashboard/change-orders", label: "Change Orders" },
+];
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role?: AppRole;
+}) {
   const pathname = usePathname();
+  const nav = role === "foreman" ? foremanNav : adminNav;
+  const mobileQuickNav = nav.slice(0, 4);
+  const mobileMoreNav = nav.slice(4);
+  const showSettingsShortcut = role !== "foreman";
 
   return (
     <div className="min-h-screen bg-zinc-100">
@@ -36,13 +53,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SignOutButton className="rounded-xl border px-4 py-3 text-sm font-medium disabled:opacity-50" />
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className={`mt-3 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
           <Link href="/employee" className="rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-center text-sm font-medium text-zinc-800">
             Employee Portal
           </Link>
-          <Link href="/dashboard/settings" className="rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-center text-sm font-medium text-zinc-800">
-            Settings
-          </Link>
+          {showSettingsShortcut ? (
+            <Link href="/dashboard/settings" className="rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-center text-sm font-medium text-zinc-800">
+              Settings
+            </Link>
+          ) : null}
         </div>
       </header>
 
