@@ -1,13 +1,15 @@
-export async function callOpenAI(endpoint: string, body: unknown) {
-  const response = await fetch(endpoint, {
+type JsonRequestResult<T> = {
+  response: Response;
+  data: T | null;
+};
+
+export async function postJson<T>(url: string, payload: unknown): Promise<JsonRequestResult<T>> {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    throw new Error(`AI request failed: ${response.status}`);
-  }
-
-  return response.json();
+  const data = (await response.json().catch(() => null)) as T | null;
+  return { response, data };
 }
