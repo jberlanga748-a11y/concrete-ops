@@ -61,7 +61,7 @@ const adminSections: NavSection[] = [
     ],
   },
   {
-    title: "Tools",
+    title: "Tools & AI",
     items: [{ href: "/dashboard/concrete-calculator", label: "Concrete Calculator", icon: "file" }],
   },
   {
@@ -157,6 +157,7 @@ function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: 
 }
 
 function isActive(pathname: string, href: string) {
+  if (href.includes("#")) return false;
   if (href === "/dashboard") return pathname === "/dashboard";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -169,7 +170,15 @@ export function AppShell({
   role?: AppRole;
 }) {
   const pathname = usePathname();
-  const sections = role === "foreman" ? foremanSections : adminSections;
+  const sections = (role === "foreman" ? foremanSections : adminSections).map((section) => {
+    if (section.title !== "Tools & AI") return section;
+    if (!["owner", "office_admin"].includes(role ?? "")) return section;
+
+    return {
+      ...section,
+      items: [...section.items, { href: "/dashboard#admin-ops-copilot", label: "Admin Ops Copilot", icon: "chat" as const }],
+    };
+  });
   const flatNav = sections.flatMap((section) => section.items);
   const mobileQuickNav = flatNav.slice(0, 4);
   const mobileMoreNav = flatNav.slice(4);

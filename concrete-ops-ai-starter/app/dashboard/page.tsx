@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
+import { getCurrentAppUserContext } from "@/lib/auth/server";
 import {
   getDailyReports,
   getJobFiles,
@@ -64,7 +65,8 @@ function formatRelativeCount(value: number, singular: string, plural = `${singul
 }
 
 export default async function DashboardPage() {
-  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
+  const [appUser, { data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
+    getCurrentAppUserContext(),
     getTimeEntries(),
     getDailyReports(),
     getJobFiles(),
@@ -90,6 +92,7 @@ export default async function DashboardPage() {
       .map((entry) => getJobLabel(entry.jobs))
       .filter((label) => label !== "—")
   ).size;
+  const canUseAdminOpsCopilot = appUser ? ["owner", "office_admin"].includes(appUser.role) : false;
 
   const stats = [
     {
@@ -139,10 +142,10 @@ export default async function DashboardPage() {
               View Job Board
             </Link>
             <Link
-              href="/dashboard/concrete-calculator"
+              href="#tools-and-ai"
               className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
             >
-              Open Concrete Calculator
+              Browse Tools &amp; AI
             </Link>
           </div>
         </div>
@@ -246,8 +249,60 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      <section>
-        <AdminOpsCopilotCard />
+      <section id="tools-and-ai" className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Tools &amp; AI</p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Use the right tool without guessing who should see it</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              The concrete calculator stays available to field and office teams, while Admin Ops Copilot remains limited to owner and office admin workflows.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/concrete-calculator"
+            className="inline-flex items-center justify-center rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
+          >
+            Open Concrete Calculator
+          </Link>
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[0.9fr,1.1fr]">
+          <article className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4 sm:p-5">
+            <p className="text-sm font-semibold text-zinc-950">Concrete Calculator</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Build yardage totals, include waste, and move straight into ordering conversations without leaving the dashboard flow.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link
+                href="/dashboard/concrete-calculator"
+                className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100"
+              >
+                Launch calculator
+              </Link>
+              {canUseAdminOpsCopilot ? (
+                <Link href="#admin-ops-copilot" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+                  Jump to Admin Ops Copilot
+                </Link>
+              ) : (
+                <p className="text-sm leading-6 text-zinc-600">Admin Ops Copilot is limited to owner and office admin users.</p>
+              )}
+            </div>
+          </article>
+
+          <div id="admin-ops-copilot">
+            {canUseAdminOpsCopilot ? (
+              <AdminOpsCopilotCard />
+            ) : (
+              <article className="rounded-[28px] border border-zinc-200 bg-zinc-50/70 p-5 sm:p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Admin Ops Copilot</p>
+                <h3 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Reserved for office-side operations follow-up</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">
+                  This AI assistant is intentionally hidden outside owner and office admin roles so field users only see the tools that match their day-to-day workflow.
+                </p>
+              </article>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
