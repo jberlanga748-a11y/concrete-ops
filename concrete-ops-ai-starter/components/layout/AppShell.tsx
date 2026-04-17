@@ -48,77 +48,115 @@ type NavSection = {
   items: NavItem[];
 };
 
-const adminSections: NavSection[] = [
-  {
-    title: "Field Ops",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-      { href: "/dashboard/jobs", label: "Jobs", icon: "jobs" },
-      { href: "/dashboard/time", label: "Time", icon: "clock" },
-      { href: "/dashboard/daily-reports", label: "Daily Reports", icon: "clipboard" },
-      { href: "/dashboard/change-orders", label: "Change Orders", icon: "file" },
-      { href: "/dashboard/uploads", label: "Uploads", icon: "upload" },
-    ],
-  },
-  {
-    title: "Tools",
-    items: [{ href: "/dashboard/concrete-calculator", label: "Concrete Calculator", icon: "file" }],
-  },
-  {
-    title: "Office",
-    items: [
-      { href: "/dashboard/customers", label: "Customers", icon: "customers" },
-      { href: "/dashboard/estimates", label: "Estimates", icon: "file" },
-      { href: "/dashboard/proposals", label: "Proposals", icon: "chat" },
-      { href: "/dashboard/approvals", label: "Approvals", icon: "check" },
-    ],
-  },
-  {
-    title: "Compliance",
-    items: [
-      { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
-      { href: "/dashboard/policies", label: "Policies", icon: "shield" },
-      { href: "/dashboard/ppe", label: "PPE", icon: "hardhat" },
-      { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
-      { href: "/dashboard/notifications", label: "Notifications", icon: "bell" },
-    ],
-  },
-  {
-    title: "Admin",
-    items: [
-      { href: "/dashboard/employees", label: "Employees", icon: "users" },
-      { href: "/dashboard/audit-logs", label: "Audit Logs", icon: "file" },
-      { href: "/dashboard/settings", label: "Settings", icon: "settings" },
-    ],
-  },
-];
+type MobileShortcut = {
+  href: string;
+  label: string;
+};
 
-const foremanSections: NavSection[] = [
-  {
-    title: "Field Ops",
-    items: [
-      { href: "/dashboard/foreman", label: "Foreman", icon: "dashboard" },
-      { href: "/dashboard/jobs", label: "Jobs", icon: "jobs" },
-      { href: "/dashboard/time", label: "Time", icon: "clock" },
-      { href: "/dashboard/daily-reports", label: "Daily Reports", icon: "clipboard" },
-      { href: "/dashboard/change-orders", label: "Change Orders", icon: "file" },
-      { href: "/dashboard/uploads", label: "Uploads", icon: "upload" },
-    ],
-  },
-  {
-    title: "Tools",
-    items: [{ href: "/dashboard/concrete-calculator", label: "Concrete Calculator", icon: "file" }],
-  },
-  {
-    title: "Compliance",
-    items: [
-      { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
-      { href: "/dashboard/policies", label: "Policies", icon: "shield" },
-      { href: "/dashboard/ppe", label: "PPE", icon: "hardhat" },
-      { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
-    ],
-  },
-];
+function canUseAdminOpsCopilot(role?: AppRole) {
+  return role === "owner" || role === "office_admin";
+}
+
+function buildToolItems(role?: AppRole): NavItem[] {
+  return [
+    { href: "/dashboard/concrete-calculator", label: "Concrete Calculator", icon: "file" },
+    ...(canUseAdminOpsCopilot(role)
+      ? [{ href: "/dashboard#admin-ops-copilot", label: "Admin Ops Copilot", icon: "chat" as const }]
+      : []),
+  ];
+}
+
+function buildSections(role?: AppRole): NavSection[] {
+  if (role === "foreman") {
+    return [
+      {
+        title: "Field Ops",
+        items: [
+          { href: "/dashboard/foreman", label: "Foreman", icon: "dashboard" },
+          { href: "/dashboard/jobs", label: "Jobs", icon: "jobs" },
+          { href: "/dashboard/time", label: "Time", icon: "clock" },
+          { href: "/dashboard/daily-reports", label: "Daily Reports", icon: "clipboard" },
+          { href: "/dashboard/change-orders", label: "Change Orders", icon: "file" },
+          { href: "/dashboard/uploads", label: "Uploads", icon: "upload" },
+        ],
+      },
+      {
+        title: "Tools",
+        items: buildToolItems(role),
+      },
+      {
+        title: "Compliance",
+        items: [
+          { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
+          { href: "/dashboard/policies", label: "Policies", icon: "shield" },
+          { href: "/dashboard/ppe", label: "PPE", icon: "hardhat" },
+          { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
+        ],
+      },
+    ];
+  }
+
+  return [
+    {
+      title: "Field Ops",
+      items: [
+        { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+        { href: "/dashboard/jobs", label: "Jobs", icon: "jobs" },
+        { href: "/dashboard/time", label: "Time", icon: "clock" },
+        { href: "/dashboard/daily-reports", label: "Daily Reports", icon: "clipboard" },
+        { href: "/dashboard/change-orders", label: "Change Orders", icon: "file" },
+        { href: "/dashboard/uploads", label: "Uploads", icon: "upload" },
+      ],
+    },
+    {
+      title: canUseAdminOpsCopilot(role) ? "Tools & AI" : "Tools",
+      items: buildToolItems(role),
+    },
+    {
+      title: "Office",
+      items: [
+        { href: "/dashboard/customers", label: "Customers", icon: "customers" },
+        { href: "/dashboard/estimates", label: "Estimates", icon: "file" },
+        { href: "/dashboard/proposals", label: "Proposals", icon: "chat" },
+        { href: "/dashboard/approvals", label: "Approvals", icon: "check" },
+      ],
+    },
+    {
+      title: "Compliance",
+      items: [
+        { href: "/dashboard/incidents", label: "Incidents", icon: "alert" },
+        { href: "/dashboard/policies", label: "Policies", icon: "shield" },
+        { href: "/dashboard/ppe", label: "PPE", icon: "hardhat" },
+        { href: "/dashboard/toolbox-talks", label: "Toolbox Talks", icon: "chat" },
+        { href: "/dashboard/notifications", label: "Notifications", icon: "bell" },
+      ],
+    },
+    {
+      title: "Admin",
+      items: [
+        { href: "/dashboard/employees", label: "Employees", icon: "users" },
+        { href: "/dashboard/audit-logs", label: "Audit Logs", icon: "file" },
+        { href: "/dashboard/settings", label: "Settings", icon: "settings" },
+      ],
+    },
+  ];
+}
+
+function buildMobileShortcuts(role?: AppRole): MobileShortcut[] {
+  return [
+    { href: "/employee", label: "Employee Portal" },
+    { href: "/dashboard/concrete-calculator", label: "Concrete Calculator" },
+    ...(canUseAdminOpsCopilot(role) ? [{ href: "/dashboard#admin-ops-copilot", label: "Admin Ops Copilot" }] : []),
+    ...(role !== "foreman" ? [{ href: "/dashboard/settings", label: "Settings" }] : []),
+  ];
+}
+
+function getMobileHeaderGridClass(count: number) {
+  if (count <= 1) return "grid-cols-1";
+  if (count === 2) return "grid-cols-2";
+  if (count === 3) return "grid-cols-2 sm:grid-cols-3";
+  return "grid-cols-2 sm:grid-cols-4";
+}
 
 function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: string }) {
   switch (icon) {
@@ -157,6 +195,7 @@ function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: 
 }
 
 function isActive(pathname: string, href: string) {
+  if (href.includes("#")) return false;
   if (href === "/dashboard") return pathname === "/dashboard";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -169,11 +208,11 @@ export function AppShell({
   role?: AppRole;
 }) {
   const pathname = usePathname();
-  const sections = role === "foreman" ? foremanSections : adminSections;
+  const sections = buildSections(role);
   const flatNav = sections.flatMap((section) => section.items);
   const mobileQuickNav = flatNav.slice(0, 4);
   const mobileMoreNav = flatNav.slice(4);
-  const showSettingsShortcut = role !== "foreman";
+  const mobileShortcuts = buildMobileShortcuts(role);
   const portalTitle = role === "foreman" ? "Foreman Workspace" : "Admin Portal";
   const portalDescription =
     role === "foreman"
@@ -192,15 +231,16 @@ export function AppShell({
             <SignOutButton className="rounded-xl border px-4 py-3 text-sm font-medium disabled:opacity-50" />
           </div>
 
-          <div className={`mt-3 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
-            <Link href="/employee" className="rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-center text-sm font-medium text-zinc-800">
-              Employee Portal
-            </Link>
-            {showSettingsShortcut ? (
-              <Link href="/dashboard/settings" className="rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-center text-sm font-medium text-zinc-800">
-                Settings
+          <div className={`mt-3 grid gap-2 ${getMobileHeaderGridClass(mobileShortcuts.length)}`}>
+            {mobileShortcuts.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-center text-sm font-medium text-zinc-800"
+              >
+                {link.label}
               </Link>
-            ) : null}
+            ))}
           </div>
         </header>
 

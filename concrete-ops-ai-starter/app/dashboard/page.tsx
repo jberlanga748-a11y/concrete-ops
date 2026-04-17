@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
+import { getCurrentAppUserContext } from "@/lib/auth/server";
 import {
   getDailyReports,
   getJobFiles,
@@ -64,12 +65,14 @@ function formatRelativeCount(value: number, singular: string, plural = `${singul
 }
 
 export default async function DashboardPage() {
-  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
-    getTimeEntries(),
-    getDailyReports(),
-    getJobFiles(),
-    getNotifications({ unreadOnly: true }),
-  ]);
+  const [appUser, { data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] =
+    await Promise.all([
+      getCurrentAppUserContext(),
+      getTimeEntries(),
+      getDailyReports(),
+      getJobFiles(),
+      getNotifications({ unreadOnly: true }),
+    ]);
 
   const allTimeEntries = timeEntries ?? [];
   const allReports = reports ?? [];
@@ -90,6 +93,27 @@ export default async function DashboardPage() {
       .map((entry) => getJobLabel(entry.jobs))
       .filter((label) => label !== "—")
   ).size;
+  const canUseAdminOpsCopilot = appUser ? ["owner", "office_admin"].includes(appUser.role) : false;
+  const toolCards = [
+    {
+      href: "/dashboard/concrete-calculator",
+      eyebrow: "Calculator",
+      title: "Concrete Calculator",
+      description: "Build yardage totals with waste before ordering so field takeoff and office purchasing stay aligned.",
+      actionLabel: "Open calculator",
+    },
+    ...(canUseAdminOpsCopilot
+      ? [
+          {
+            href: "/dashboard#admin-ops-copilot",
+            eyebrow: "AI Assistant",
+            title: "Admin Ops Copilot",
+            description: "Ask grounded operations questions from jobs, daily reports, uploads, and change orders.",
+            actionLabel: "Open copilot",
+          },
+        ]
+      : []),
+  ];
 
   const stats = [
     {
@@ -139,13 +163,51 @@ export default async function DashboardPage() {
               View Job Board
             </Link>
             <Link
-              href="/dashboard/concrete-calculator"
+              href="/dashboard#tools-and-ai"
               className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
             >
-              Open Concrete Calculator
+              {canUseAdminOpsCopilot ? "View Tools & AI" : "View Tools"}
             </Link>
           </div>
         </div>
+      </section>
+
+      <section id="tools-and-ai" className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              {canUseAdminOpsCopilot ? "Tools & AI" : "Tools"}
+            </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Know where to go for calculators and operational help</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              These are the purpose-built tools in this workspace. Start here when you need yardage math or grounded operations answers instead of hunting through the dashboard.
+            </p>
+          </div>
+          <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-600">
+            {toolCards.length} tool{toolCards.length === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        <div className={`mt-5 grid gap-4 ${toolCards.length > 1 ? "xl:grid-cols-2" : ""}`}>
+          {toolCards.map((tool) => (
+            <Link
+              key={tool.href}
+              href={tool.href}
+              className="block rounded-[24px] border border-zinc-200 bg-zinc-50/80 p-5 transition hover:border-orange-300 hover:bg-orange-50"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{tool.eyebrow}</p>
+              <h3 className="mt-2 text-lg font-semibold tracking-tight text-zinc-950">{tool.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">{tool.description}</p>
+              <p className="mt-4 text-sm font-semibold text-orange-600">{tool.actionLabel}</p>
+            </Link>
+          ))}
+        </div>
+
+        {!canUseAdminOpsCopilot ? (
+          <p className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm leading-6 text-zinc-600">
+            Admin Ops Copilot is shown only to owner and office admin roles because it answers from office records.
+          </p>
+        ) : null}
       </section>
 
       <section className="grid gap-4 xl:grid-cols-4">
@@ -246,9 +308,11 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      <section>
-        <AdminOpsCopilotCard />
-      </section>
+      {canUseAdminOpsCopilot ? (
+        <section id="admin-ops-copilot" className="scroll-mt-24">
+          <AdminOpsCopilotCard />
+        </section>
+      ) : null}
 
       <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
