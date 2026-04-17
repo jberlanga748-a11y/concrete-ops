@@ -1,5 +1,17 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 import type { EmployeeListRow } from "@/lib/db/queries";
+import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import {
+  DataTable,
+  TableActionLink,
+  TableBody,
+  TableCell,
+  TableEmptyRow,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+  TableShell,
+} from "@/components/ui/table";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -8,43 +20,59 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
-export function EmployeeTable({ employees }: { employees: EmployeeListRow[] }) {
+export function EmployeeTable({
+  employees,
+  toolbar,
+}: {
+  employees: EmployeeListRow[];
+  toolbar?: ReactNode;
+}) {
   return (
-    <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-      <table className="w-full text-sm">
-        <thead className="bg-zinc-100">
+    <TableShell toolbar={toolbar}>
+      <DataTable>
+        <TableHead>
           <tr>
-            <th className="px-4 py-3 text-left">Employee</th>
-            <th className="px-4 py-3 text-left">Crew</th>
-            <th className="px-4 py-3 text-left">Title</th>
-            <th className="px-4 py-3 text-left">Status</th>
-            <th className="px-4 py-3 text-left">Hire Date</th>
+            <TableHeadCell>Employee</TableHeadCell>
+            <TableHeadCell>Crew</TableHeadCell>
+            <TableHeadCell>Title</TableHeadCell>
+            <TableHeadCell>Status</TableHeadCell>
+            <TableHeadCell>Hire Date</TableHeadCell>
+            <TableHeadCell className="w-32">Actions</TableHeadCell>
           </tr>
-        </thead>
-        <tbody>
+        </TableHead>
+        <TableBody>
           {employees.map((employee) => (
-            <tr key={employee.id} className="border-t">
-              <td className="px-4 py-4">
-                <Link href={`/dashboard/employees/${employee.id}`} className="font-medium hover:underline">
-                  {employee.full_name}
-                </Link>
-                <p className="mt-1 text-xs text-zinc-500">{employee.email || employee.phone || "No contact info"}</p>
-              </td>
-              <td className="px-4 py-4">{employee.crew_name || "—"}</td>
-              <td className="px-4 py-4">{employee.job_title || "—"}</td>
-              <td className="px-4 py-4">{employee.is_active ? "Active" : "Inactive"}</td>
-              <td className="px-4 py-4">{formatDate(employee.hire_date)}</td>
-            </tr>
+            <TableRow key={employee.id}>
+              <TableCell>
+                <p className="font-semibold text-zinc-950">{employee.full_name}</p>
+                <p className="mt-1 text-sm text-zinc-600">{employee.email || employee.phone || "No contact info"}</p>
+              </TableCell>
+              <TableCell>{employee.crew_name || "—"}</TableCell>
+              <TableCell>{employee.job_title || "—"}</TableCell>
+              <TableCell>
+                <StatusChip tone={employee.is_active ? "success" : "warning"}>
+                  {employee.is_active ? "Active" : "Inactive"}
+                </StatusChip>
+              </TableCell>
+              <TableCell>{formatDate(employee.hire_date)}</TableCell>
+              <TableCell>
+                <TableActionLink href={`/dashboard/employees/${employee.id}`} label="Edit" />
+              </TableCell>
+            </TableRow>
           ))}
           {employees.length === 0 ? (
-            <tr>
-              <td className="px-4 py-6 text-zinc-600" colSpan={5}>
-                No employees found yet.
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={6}>
+              <EmptyState
+                icon="users"
+                title="No employees found"
+                description="Add employees so they can be assigned to jobs, clock time, and appear in daily report crew rows."
+                actionHref="/dashboard/employees/new"
+                actionLabel="Add employee"
+              />
+            </TableEmptyRow>
           ) : null}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </DataTable>
+    </TableShell>
   );
 }

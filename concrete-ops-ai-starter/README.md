@@ -19,6 +19,11 @@
 5. Create at least one company, user, employee, customer, job, and phase in Supabase.
 6. Start the app with `npm run dev`.
 
+## Package management
+- `npm` is the canonical package manager for `concrete-ops-ai-starter`.
+- Keep `package-lock.json` committed and do not add `pnpm-lock.yaml`.
+- CI installs dependencies with `npm ci` from the app directory.
+
 ## Important note
 The employee clock card uses real database IDs. Until you add seed data, use Supabase directly or add a seed script.
 

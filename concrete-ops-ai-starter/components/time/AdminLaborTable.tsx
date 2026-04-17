@@ -1,4 +1,16 @@
+import type { ReactNode } from "react";
 import type { JobTimeEntryRow } from "@/lib/db/queries";
+import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import {
+  DataTable,
+  TableBody,
+  TableCell,
+  TableEmptyRow,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+  TableShell,
+} from "@/components/ui/table";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -22,42 +34,72 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"]) {
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
-export function AdminLaborTable({ entries }: { entries: JobTimeEntryRow[] }) {
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function getStatusTone(status: string) {
+  if (status === "clocked_in") return "info" as const;
+  if (status === "on_break") return "warning" as const;
+  return "neutral" as const;
+}
+
+export function AdminLaborTable({
+  entries,
+  toolbar,
+}: {
+  entries: JobTimeEntryRow[];
+  toolbar?: ReactNode;
+}) {
   return (
-    <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-      <table className="w-full text-sm">
-        <thead className="bg-zinc-100">
+    <TableShell toolbar={toolbar}>
+      <DataTable>
+        <TableHead>
           <tr>
-            <th className="px-4 py-3 text-left">Employee</th>
-            <th className="px-4 py-3 text-left">Job</th>
-            <th className="px-4 py-3 text-left">Phase</th>
-            <th className="px-4 py-3 text-left">Clock In</th>
-            <th className="px-4 py-3 text-left">Clock Out</th>
-            <th className="px-4 py-3 text-left">Hours</th>
-            <th className="px-4 py-3 text-left">Status</th>
+            <TableHeadCell>Employee</TableHeadCell>
+            <TableHeadCell>Job</TableHeadCell>
+            <TableHeadCell>Phase</TableHeadCell>
+            <TableHeadCell>Clock In</TableHeadCell>
+            <TableHeadCell>Clock Out</TableHeadCell>
+            <TableHeadCell>Hours</TableHeadCell>
+            <TableHeadCell>Status</TableHeadCell>
           </tr>
-        </thead>
-        <tbody>
+        </TableHead>
+        <TableBody>
           {entries.map((entry) => (
-            <tr key={entry.id} className="border-t">
-              <td className="px-4 py-4">{getEmployeeName(entry.employees)}</td>
-              <td className="px-4 py-4">{getJobLabel(entry.jobs)}</td>
-              <td className="px-4 py-4">{getPhaseName(entry.job_phases)}</td>
-              <td className="px-4 py-4">{entry.clock_in_at}</td>
-              <td className="px-4 py-4">{entry.clock_out_at ?? "—"}</td>
-              <td className="px-4 py-4">{entry.total_hours ?? "—"}</td>
-              <td className="px-4 py-4">{entry.status}</td>
-            </tr>
+            <TableRow key={entry.id}>
+              <TableCell>{getEmployeeName(entry.employees)}</TableCell>
+              <TableCell>{getJobLabel(entry.jobs)}</TableCell>
+              <TableCell>{getPhaseName(entry.job_phases)}</TableCell>
+              <TableCell>{formatDateTime(entry.clock_in_at)}</TableCell>
+              <TableCell>{formatDateTime(entry.clock_out_at)}</TableCell>
+              <TableCell>{entry.total_hours ?? "—"}</TableCell>
+              <TableCell>
+                <StatusChip tone={getStatusTone(entry.status)}>{entry.status.replaceAll("_", " ")}</StatusChip>
+              </TableCell>
+            </TableRow>
           ))}
           {entries.length === 0 ? (
-            <tr>
-              <td className="px-4 py-6 text-zinc-600" colSpan={7}>
-                No time entries match the current filters.
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={7}>
+              <EmptyState
+                icon="clock"
+                title="No time entries match this view"
+                description="Adjust the filters or add a new clock entry above to start building the labor log for this period."
+                actionHref="/dashboard/time"
+                actionLabel="Clear filters"
+              />
+            </TableEmptyRow>
           ) : null}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </DataTable>
+    </TableShell>
   );
 }
