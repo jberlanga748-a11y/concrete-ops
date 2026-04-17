@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
 import {
   getDailyReports,
   getJobFiles,
@@ -243,6 +244,10 @@ export default async function DashboardPage() {
             ))}
           </div>
         </article>
+      </section>
+
+      <section>
+        <AdminOpsCopilotCard />
       </section>
 
       <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
