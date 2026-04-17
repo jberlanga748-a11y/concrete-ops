@@ -137,6 +137,12 @@ export default async function DashboardPage() {
             >
               View Job Board
             </Link>
+            <Link
+              href="/dashboard/concrete-calculator"
+              className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+            >
+              Open Concrete Calculator
+            </Link>
           </div>
         </div>
       </section>
@@ -223,6 +229,7 @@ export default async function DashboardPage() {
               { href: "/dashboard/time", title: "Open Time Board", detail: "Review live labor, breaks, and clock status." },
               { href: "/dashboard/change-orders/new", title: "Start Change Order", detail: "Capture scope changes before they slip." },
               { href: "/dashboard/uploads/new", title: "Add Upload", detail: "Get photos and supporting files into the record." },
+              { href: "/dashboard/concrete-calculator", title: "Concrete Calculator", detail: "Build yardage totals with waste before ordering." },
               { href: "/dashboard/notifications", title: "Open Notifications", detail: "Clear office follow-up and escalations." },
             ].map((action) => (
               <Link
