@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { clockOutLatestEntry, createClockInEntry } from "@/lib/db/mutations";
+import { clockOutLatestEntryAction, createClockInEntryAction } from "@/components/time/actions";
 import type { TimeOption } from "@/lib/db/queries";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -99,13 +99,20 @@ export function EmployeeClockCard({
   const [jobId, setJobId] = useState("");
   const [jobPhaseId, setJobPhaseId] = useState("");
   const [loadingAction, setLoadingAction] = useState<"clock-in" | "clock-out" | null>(null);
+  const [isRefreshing, startRefreshTransition] = useTransition();
   const router = useRouter();
   const { pushToast } = useToast();
 
   const selectedEmployeeLabel = getOptionLabel(employeeOptions, employeeId, "Select crew member");
   const selectedJobLabel = getOptionLabel(jobOptions, jobId, "Select assignment");
   const selectedPhaseLabel = getOptionLabel(phaseOptions, jobPhaseId, "Phase is optional");
-  const isLoading = loadingAction !== null;
+  const isLoading = loadingAction !== null || isRefreshing;
+
+  function refreshLaborBoard() {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  }
 
   async function handleClockIn() {
     if (!employeeId || !jobId) {
@@ -120,7 +127,7 @@ export function EmployeeClockCard({
     setLoadingAction("clock-in");
 
     try {
-      const result = await createClockInEntry({ employeeId, jobId, jobPhaseId: jobPhaseId || undefined });
+      const result = await createClockInEntryAction({ employeeId, jobId, jobPhaseId: jobPhaseId || undefined });
 
       if (result.error) {
         pushToast({
@@ -134,9 +141,9 @@ export function EmployeeClockCard({
       pushToast({
         tone: "success",
         title: "Clock-in saved",
-        description: "The labor board has been refreshed with the new open shift.",
+        description: "Clock-in saved. Refreshing the labor board now.",
       });
-      router.refresh();
+      refreshLaborBoard();
     } catch {
       pushToast({
         tone: "error",
@@ -161,7 +168,7 @@ export function EmployeeClockCard({
     setLoadingAction("clock-out");
 
     try {
-      const result = await clockOutLatestEntry({ employeeId, jobId: jobId || undefined });
+      const result = await clockOutLatestEntryAction({ employeeId, jobId: jobId || undefined });
 
       if (result.error) {
         pushToast({
@@ -175,9 +182,9 @@ export function EmployeeClockCard({
       pushToast({
         tone: "success",
         title: "Clock-out saved",
-        description: "The latest matching time entry has been closed and the labor board is up to date.",
+        description: "Clock-out saved. Refreshing the labor board now.",
       });
-      router.refresh();
+      refreshLaborBoard();
     } catch {
       pushToast({
         tone: "error",
@@ -264,7 +271,7 @@ export function EmployeeClockCard({
 
         <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/90 p-4 text-sm leading-6 text-zinc-600">
           Clock-in creates a new open shift immediately. Clock-out closes the latest matching open entry for the selected
-          employee, and the labor board refreshes beside this panel after a successful save.
+          employee, and successful saves trigger a fresh labor board reload beside this panel.
         </div>
       </div>
     </section>

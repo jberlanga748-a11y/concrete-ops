@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import type { JobTimeEntryRow } from "@/lib/db/queries";
 import { EmptyState } from "@/components/ui/feedback";
 
@@ -24,15 +27,18 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"]) {
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
-function formatDateTime(value: string | null | undefined) {
+export function formatLaborDateTime(value: string | null | undefined, timeZone: string) {
   if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
+
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone,
+    timeZoneName: "short",
   }).format(parsed);
 }
 
@@ -55,13 +61,31 @@ function getStatusClasses(status: string) {
   return "border-zinc-200 bg-zinc-100 text-zinc-700";
 }
 
+function getViewerTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+function LaborTime({
+  value,
+  timeZone,
+  emptyLabel = "—",
+}: {
+  value: string | null | undefined;
+  timeZone: string;
+  emptyLabel?: string;
+}) {
+  if (!value) return <span>{emptyLabel}</span>;
+
+  return <time dateTime={value}>{formatLaborDateTime(value, timeZone)}</time>;
+}
+
 function SummaryTile({
   label,
   value,
   detail,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   detail: string;
 }) {
   return (
@@ -78,7 +102,7 @@ function DetailPair({
   value,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
 }) {
   return (
     <div className="space-y-1">
@@ -95,10 +119,15 @@ export function AdminLaborTable({
   entries: JobTimeEntryRow[];
   toolbar?: ReactNode;
 }) {
+  const [timeZone, setTimeZone] = useState("UTC");
+
+  useEffect(() => {
+    setTimeZone(getViewerTimeZone());
+  }, []);
+
   const openEntries = entries.filter((entry) => !entry.clock_out_at).length;
   const onBreakEntries = entries.filter((entry) => entry.status === "on_break").length;
   const loggedHours = entries.reduce((total, entry) => total + (entry.total_hours ?? 0), 0);
-  const latestMovement = entries[0] ? formatDateTime(entries[0].clock_out_at ?? entries[0].clock_in_at) : "—";
 
   return (
     <section className="overflow-hidden rounded-[32px] border border-zinc-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
@@ -117,6 +146,7 @@ export function AdminLaborTable({
       ) : (
         <>
           <div className="border-b border-zinc-200 bg-[linear-gradient(180deg,rgba(250,250,249,1)_0%,rgba(245,245,244,0.94)_100%)] px-5 py-4 sm:px-6">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Browser timezone · {timeZone}</p>
             <div className="grid gap-3 sm:grid-cols-3">
               <SummaryTile
                 label="Open Shifts"
@@ -124,7 +154,11 @@ export function AdminLaborTable({
                 detail={onBreakEntries > 0 ? `${onBreakEntries} entries are paused or on break` : "No breaks flagged in this view"}
               />
               <SummaryTile label="Logged Hours" value={formatHours(loggedHours)} detail="Recorded totals from the entries in view" />
-              <SummaryTile label="Latest Movement" value={latestMovement} detail="Most recent clock activity on this board" />
+              <SummaryTile
+                label="Latest Movement"
+                value={<LaborTime value={entries[0]?.clock_out_at ?? entries[0]?.clock_in_at} timeZone={timeZone} />}
+                detail="Most recent clock activity on this board"
+              />
             </div>
           </div>
 
@@ -155,8 +189,11 @@ export function AdminLaborTable({
                     </p>
 
                     <dl className="mt-4 grid gap-4 sm:grid-cols-3">
-                      <DetailPair label="Clock in" value={formatDateTime(entry.clock_in_at)} />
-                      <DetailPair label="Clock out" value={entry.clock_out_at ? formatDateTime(entry.clock_out_at) : "Still open"} />
+                      <DetailPair label="Clock in" value={<LaborTime value={entry.clock_in_at} timeZone={timeZone} />} />
+                      <DetailPair
+                        label="Clock out"
+                        value={<LaborTime value={entry.clock_out_at} timeZone={timeZone} emptyLabel="Still open" />}
+                      />
                       <DetailPair label="Hours" value={entry.clock_out_at ? formatHours(entry.total_hours) : "In progress"} />
                     </dl>
                   </div>
@@ -197,9 +234,11 @@ export function AdminLaborTable({
                           {phaseName === "—" ? "No phase tagged" : `Phase · ${phaseName}`}
                         </p>
                       </td>
-                      <td className="px-5 py-4 align-top text-zinc-700">{formatDateTime(entry.clock_in_at)}</td>
                       <td className="px-5 py-4 align-top text-zinc-700">
-                        {entry.clock_out_at ? formatDateTime(entry.clock_out_at) : "Still open"}
+                        <LaborTime value={entry.clock_in_at} timeZone={timeZone} />
+                      </td>
+                      <td className="px-5 py-4 align-top text-zinc-700">
+                        <LaborTime value={entry.clock_out_at} timeZone={timeZone} emptyLabel="Still open" />
                       </td>
                       <td className="px-5 py-4 align-top">
                         <span className="font-semibold text-zinc-950">

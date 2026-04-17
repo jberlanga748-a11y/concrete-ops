@@ -11,19 +11,6 @@ function formatHours(value: number) {
   }).format(value)} hrs`;
 }
 
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "Ready for the first shift";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
-}
-
 function getOptionLabel(options: TimeOption[], id: string) {
   return options.find((option) => option.id === id)?.label ?? null;
 }
@@ -103,7 +90,12 @@ export default async function TimePage({
   const loggedHours = timeEntries.reduce((total, entry) => total + (entry.total_hours ?? 0), 0);
   const trackedEmployees = new Set(timeEntries.map((entry) => entry.employee_id).filter(Boolean)).size;
   const trackedJobs = new Set(timeEntries.map((entry) => entry.job_id).filter(Boolean)).size;
-  const latestActivity = timeEntries[0] ? formatDateTime(timeEntries[0].clock_out_at ?? timeEntries[0].clock_in_at) : "Ready for the first shift";
+  const latestActivity =
+    timeEntries.length === 0
+      ? "Ready for the first shift"
+      : timeEntries[0]?.clock_out_at
+        ? "Recent clock-out recorded on this board"
+        : "Open shift recently started on this board";
   const resultCountLabel = `${timeEntries.length} entr${timeEntries.length === 1 ? "y" : "ies"}`;
   const scopeChips = [
     hasFilters ? "Filtered live board" : "All crews in view",
