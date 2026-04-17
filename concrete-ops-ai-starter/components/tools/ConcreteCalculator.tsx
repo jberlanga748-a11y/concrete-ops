@@ -339,14 +339,14 @@ export function ConcreteCalculator() {
               <textarea
                 value={shorthandInput}
                 onChange={(event) => setShorthandInput(event.target.value)}
-                placeholder={`20 panels 5x5x4\nRamp pour 12x8x6\n2 footings 3ft x 3ft x 18in\n24in x 24in x 4in`}
+                placeholder={`20 panels 5x5x4\nRamp pour 12x8x6\n2 footings 3ft x 3ft x 18in`}
                 className="min-h-32 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-500"
               />
               <p className="mt-2 text-xs leading-5 text-zinc-500">
                 Default shorthand assumes <span className="font-medium text-zinc-700">length × width in feet</span> and{" "}
                 <span className="font-medium text-zinc-700">depth in inches</span> when units are omitted, so
-                <span className="font-medium text-zinc-700"> 5x5x4</span> means 5 ft × 5 ft × 4 in. Explicit inch-based
-                length and width entries like <span className="font-medium text-zinc-700">24in x 24in x 4in</span> are converted to feet automatically.
+                <span className="font-medium text-zinc-700"> 5x5x4</span> means 5 ft × 5 ft × 4 in. Length and width
+                must be feet (ft, f, ') in default mode; inches are only allowed for depth.
               </p>
               {parseErrors.length > 0 ? (
                 <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">

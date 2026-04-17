@@ -25,6 +25,10 @@ export type ParsedConcreteShorthandBatch = {
   errors: string[];
 };
 
+export type ParseConcreteShorthandOptions = {
+  allowInchLengthWidth?: boolean;
+};
+
 type ParsedDimension =
   | { unit: "ft"; value: number }
   | { unit: "in"; value: number };
@@ -89,7 +93,10 @@ function parseDimensionValue(rawValue: string, rawUnit: string | undefined, defa
   return null;
 }
 
-export function parseConcreteShorthandLine(input: string): ParsedConcreteShorthandLine {
+export function parseConcreteShorthandLine(
+  input: string,
+  options: ParseConcreteShorthandOptions = {},
+): ParsedConcreteShorthandLine {
   const trimmed = input.trim();
   if (!trimmed) {
     return { ok: false, error: "Line is empty." };
@@ -114,6 +121,13 @@ export function parseConcreteShorthandLine(input: string): ParsedConcreteShortha
     return {
       ok: false,
       error: `Couldn't parse dimensions in "${trimmed}". Supported units are feet and inches.`,
+    };
+  }
+
+  if (!options.allowInchLengthWidth && (lengthDimension.unit === "in" || widthDimension.unit === "in")) {
+    return {
+      ok: false,
+      error: `Length and width must use feet (ft, f, '). Inches are only allowed for depth unless inch mode is enabled.`,
     };
   }
 
@@ -147,7 +161,10 @@ export function parseConcreteShorthandLine(input: string): ParsedConcreteShortha
   };
 }
 
-export function parseConcreteShorthandBatch(input: string): ParsedConcreteShorthandBatch {
+export function parseConcreteShorthandBatch(
+  input: string,
+  options: ParseConcreteShorthandOptions = {},
+): ParsedConcreteShorthandBatch {
   const lines = input
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -157,7 +174,7 @@ export function parseConcreteShorthandBatch(input: string): ParsedConcreteShorth
   const errors: string[] = [];
 
   lines.forEach((line, index) => {
-    const parsed = parseConcreteShorthandLine(line);
+    const parsed = parseConcreteShorthandLine(line, options);
     if (parsed.ok) {
       rows.push(parsed.row);
       return;

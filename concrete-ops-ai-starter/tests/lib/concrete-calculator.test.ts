@@ -51,6 +51,21 @@ describe("concrete calculator shorthand parser", () => {
     });
   });
 
+  it("defaults omitted units to feet, feet, and inches by position", () => {
+    const parsed = parseConcreteShorthandLine("Ramp pour 12x8x6");
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.row).toMatchObject({
+      description: "Ramp pour",
+      quantity: 1,
+      lengthFeet: 12,
+      widthFeet: 8,
+      depthInches: 6,
+    });
+  });
+
   it("parses explicit feet and inches units", () => {
     const parsed = parseConcreteShorthandLine("2 footings 3ft x 3ft x 18in");
 
@@ -66,8 +81,31 @@ describe("concrete calculator shorthand parser", () => {
     });
   });
 
-  it("converts inch-based length and width into feet", () => {
+  it("accepts shorthand unit aliases and symbol notation", () => {
+    const parsed = parseConcreteShorthandLine("3 forms 6' x 2.5f x 6i");
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.row).toMatchObject({
+      description: "forms",
+      quantity: 3,
+      lengthFeet: 6,
+      widthFeet: 2.5,
+      depthInches: 6,
+    });
+  });
+
+  it("rejects inch-based length and width by default", () => {
     const parsed = parseConcreteShorthandLine("24in x 24in x 4in");
+
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.error).toBe("Length and width must use feet (ft, f, '). Inches are only allowed for depth unless inch mode is enabled.");
+  });
+
+  it("converts inch-based length and width only when inch mode is enabled", () => {
+    const parsed = parseConcreteShorthandLine("24\" x 30\" x 1.5'", { allowInchLengthWidth: true });
 
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
@@ -76,8 +114,8 @@ describe("concrete calculator shorthand parser", () => {
       description: "Concrete item",
       quantity: 1,
       lengthFeet: 2,
-      widthFeet: 2,
-      depthInches: 4,
+      widthFeet: 2.5,
+      depthInches: 18,
     });
   });
 
