@@ -61,6 +61,10 @@ const adminSections: NavSection[] = [
     ],
   },
   {
+    title: "Tools",
+    items: [{ href: "/dashboard/concrete-calculator", label: "Concrete Calculator", icon: "file" }],
+  },
+  {
     title: "Office",
     items: [
       { href: "/dashboard/customers", label: "Customers", icon: "customers" },
@@ -100,6 +104,10 @@ const foremanSections: NavSection[] = [
       { href: "/dashboard/change-orders", label: "Change Orders", icon: "file" },
       { href: "/dashboard/uploads", label: "Uploads", icon: "upload" },
     ],
+  },
+  {
+    title: "Tools",
+    items: [{ href: "/dashboard/concrete-calculator", label: "Concrete Calculator", icon: "file" }],
   },
   {
     title: "Compliance",
