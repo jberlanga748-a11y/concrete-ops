@@ -205,6 +205,49 @@ describe("admin ops copilot route safeguards", () => {
     expect(body.error).toBe("AI returned citations that do not resolve to grounded records.");
   });
 
+  it("returns a grounded answer when citations resolve to included records", async () => {
+    vi.mocked(createClient).mockResolvedValue(mockSupabaseClient() as never);
+    global.fetch = vi.fn(async () =>
+      jsonResponse({
+        output_text: JSON.stringify({
+          answer: "J-100 has a recent daily report, a progress upload, and one submitted change order tied to the same report.",
+          confidence: "high",
+          citations: [
+            {
+              entityType: "daily_report",
+              id: "report-1",
+              label: "J-100 · Warehouse Slab daily report for 2026-04-14",
+              reason: "Confirms slab placement and completed work on 2026-04-14.",
+            },
+            {
+              entityType: "change_order",
+              id: "co-1",
+              label: "Additional edge prep",
+              reason: "Shows one submitted change order linked to the same job and report.",
+            },
+          ],
+        }),
+      }),
+    ) as typeof fetch;
+
+    const request = new NextRequest("http://localhost/api/ai/admin-ops-copilot", {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Summarize recent activity for Warehouse Slab.",
+      }),
+      headers: { "content-type": "application/json" },
+    });
+
+    const response = await adminOpsCopilotPost(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.answer.answer).toContain("J-100");
+    expect(body.answer.confidence).toBe("high");
+    expect(body.answer.citations).toHaveLength(2);
+    expect(body.answer.citations[0].id).toBe("report-1");
+  });
+
   afterEach(() => {
     global.fetch = originalFetch;
     process.env.OPENAI_API_KEY = originalApiKey;

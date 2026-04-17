@@ -78,12 +78,46 @@ function firstRelation<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function questionKeywords(question: string) {
-  return Array.from(new Set(question.toLowerCase().match(/[a-z0-9][a-z0-9\-]{2,}/g) ?? [])).slice(0, 10);
+  const stopWords = new Set([
+    "about",
+    "after",
+    "before",
+    "both",
+    "from",
+    "have",
+    "jobs",
+    "last",
+    "more",
+    "open",
+    "that",
+    "this",
+    "what",
+    "which",
+    "with",
+  ]);
+
+  return Array.from(
+    new Set((question.toLowerCase().match(/[a-z0-9][a-z0-9\-]{2,}/g) ?? []).filter((keyword) => !stopWords.has(keyword))),
+  ).slice(0, 10);
 }
 
 function includesKeyword(text: string, keywords: string[]) {
   const lowered = text.toLowerCase();
   return keywords.some((keyword) => lowered.includes(keyword));
+}
+
+function keywordScore(text: string, keywords: string[]) {
+  const lowered = text.toLowerCase();
+  return keywords.reduce((score, keyword) => score + (lowered.includes(keyword) ? 1 : 0), 0);
+}
+
+function recencyScore(dateText: string | null | undefined) {
+  if (!dateText) return 0;
+  const parsed = new Date(dateText);
+  if (Number.isNaN(parsed.getTime())) return 0;
+
+  const ageDays = Math.max(0, (Date.now() - parsed.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, 30 - Math.min(ageDays, 30));
 }
 
 function buildGroundedSnapshot(input: {
@@ -96,63 +130,139 @@ function buildGroundedSnapshot(input: {
   const keywords = questionKeywords(input.question);
   const hasKeyword = keywords.length > 0;
 
-  const scopedJobs = hasKeyword
-    ? input.jobs.filter((job) =>
-      includesKeyword([job.job_number, job.name, job.status].join(" "), keywords),
-    )
-    : [];
+  const scoredJobs = input.jobs
+    .map((job) => ({
+      row: job,
+      score: hasKeyword ? keywordScore([job.job_number, job.name, job.status].join(" "), keywords) : 0,
+    }))
+    .sort((a, b) => b.score - a.score || recencyScore(b.row.created_at) - recencyScore(a.row.created_at));
 
-  const scopedReports = hasKeyword
-    ? input.reports.filter((report) => {
+  const scoredReports = input.reports
+    .map((report) => {
       const job = firstRelation(report.jobs);
-      return includesKeyword(
-        [
-          report.report_date,
-          report.work_completed,
-          report.delays_issues ?? "",
-          report.materials_deliveries ?? "",
-          report.safety_notes ?? "",
-          job ? `${job.job_number} ${job.name}` : "",
-        ].join(" "),
-        keywords,
-      );
+      return {
+        row: report,
+        score: hasKeyword
+          ? keywordScore(
+              [
+                report.report_date,
+                report.work_completed,
+                report.delays_issues ?? "",
+                report.materials_deliveries ?? "",
+                report.safety_notes ?? "",
+                job ? `${job.job_number} ${job.name}` : "",
+              ].join(" "),
+              keywords,
+            )
+          : 0,
+      };
     })
-    : [];
+    .sort((a, b) => b.score - a.score || recencyScore(b.row.report_date) - recencyScore(a.row.report_date));
 
-  const scopedUploads = hasKeyword
-    ? input.uploads.filter((upload) => {
+  const scoredUploads = input.uploads
+    .map((upload) => {
       const job = firstRelation(upload.jobs);
-      return includesKeyword(
-        [
-          upload.file_name,
-          upload.tag,
-          upload.note ?? "",
-          job ? `${job.job_number} ${job.name}` : "",
-        ].join(" "),
-        keywords,
-      );
+      return {
+        row: upload,
+        score: hasKeyword
+          ? keywordScore(
+              [
+                upload.file_name,
+                upload.tag,
+                upload.note ?? "",
+                job ? `${job.job_number} ${job.name}` : "",
+              ].join(" "),
+              keywords,
+            )
+          : 0,
+      };
     })
-    : [];
+    .sort((a, b) => b.score - a.score || recencyScore(b.row.created_at) - recencyScore(a.row.created_at));
 
-  const scopedChangeOrders = hasKeyword
-    ? input.changeOrders.filter((changeOrder) => {
+  const scoredChangeOrders = input.changeOrders
+    .map((changeOrder) => {
       const job = firstRelation(changeOrder.jobs);
-      return includesKeyword(
-        [
-          changeOrder.title,
-          changeOrder.description ?? "",
-          changeOrder.status,
-          job ? `${job.job_number} ${job.name}` : "",
-        ].join(" "),
-        keywords,
-      );
+      return {
+        row: changeOrder,
+        score: hasKeyword
+          ? keywordScore(
+              [
+                changeOrder.title,
+                changeOrder.description ?? "",
+                changeOrder.status,
+                job ? `${job.job_number} ${job.name}` : "",
+              ].join(" "),
+              keywords,
+            )
+          : 0,
+      };
     })
-    : [];
+    .sort((a, b) => b.score - a.score || recencyScore(b.row.created_at) - recencyScore(a.row.created_at));
 
-  const fallbackJobs = input.jobs.slice(0, 10);
-  const fallbackReports = input.reports.slice(0, 14);
-  const fallbackUploads = input.uploads.slice(0, 14);
-  const fallbackChangeOrders = input.changeOrders.slice(0, 14);
+  const matchedJobs = scoredJobs.filter((entry) => entry.score > 0).map((entry) => entry.row);
+  const matchedReports = scoredReports.filter((entry) => entry.score > 0).map((entry) => entry.row);
+  const matchedUploads = scoredUploads.filter((entry) => entry.score > 0).map((entry) => entry.row);
+  const matchedChangeOrders = scoredChangeOrders.filter((entry) => entry.score > 0).map((entry) => entry.row);
+
+  const relatedJobIds = new Set([
+    ...matchedJobs.map((job) => job.id),
+    ...matchedReports.map((report) => report.job_id),
+    ...matchedUploads.map((upload) => upload.job_id),
+    ...matchedChangeOrders.map((changeOrder) => changeOrder.job_id),
+  ]);
+  const relatedReportIds = new Set([
+    ...matchedReports.map((report) => report.id),
+    ...matchedUploads.map((upload) => upload.daily_report_id).filter((id): id is string => Boolean(id)),
+    ...matchedChangeOrders.map((changeOrder) => changeOrder.daily_report_id).filter((id): id is string => Boolean(id)),
+  ]);
+
+  function takeRelevant<T extends { id: string }>(
+    directMatches: T[],
+    relatedMatches: T[],
+    fallbackRows: T[],
+    limit: number,
+  ) {
+    const selected: T[] = [];
+    const seen = new Set<string>();
+
+    for (const row of [...directMatches, ...relatedMatches, ...fallbackRows]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      selected.push(row);
+      if (selected.length >= limit) break;
+    }
+
+    return selected;
+  }
+
+  const scopedJobs = takeRelevant(
+    matchedJobs,
+    input.jobs.filter((job) => relatedJobIds.has(job.id)),
+    scoredJobs.map((entry) => entry.row),
+    10,
+  );
+  const scopedReports = takeRelevant(
+    matchedReports,
+    input.reports.filter((report) => relatedJobIds.has(report.job_id) || relatedReportIds.has(report.id)),
+    scoredReports.map((entry) => entry.row),
+    14,
+  );
+  const scopedUploads = takeRelevant(
+    matchedUploads,
+    input.uploads.filter((upload) => relatedJobIds.has(upload.job_id) || (upload.daily_report_id ? relatedReportIds.has(upload.daily_report_id) : false)),
+    scoredUploads.map((entry) => entry.row),
+    14,
+  );
+  const scopedChangeOrders = takeRelevant(
+    matchedChangeOrders,
+    input.changeOrders.filter(
+      (changeOrder) =>
+        relatedJobIds.has(changeOrder.job_id) ||
+        (changeOrder.daily_report_id ? relatedReportIds.has(changeOrder.daily_report_id) : false),
+    ),
+    scoredChangeOrders.map((entry) => entry.row),
+    14,
+  );
 
   return {
     question: input.question,
@@ -167,7 +277,7 @@ function buildGroundedSnapshot(input: {
       uploadsMatched: scopedUploads.length,
       changeOrdersMatched: scopedChangeOrders.length,
     },
-    jobs: (scopedJobs.length > 0 ? scopedJobs : fallbackJobs).map((job) => ({
+    jobs: scopedJobs.map((job) => ({
       id: job.id,
       label: `${job.job_number} · ${job.name}`,
       status: job.status,
@@ -175,7 +285,7 @@ function buildGroundedSnapshot(input: {
       targetFinishDate: job.target_finish_date,
       createdAt: job.created_at,
     })),
-    dailyReports: (scopedReports.length > 0 ? scopedReports : fallbackReports).map((report) => {
+    dailyReports: scopedReports.map((report) => {
       const job = firstRelation(report.jobs);
       return {
         id: report.id,
@@ -189,7 +299,7 @@ function buildGroundedSnapshot(input: {
         createdAt: report.created_at,
       };
     }),
-    uploads: (scopedUploads.length > 0 ? scopedUploads : fallbackUploads).map((upload) => {
+    uploads: scopedUploads.map((upload) => {
       const job = firstRelation(upload.jobs);
       return {
         id: upload.id,
@@ -202,7 +312,7 @@ function buildGroundedSnapshot(input: {
         createdAt: upload.created_at,
       };
     }),
-    changeOrders: (scopedChangeOrders.length > 0 ? scopedChangeOrders : fallbackChangeOrders).map((changeOrder) => {
+    changeOrders: scopedChangeOrders.map((changeOrder) => {
       const job = firstRelation(changeOrder.jobs);
       const report = firstRelation(changeOrder.daily_reports);
       return {

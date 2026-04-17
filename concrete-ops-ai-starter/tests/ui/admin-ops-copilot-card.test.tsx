@@ -48,4 +48,46 @@ describe("AdminOpsCopilotCard", () => {
 
     expect(await screen.findByText("Copilot unavailable")).toBeInTheDocument();
   });
+
+  it("renders grounded answer details on success", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          answer: {
+            answer: "Warehouse Slab has one recent daily report and one submitted change order.",
+            confidence: "high",
+            citations: [
+              {
+                entityType: "daily_report",
+                id: "report-1",
+                label: "J-100 · Warehouse Slab daily report for 2026-04-14",
+                reason: "Confirms completed slab work on 2026-04-14.",
+              },
+            ],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    ) as typeof fetch;
+
+    render(
+      <ToastProvider>
+        <AdminOpsCopilotCard />
+      </ToastProvider>,
+    );
+
+    await userEvent.type(
+      screen.getAllByPlaceholderText("Example: Which jobs had both a daily report and a change order in the last week?")[0],
+      "Summarize recent activity for Warehouse Slab.",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Ask Copilot" }));
+
+    expect(await screen.findByText("Warehouse Slab has one recent daily report and one submitted change order.")).toBeInTheDocument();
+    expect(screen.getByText("1 source")).toBeInTheDocument();
+    expect(screen.getByText("Daily report")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open report" })).toHaveAttribute("href", "/dashboard/daily-reports/report-1");
+  });
 });
