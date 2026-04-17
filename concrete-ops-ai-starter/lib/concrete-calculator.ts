@@ -62,14 +62,17 @@ export function calculateConcreteTotals(
   wastePercent: number,
 ): ConcreteTotals {
   const subtotalCubicFeet = rows.reduce((sum, row) => sum + calculateConcreteRowCubicFeet(row), 0);
-  const subtotalCubicYards = subtotalCubicFeet / 27;
-  const wasteCubicYards = subtotalCubicYards * (Math.max(wastePercent, 0) / 100);
+  const subtotalCubicYardsRaw = subtotalCubicFeet / 27;
+  const wasteCubicYardsRaw = subtotalCubicYardsRaw * (Math.max(wastePercent, 0) / 100);
+  const subtotalCubicYards = roundTo(subtotalCubicYardsRaw, 2);
+  const wasteCubicYards = roundTo(wasteCubicYardsRaw, 2);
+  const totalCubicYards = roundTo(subtotalCubicYards + wasteCubicYards, 2);
 
   return {
     subtotalCubicFeet: roundTo(subtotalCubicFeet, 2),
-    subtotalCubicYards: roundTo(subtotalCubicYards, 2),
-    wasteCubicYards: roundTo(wasteCubicYards, 2),
-    totalCubicYards: roundTo(subtotalCubicYards + wasteCubicYards, 2),
+    subtotalCubicYards,
+    wasteCubicYards,
+    totalCubicYards,
   };
 }
 

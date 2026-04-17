@@ -31,7 +31,8 @@ describe("concrete calculator math", () => {
 
     expect(totals.subtotalCubicYards).toBe(5.94);
     expect(totals.wasteCubicYards).toBe(0.48);
-    expect(totals.totalCubicYards).toBe(6.41);
+    expect(totals.totalCubicYards).toBe(6.42);
+    expect(totals.totalCubicYards).toBe(totals.subtotalCubicYards + totals.wasteCubicYards);
   });
 });
 
