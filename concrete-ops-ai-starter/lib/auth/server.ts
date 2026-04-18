@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { AppRole } from "@/lib/auth/roles";
+import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
 export type AppUserContext = {
@@ -41,15 +42,29 @@ export async function getCurrentAppUserContext() {
   } satisfies AppUserContext;
 }
 
-export async function requireOfficeUser() {
+export async function requireOfficeUser(nextPath = "/dashboard/settings") {
   const appUser = await getCurrentAppUserContext();
 
   if (!appUser) {
-    redirect("/login?next=/dashboard/settings");
+    redirect(`/login?next=${nextPath}`);
   }
 
-  if (!["owner", "office_admin"].includes(appUser.role)) {
-    redirect(appUser.role === "foreman" ? "/dashboard/foreman" : "/employee");
+  if (!isOfficeRole(appUser.role)) {
+    redirect(getRoleHomePath(appUser.role));
+  }
+
+  return appUser;
+}
+
+export async function requireForemanUser() {
+  const appUser = await getCurrentAppUserContext();
+
+  if (!appUser) {
+    redirect("/login?next=/dashboard/foreman");
+  }
+
+  if (appUser.role !== "foreman") {
+    redirect(getRoleHomePath(appUser.role));
   }
 
   return appUser;

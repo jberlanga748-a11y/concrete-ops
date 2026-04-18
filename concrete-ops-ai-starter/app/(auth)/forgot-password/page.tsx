@@ -8,7 +8,7 @@ const RESET_ERROR_MESSAGES: Record<string, string> = {
 export default async function ForgotPasswordPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string }> | { error?: string };
+  searchParams?: Promise<{ error?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const initialError = typeof params.error === "string" ? RESET_ERROR_MESSAGES[params.error] ?? null : null;

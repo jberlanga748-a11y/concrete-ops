@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { requireOfficeUser } from "@/lib/auth/server";
 import { getAuditLogs, type AuditLogRow } from "@/lib/db/queries";
-import { createClient } from "@/lib/supabase/server";
 import { formatTimestamp } from "@/lib/time/formatting";
 
 function getActorUser(actorUser: AuditLogRow["actor_user"]) {
@@ -21,19 +20,7 @@ export default async function AuditLogsPage({
 }: {
   searchParams?: Promise<{ actionType?: string; targetTable?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?next=/dashboard/audit-logs");
-  }
-
-  const { data: appUser } = await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle();
-  if (!appUser || !["owner", "office_admin"].includes(appUser.role)) {
-    redirect("/dashboard");
-  }
+  await requireOfficeUser("/dashboard/audit-logs");
 
   const params = (await searchParams) ?? {};
   const actionType = params.actionType?.trim() || "";

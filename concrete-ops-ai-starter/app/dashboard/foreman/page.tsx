@@ -6,6 +6,7 @@ import {
   type DailyReportListRow,
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
+import { requireForemanUser } from "@/lib/auth/server";
 import { formatDateOnly, formatTimestamp } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
@@ -25,6 +26,8 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"])
 }
 
 export default async function ForemanHomePage() {
+  await requireForemanUser();
+
   const [{ data: jobs }, { data: reports }, { data: timeEntries }] = await Promise.all([
     getJobs(),
     getDailyReports(),

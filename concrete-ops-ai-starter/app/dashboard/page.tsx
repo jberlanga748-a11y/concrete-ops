@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ComponentProps, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -21,6 +22,7 @@ import { ViewerCurrentDateLabel } from "@/components/time/ViewerCurrentDateLabel
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
+import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
 import {
   getDailyReports,
   getJobFiles,
@@ -223,8 +225,17 @@ function ActivityPanel<T>({
 }
 
 export default async function DashboardPage() {
-  const [appUser, { data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
-    getCurrentAppUserContext(),
+  const appUser = await getCurrentAppUserContext();
+
+  if (!appUser) {
+    redirect("/login?next=/dashboard");
+  }
+
+  if (appUser.role === "foreman") {
+    redirect(getRoleHomePath(appUser.role));
+  }
+
+  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
     getTimeEntries(),
     getDailyReports(),
     getJobFiles(),
@@ -250,7 +261,7 @@ export default async function DashboardPage() {
       .map((entry) => getJobLabel(entry.jobs))
       .filter((label) => label !== "—")
   ).size;
-  const canUseAdminOpsCopilot = appUser ? ["owner", "office_admin"].includes(appUser.role) : false;
+  const canUseAdminOpsCopilot = isOfficeRole(appUser.role);
 
   const focusMessage =
     allUnreadNotifications.length > 0

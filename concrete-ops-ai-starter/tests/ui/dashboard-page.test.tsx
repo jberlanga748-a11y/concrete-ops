@@ -19,6 +19,16 @@ const {
   mockGetNotifications: vi.fn(),
 }));
 
+const redirectMock = vi.hoisted(() =>
+  vi.fn((href: string) => {
+    throw new Error(`NEXT_REDIRECT:${href}`);
+  }),
+);
+
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
+}));
+
 vi.mock("@/lib/auth/server", () => ({
   getCurrentAppUserContext: mockGetCurrentAppUserContext,
 }));
@@ -77,13 +87,20 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: "Ask Copilot" })).toBeInTheDocument();
   });
 
-  it("keeps admin ops copilot controls hidden for non-office roles", async () => {
-    await renderDashboardPage("foreman");
+  it("redirects foremen to the dedicated foreman landing before loading office dashboard data", async () => {
+    mockGetCurrentAppUserContext.mockResolvedValue({
+      id: "user-1",
+      companyId: "company-1",
+      role: "foreman",
+      email: "foreman@example.com",
+      fullName: "Foreman User",
+    });
 
-    expect(document.getElementById("admin-ops-copilot")).not.toBeNull();
-    expect(screen.queryByRole("link", { name: "Jump to Admin Ops Copilot" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Ask Copilot" })).not.toBeInTheDocument();
-    expect(screen.getByText("Admin Ops Copilot")).toBeInTheDocument();
-    expect(screen.getByText(/owner and office admin roles/i)).toBeInTheDocument();
+    await expect(DashboardPage()).rejects.toThrow("NEXT_REDIRECT:/dashboard/foreman");
+    expect(redirectMock).toHaveBeenCalledWith("/dashboard/foreman");
+    expect(mockGetTimeEntries).not.toHaveBeenCalled();
+    expect(mockGetDailyReports).not.toHaveBeenCalled();
+    expect(mockGetJobFiles).not.toHaveBeenCalled();
+    expect(mockGetNotifications).not.toHaveBeenCalled();
   });
 });
