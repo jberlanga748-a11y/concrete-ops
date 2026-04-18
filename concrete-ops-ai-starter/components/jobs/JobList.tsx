@@ -26,21 +26,37 @@ function getForemanName(foreman: JobListRow["foreman_employee"]) {
   return foreman.full_name;
 }
 
-function formatDate(value: string | null | undefined) {
+function formatDateOnly(value: string | null | undefined) {
   if (!value) return "";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value;
+
+  const [, yearText, monthText, dayText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return value;
+  }
 
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   }).format(parsed);
 }
 
 function formatSchedule(startDate: string | null | undefined, targetFinishDate: string | null | undefined) {
-  if (startDate && targetFinishDate) return `${formatDate(startDate)} - ${formatDate(targetFinishDate)}`;
-  if (startDate) return `Starts ${formatDate(startDate)}`;
-  if (targetFinishDate) return `Target ${formatDate(targetFinishDate)}`;
+  if (startDate && targetFinishDate) return `${formatDateOnly(startDate)} - ${formatDateOnly(targetFinishDate)}`;
+  if (startDate) return `Starts ${formatDateOnly(startDate)}`;
+  if (targetFinishDate) return `Target ${formatDateOnly(targetFinishDate)}`;
   return "Schedule not set";
 }
 
@@ -122,7 +138,7 @@ export function JobList({
                   <div className="space-y-1">
                     <p className="font-medium text-zinc-900">{scheduleLabel}</p>
                     <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                      {job.target_finish_date ? `Target ${formatDate(job.target_finish_date)}` : "Planning in progress"}
+                      {job.target_finish_date ? `Target ${formatDateOnly(job.target_finish_date)}` : "Planning in progress"}
                     </p>
                   </div>
                 </TableCell>
