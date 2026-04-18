@@ -32,6 +32,7 @@ import {
   type DailyReportListRow,
   type DocumentRow,
   type JobTimeEntryRow,
+  type NotificationRow,
 } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
 
@@ -67,6 +68,32 @@ function getSubmitter(users: DailyReportListRow["users"] | DocumentRow["users"],
 
 function formatRelativeCount(value: number, singular: string, plural = `${singular}s`) {
   return `${value} ${value === 1 ? singular : plural}`;
+}
+
+async function getSafeUnreadNotifications() {
+  try {
+    const result = await getNotifications({ unreadOnly: true });
+    if (result.error) {
+      return { data: [] as NotificationRow[], unavailable: true };
+    }
+
+    return { data: result.data ?? [], unavailable: false };
+  } catch {
+    return { data: [] as NotificationRow[], unavailable: true };
+  }
+}
+
+async function getSafeRecentUploads() {
+  try {
+    const result = await getDocuments();
+    if (result.error) {
+      return { data: [] as DocumentRow[], unavailable: true };
+    }
+
+    return { data: result.data ?? [], unavailable: false };
+  } catch {
+    return { data: [] as DocumentRow[], unavailable: true };
+  }
 }
 
 function SurfaceCard({
@@ -239,16 +266,16 @@ export default async function DashboardPage() {
   const [
     { data: timeEntries, error: timeEntriesError },
     { data: reports, error: reportsError },
-    { data: uploads, error: uploadsError },
-    { data: unreadNotifications, error: notificationsError },
+    { data: uploads, unavailable: uploadsUnavailable },
+    { data: unreadNotifications, unavailable: notificationsUnavailable },
   ] = await Promise.all([
     getTimeEntries(),
     getDailyReports(),
-    getDocuments(),
-    getNotifications({ unreadOnly: true }),
+    getSafeRecentUploads(),
+    getSafeUnreadNotifications(),
   ]);
 
-  if (timeEntriesError || reportsError || uploadsError || notificationsError) {
+  if (timeEntriesError || reportsError) {
     return (
       <div className="space-y-6 lg:space-y-8">
         <ErrorPanel
@@ -283,7 +310,13 @@ export default async function DashboardPage() {
   const canUseAdminOpsCopilot = isOfficeRole(appUser.role);
 
   const focusMessage =
-    allUnreadNotifications.length > 0
+    uploadsUnavailable && notificationsUnavailable
+      ? "Uploads and notifications are temporarily unavailable, but the core labor and reporting picture is still loaded."
+      : uploadsUnavailable
+        ? "Recent uploads are temporarily unavailable, but the core labor and reporting picture is still loaded."
+        : notificationsUnavailable
+      ? "The notification queue is temporarily unavailable, but the core labor, report, and upload picture is still loaded."
+      : allUnreadNotifications.length > 0
       ? "Clear the unread office queue after reviewing today's reports so follow-up stays same-day."
       : reportsToday === 0
         ? "Prompt the field for today's report set before closeout so documentation doesn't slip."
@@ -312,8 +345,12 @@ export default async function DashboardPage() {
     },
     {
       label: "Uploads Captured",
-      value: allUploads.length.toString(),
-      detail: uploadsToday > 0 ? `${uploadsToday} file uploads landed today.` : "No uploads have been captured yet today.",
+      value: uploadsUnavailable ? "—" : allUploads.length.toString(),
+      detail: uploadsUnavailable
+        ? "Recent uploads are temporarily unavailable."
+        : uploadsToday > 0
+          ? `${uploadsToday} file uploads landed today.`
+          : "No uploads have been captured yet today.",
       cta: "Open uploads",
       href: "/dashboard/uploads",
       icon: UploadIcon,
@@ -321,8 +358,12 @@ export default async function DashboardPage() {
     },
     {
       label: "Unread Notifications",
-      value: allUnreadNotifications.length.toString(),
-      detail: jobsTouchedToday > 0 ? `${jobsTouchedToday} jobs have labor activity today.` : "No jobs have logged labor activity yet today.",
+      value: notificationsUnavailable ? "—" : allUnreadNotifications.length.toString(),
+      detail: notificationsUnavailable
+        ? "The notification queue is temporarily unavailable."
+        : jobsTouchedToday > 0
+          ? `${jobsTouchedToday} jobs have labor activity today.`
+          : "No jobs have logged labor activity yet today.",
       cta: "Review alerts",
       href: "/dashboard/notifications",
       icon: BellDotIcon,
@@ -375,12 +416,24 @@ export default async function DashboardPage() {
     {
       label: "Documentation pace",
       value: reportsToday > 0 ? `${reportsToday} daily reports filed` : "No reports filed yet",
-      detail: uploadsToday > 0 ? `${uploadsToday} uploads were added today.` : "Supporting files still need to land.",
+      detail: uploadsUnavailable
+        ? "Recent uploads could not be loaded for this view."
+        : uploadsToday > 0
+          ? `${uploadsToday} uploads were added today.`
+          : "Supporting files still need to land.",
     },
     {
       label: "Office queue",
-      value: allUnreadNotifications.length > 0 ? `${allUnreadNotifications.length} unread notifications` : "Queue is clear",
-      detail: allUnreadNotifications.length > 0 ? "Follow-up is waiting in the notification feed." : "No office escalations are sitting unreviewed.",
+      value: notificationsUnavailable
+        ? "Queue unavailable"
+        : allUnreadNotifications.length > 0
+          ? `${allUnreadNotifications.length} unread notifications`
+          : "Queue is clear",
+      detail: notificationsUnavailable
+        ? "Notifications could not be loaded for this view."
+        : allUnreadNotifications.length > 0
+          ? "Follow-up is waiting in the notification feed."
+          : "No office escalations are sitting unreviewed.",
     },
   ];
 
@@ -438,8 +491,10 @@ export default async function DashboardPage() {
               </div>
               <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
                 <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Alerts</p>
-                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{allUnreadNotifications.length}</p>
-                <p className="mt-1 text-sm text-zinc-600">awaiting review</p>
+                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">
+                  {notificationsUnavailable ? "—" : allUnreadNotifications.length}
+                </p>
+                <p className="mt-1 text-sm text-zinc-600">{notificationsUnavailable ? "queue unavailable" : "awaiting review"}</p>
               </div>
             </div>
           </div>
@@ -672,7 +727,7 @@ export default async function DashboardPage() {
             href="/dashboard/uploads"
             icon={UploadIcon}
             items={recentUploads}
-            emptyLabel="No files have been uploaded yet."
+            emptyLabel={uploadsUnavailable ? "Recent uploads are temporarily unavailable." : "No files have been uploaded yet."}
             renderItem={(upload) => (
               <>
                 <p className="font-semibold text-zinc-950">{upload.file_name}</p>

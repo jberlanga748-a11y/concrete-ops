@@ -132,4 +132,52 @@ describe("DashboardPage", () => {
 
     expect(mockGetDocuments).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps the dashboard home available when notifications fail", async () => {
+    mockGetCurrentAppUserContext.mockResolvedValue({
+      id: "user-1",
+      companyId: "company-1",
+      role: "owner",
+      email: "ops@example.com",
+      fullName: "Operations User",
+    });
+    mockGetTimeEntries.mockResolvedValue({ data: [] });
+    mockGetDailyReports.mockResolvedValue({ data: [] });
+    mockGetDocuments.mockResolvedValue({ data: [] });
+    mockGetNotifications.mockRejectedValue(new Error("boom"));
+
+    render(
+      <ToastProvider>
+        {await DashboardPage()}
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByText("We couldn’t load the operations command view right now")).not.toBeInTheDocument();
+    expect(screen.getByText("A steadier command view for field work, documentation, and office follow-up.")).toBeInTheDocument();
+    expect(screen.getByText("Queue unavailable")).toBeInTheDocument();
+  });
+
+  it("keeps the dashboard home available when uploads fail", async () => {
+    mockGetCurrentAppUserContext.mockResolvedValue({
+      id: "user-1",
+      companyId: "company-1",
+      role: "owner",
+      email: "ops@example.com",
+      fullName: "Operations User",
+    });
+    mockGetTimeEntries.mockResolvedValue({ data: [] });
+    mockGetDailyReports.mockResolvedValue({ data: [] });
+    mockGetDocuments.mockRejectedValue(new Error("boom"));
+    mockGetNotifications.mockResolvedValue({ data: [] });
+
+    render(
+      <ToastProvider>
+        {await DashboardPage()}
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByText("We couldn’t load the operations command view right now")).not.toBeInTheDocument();
+    expect(screen.getByText("A steadier command view for field work, documentation, and office follow-up.")).toBeInTheDocument();
+    expect(screen.getAllByText("Recent uploads are temporarily unavailable.").length).toBeGreaterThan(0);
+  });
 });
