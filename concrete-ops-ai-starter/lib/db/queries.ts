@@ -643,7 +643,7 @@ export async function getEmployeeUploadJobOptions() {
 export async function getEmployeeUploadDailyReportOptions(jobId?: string) {
   const accessResult = await getEmployeeUploadAccess();
   const assignedJobIds = accessResult.data?.assignedJobIds ?? [];
-  const scopedJobIds = jobId ? assignedJobIds.filter((assignedJobId) => assignedJobId === jobId) : assignedJobIds;
+  const scopedJobIds = jobId ? assignedJobIds.filter((assignedJobId: string) => assignedJobId === jobId) : assignedJobIds;
 
   if (scopedJobIds.length === 0) {
     return [] as DailyReportOption[];

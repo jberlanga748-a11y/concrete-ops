@@ -13,7 +13,23 @@ const TAG_OPTIONS = [
   { value: "change_order_support", label: "Change Order Support" },
 ];
 
-export function EmployeeUploadForm({ jobOptions, dailyReportOptions }: { jobOptions: TimeOption[]; dailyReportOptions: DailyReportOption[] }) {
+type EmployeeUploadFormProps = {
+  jobOptions: TimeOption[];
+  dailyReportOptions: DailyReportOption[];
+  title?: string;
+  description?: string;
+  successMessage?: string;
+  tipMessage?: string;
+};
+
+export function EmployeeUploadForm({
+  jobOptions,
+  dailyReportOptions,
+  title = "Employee Photo Upload",
+  description = "Attach field photos or docs to jobs and optional daily reports.",
+  successMessage = "Upload saved and linked to the selected job.",
+  tipMessage = "Tip: choose a clear note so admins can quickly use this as field proof later.",
+}: EmployeeUploadFormProps) {
   const router = useRouter();
   const [jobId, setJobId] = useState("");
   const [dailyReportId, setDailyReportId] = useState("");
@@ -57,7 +73,7 @@ export function EmployeeUploadForm({ jobOptions, dailyReportOptions }: { jobOpti
     }
 
     setMessageType("success");
-    setMessage("Upload saved and linked to the selected job.");
+    setMessage(successMessage);
     setNote("");
     setFile(null);
     setDailyReportId("");
@@ -67,8 +83,8 @@ export function EmployeeUploadForm({ jobOptions, dailyReportOptions }: { jobOpti
 
   return (
     <div className="rounded-3xl border bg-white p-6 shadow-sm">
-      <h2 className="text-2xl font-semibold">Employee Photo Upload</h2>
-      <p className="mt-2 text-sm text-zinc-600">Attach field photos or docs to jobs and optional daily reports.</p>
+      <h2 className="text-2xl font-semibold">{title}</h2>
+      <p className="mt-2 text-sm text-zinc-600">{description}</p>
 
       <div className="mt-5 space-y-4">
         <div>
@@ -119,7 +135,7 @@ export function EmployeeUploadForm({ jobOptions, dailyReportOptions }: { jobOpti
         {message ? (
           <p className={`text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
         ) : (
-          <p className="text-sm text-zinc-500">Tip: choose a clear note so admins can quickly use this as field proof later.</p>
+          <p className="text-sm text-zinc-500">{tipMessage}</p>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getEmployeeUploadAccessFromClient } from "@/lib/uploads/employeeAccess";
+import { getUploadAccessFromClient } from "@/lib/uploads/employeeAccess";
 
 const BUCKET = "job-uploads";
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Job, tag, and file are required." }, { status: 400 });
   }
 
-  const accessResult = await getEmployeeUploadAccessFromClient(supabase);
+  const accessResult = await getUploadAccessFromClient(supabase);
   if (accessResult.error || !accessResult.data) {
     return NextResponse.json(
       { error: accessResult.error || "Unauthorized" },
@@ -30,10 +30,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const { appUserId, companyId, employeeId, assignedJobIds } = accessResult.data;
+  const { appUserId, companyId, employeeId, assignedJobIds, scope } = accessResult.data;
 
-  if (!assignedJobIds.includes(jobId)) {
+  if (scope === "employee" && !assignedJobIds.includes(jobId)) {
     return NextResponse.json({ error: "You can only upload to jobs assigned to you." }, { status: 403 });
+  }
+
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (jobError || !job) {
+    return NextResponse.json(
+      { error: jobError?.message || "The selected job is not available for this upload." },
+      { status: 403 },
+    );
   }
 
   if (dailyReportIdRaw) {
