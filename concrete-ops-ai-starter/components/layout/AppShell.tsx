@@ -321,7 +321,7 @@ export function AppShell({
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Premium Operations Platform</p>
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
-                    <h1 className="text-[1.7rem] font-semibold tracking-[-0.05em] text-white">Concrete Ops AI</h1>
+                    <h1 className="text-[1.7rem] font-semibold tracking-[-0.05em] text-white">Concrete Ops</h1>
                     <p className="mt-2 max-w-[18rem] text-sm leading-6 text-zinc-300">
                       A sharper control layer for field execution, office coordination, and documentation.
                     </p>
@@ -428,7 +428,7 @@ export function AppShell({
           <header className="rounded-[30px] border border-[#18232d] bg-[#0c141c] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops AI</p>
+                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
                 <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-white">{activeTitle}</p>
                 <p className="mt-1 text-sm text-zinc-400">
                   {activeSection}
