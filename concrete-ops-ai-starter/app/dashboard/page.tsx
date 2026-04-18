@@ -26,11 +26,11 @@ import { getCurrentAppUserContext } from "@/lib/auth/server";
 import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
 import {
   getDailyReports,
-  getJobFiles,
+  getDocuments,
   getNotifications,
   getTimeEntries,
   type DailyReportListRow,
-  type JobFileRow,
+  type DocumentRow,
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
@@ -41,7 +41,7 @@ function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   return employees.full_name;
 }
 
-function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"] | JobFileRow["jobs"]) {
+function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"] | DocumentRow["jobs"]) {
   if (!jobs) return "—";
   if (Array.isArray(jobs)) {
     const job = jobs[0];
@@ -51,7 +51,7 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"] 
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
-function getSubmitter(users: DailyReportListRow["users"] | JobFileRow["users"], employees?: JobFileRow["employees"]) {
+function getSubmitter(users: DailyReportListRow["users"] | DocumentRow["users"], employees?: DocumentRow["employees"]) {
   if (users) {
     if (Array.isArray(users)) return users[0]?.full_name ?? "—";
     return users.full_name;
@@ -244,7 +244,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     getTimeEntries(),
     getDailyReports(),
-    getJobFiles(),
+    getDocuments(),
     getNotifications({ unreadOnly: true }),
   ]);
 
