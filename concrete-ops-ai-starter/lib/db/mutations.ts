@@ -374,6 +374,130 @@ async function getActorEmployeeId(args: {
   return employee?.id ?? null;
 }
 
+function isTimeManagerRole(role?: AppRole | null) {
+  return role === "owner" || role === "office_admin" || role === "foreman";
+}
+
+type TimeEntryAccess = {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  appUser: {
+    id: string;
+    company_id: string;
+    role: AppRole;
+  };
+  scope: "manager" | "employee";
+  employeeId: string | null;
+  assignedJobIds: string[];
+};
+
+async function getTimeEntryAccess() {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) {
+    return { error: auth.error || "You must be signed in." };
+  }
+
+  const { supabase, appUser } = auth;
+
+  if (isTimeManagerRole(appUser.role)) {
+    return {
+      data: {
+        supabase,
+        appUser,
+        scope: "manager",
+        employeeId: null,
+        assignedJobIds: [],
+      } satisfies TimeEntryAccess,
+    };
+  }
+
+  const employeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+
+  if (!employeeId) {
+    return { error: "No employee record is linked to your user." };
+  }
+
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from("job_assignments")
+    .select("job_id")
+    .eq("company_id", appUser.company_id)
+    .eq("employee_id", employeeId)
+    .eq("is_active", true);
+
+  if (assignmentsError) {
+    return { error: assignmentsError.message };
+  }
+
+  return {
+    data: {
+      supabase,
+      appUser,
+      scope: "employee",
+      employeeId,
+      assignedJobIds: Array.from(
+        new Set((assignments ?? []).map((assignment: { job_id: string }) => assignment.job_id)),
+      ),
+    } satisfies TimeEntryAccess,
+  };
+}
+
+async function validateTimeEntryEmployee(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  employeeId: string;
+}) {
+  const { supabase, companyId, employeeId } = args;
+  const { data: employee, error } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", employeeId)
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!employee) return { error: "Employee not found." };
+  return { data: employee };
+}
+
+async function validateTimeEntryJob(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  jobId: string;
+}) {
+  const { supabase, companyId, jobId } = args;
+  const { data: job, error } = await supabase
+    .from("jobs")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!job) return { error: "Job not found." };
+  return { data: job };
+}
+
+async function validateTimeEntryPhase(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  jobPhaseId: string;
+}) {
+  const { supabase, companyId, jobPhaseId } = args;
+  const { data: phase, error } = await supabase
+    .from("job_phases")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", jobPhaseId)
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!phase) return { error: "Phase not found." };
+  return { data: phase };
+}
+
 async function createAuditLog(args: {
   supabase: Awaited<ReturnType<typeof createClient>>;
   companyId: string;
@@ -406,15 +530,66 @@ type ClockInInput = {
 };
 
 export async function createClockInEntry(input: ClockInInput) {
-  const supabase = await createClient();
+  const accessResult = await getTimeEntryAccess();
+  if (accessResult.error || !accessResult.data) {
+    return { error: accessResult.error || "You must be signed in." };
+  }
+
+  const { supabase, appUser, scope, employeeId, assignedJobIds } = accessResult.data;
+
+  if (scope === "employee" && employeeId !== input.employeeId) {
+    return { error: "You can only manage your own time entries." };
+  }
+
+  const employeeResult = await validateTimeEntryEmployee({
+    supabase,
+    companyId: appUser.company_id,
+    employeeId: input.employeeId,
+  });
+  if (employeeResult.error) return { error: employeeResult.error };
+
+  const jobResult = await validateTimeEntryJob({
+    supabase,
+    companyId: appUser.company_id,
+    jobId: input.jobId,
+  });
+  if (jobResult.error) return { error: jobResult.error };
+
+  if (scope === "employee" && !assignedJobIds.includes(input.jobId)) {
+    return { error: "You can only clock time on jobs assigned to you." };
+  }
+
+  if (input.jobPhaseId) {
+    const phaseResult = await validateTimeEntryPhase({
+      supabase,
+      companyId: appUser.company_id,
+      jobPhaseId: input.jobPhaseId,
+    });
+    if (phaseResult.error) return { error: phaseResult.error };
+  }
+
+  const { data: existingOpenEntries, error: existingOpenEntriesError } = await supabase
+    .from("time_entries")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("employee_id", input.employeeId)
+    .is("clock_out_at", null)
+    .in("status", ["clocked_in", "on_break"])
+    .limit(1);
+
+  if (existingOpenEntriesError) return { error: existingOpenEntriesError.message };
+  if (existingOpenEntries?.length) {
+    return { error: "This employee already has an open time entry." };
+  }
 
   const payload = {
+    company_id: appUser.company_id,
     employee_id: input.employeeId,
     job_id: input.jobId,
     job_phase_id: input.jobPhaseId || null,
     clock_in_at: new Date().toISOString(),
     status: "clocked_in",
-    source: "employee_app",
+    source: scope === "manager" ? "admin_entry" : "employee_app",
   };
 
   const { data, error } = await supabase.from("time_entries").insert(payload).select("id").single();
@@ -423,11 +598,37 @@ export async function createClockInEntry(input: ClockInInput) {
 }
 
 export async function clockOutLatestEntry(input: { employeeId: string; jobId?: string }) {
-  const supabase = await createClient();
+  const accessResult = await getTimeEntryAccess();
+  if (accessResult.error || !accessResult.data) {
+    return { error: accessResult.error || "You must be signed in." };
+  }
+
+  const { supabase, appUser, scope, employeeId } = accessResult.data;
+
+  if (scope === "employee" && employeeId !== input.employeeId) {
+    return { error: "You can only manage your own time entries." };
+  }
+
+  const employeeResult = await validateTimeEntryEmployee({
+    supabase,
+    companyId: appUser.company_id,
+    employeeId: input.employeeId,
+  });
+  if (employeeResult.error) return { error: employeeResult.error };
+
+  if (input.jobId) {
+    const jobResult = await validateTimeEntryJob({
+      supabase,
+      companyId: appUser.company_id,
+      jobId: input.jobId,
+    });
+    if (jobResult.error) return { error: jobResult.error };
+  }
 
   let openEntryQuery = supabase
     .from("time_entries")
     .select("id, clock_in_at, break_minutes")
+    .eq("company_id", appUser.company_id)
     .eq("employee_id", input.employeeId)
     .is("clock_out_at", null)
     .in("status", ["clocked_in", "on_break"])
@@ -450,6 +651,7 @@ export async function clockOutLatestEntry(input: { employeeId: string; jobId?: s
   const { error: updateError } = await supabase
     .from("time_entries")
     .update({ clock_out_at: nowIso, total_hours: Number(totalHours.toFixed(2)), status: "clocked_out" })
+    .eq("company_id", appUser.company_id)
     .eq("id", openEntry.id);
 
   if (updateError) return { error: updateError.message };
