@@ -1370,6 +1370,31 @@ export async function createProposal(input: ProposalInput) {
   const officeError = getOfficeAdminRoleError(appUser.role, "manage proposals");
   if (officeError) return { error: officeError };
 
+  const { data: customer, error: customerError } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("id", input.customerId)
+    .maybeSingle();
+
+  if (customerError) return { error: customerError.message };
+  if (!customer) return { error: "Selected customer was not found." };
+
+  if (input.jobId) {
+    const { data: job, error: jobError } = await supabase
+      .from("jobs")
+      .select("id, customer_id")
+      .eq("company_id", appUser.company_id)
+      .eq("id", input.jobId)
+      .maybeSingle();
+
+    if (jobError) return { error: jobError.message };
+    if (!job) return { error: "Selected job was not found." };
+    if (job.customer_id !== input.customerId) {
+      return { error: "Selected job does not belong to the selected customer." };
+    }
+  }
+
   const normalizedSections = normalizeProposalSections(input.sections);
 
   const { data: proposal, error: proposalError } = await supabase
@@ -1426,6 +1451,31 @@ export async function updateProposal(id: string, input: ProposalInput) {
   const { supabase, appUser } = auth;
   const officeError = getOfficeAdminRoleError(appUser.role, "manage proposals");
   if (officeError) return { error: officeError };
+
+  const { data: customer, error: customerError } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("id", input.customerId)
+    .maybeSingle();
+
+  if (customerError) return { error: customerError.message };
+  if (!customer) return { error: "Selected customer was not found." };
+
+  if (input.jobId) {
+    const { data: job, error: jobError } = await supabase
+      .from("jobs")
+      .select("id, customer_id")
+      .eq("company_id", appUser.company_id)
+      .eq("id", input.jobId)
+      .maybeSingle();
+
+    if (jobError) return { error: jobError.message };
+    if (!job) return { error: "Selected job was not found." };
+    if (job.customer_id !== input.customerId) {
+      return { error: "Selected job does not belong to the selected customer." };
+    }
+  }
 
   const normalizedSections = normalizeProposalSections(input.sections);
 
