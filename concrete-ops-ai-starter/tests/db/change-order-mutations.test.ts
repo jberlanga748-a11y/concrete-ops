@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 import { createClient } from "@/lib/supabase/server";
-import { createChangeOrder } from "@/lib/db/mutations";
+import { createChangeOrder, updateChangeOrder } from "@/lib/db/mutations";
 
 function createAuthenticatedClient(from: (table: string) => unknown) {
   return {
@@ -86,7 +86,19 @@ function createMaybeSingleBuilder<T>(data: T | null) {
   return builder;
 }
 
-describe("createChangeOrder", () => {
+function createDeleteBuilder() {
+  const builder: {
+    eq: ReturnType<typeof vi.fn>;
+    error: null;
+  } = {
+    eq: vi.fn(),
+    error: null,
+  };
+  builder.eq.mockReturnValue(builder);
+  return builder;
+}
+
+describe("change order mutations", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -97,11 +109,13 @@ describe("createChangeOrder", () => {
 
   it("rejects a daily report that is not linked to the selected job", async () => {
     const usersTable = createUsersTable();
+    const jobsBuilder = createMaybeSingleBuilder({ id: "job-1" });
     const dailyReportBuilder = createMaybeSingleBuilder(null);
     const changeOrdersInsert = vi.fn();
 
     const from = vi.fn((table: string) => {
       if (table === "users") return usersTable;
+      if (table === "jobs") return { select: vi.fn(() => jobsBuilder) };
       if (table === "daily_reports") return { select: vi.fn(() => dailyReportBuilder) };
       if (table === "change_orders") return { insert: changeOrdersInsert };
       throw new Error(`Unexpected table ${table}`);
@@ -127,6 +141,7 @@ describe("createChangeOrder", () => {
 
   it("rejects proof files that do not belong to the selected job", async () => {
     const usersTable = createUsersTable();
+    const jobsBuilder = createMaybeSingleBuilder({ id: "job-1" });
     const jobFilesSelectBuilder = {
       eq: vi.fn(),
       in: vi.fn().mockResolvedValue({
@@ -139,6 +154,7 @@ describe("createChangeOrder", () => {
 
     const from = vi.fn((table: string) => {
       if (table === "users") return usersTable;
+      if (table === "jobs") return { select: vi.fn(() => jobsBuilder) };
       if (table === "job_files") return { select: vi.fn(() => jobFilesSelectBuilder) };
       if (table === "change_orders") return { insert: changeOrdersInsert };
       throw new Error(`Unexpected table ${table}`);
@@ -164,6 +180,7 @@ describe("createChangeOrder", () => {
   it("creates a change order when the daily report and proof files match the selected job", async () => {
     const usersTable = createUsersTable("office_admin", ["office-1", "office-2"]);
     const employeesTable = createActorEmployeeTable();
+    const jobsBuilder = createMaybeSingleBuilder({ id: "job-1" });
     const dailyReportBuilder = createMaybeSingleBuilder({ id: "report-1" });
     const jobFilesValidationBuilder = {
       eq: vi.fn(),
@@ -184,7 +201,9 @@ describe("createChangeOrder", () => {
         }),
       })),
     }));
+    const deleteChangeOrderFiles = vi.fn(() => createDeleteBuilder());
     const changeOrderFilesInsert = vi.fn().mockResolvedValue({ error: null });
+    const deleteDocumentLinks = vi.fn(() => createDeleteBuilder());
 
     const documentSelectBuilder = {
       eq: vi.fn(),
@@ -201,12 +220,13 @@ describe("createChangeOrder", () => {
     const from = vi.fn((table: string) => {
       if (table === "users") return usersTable;
       if (table === "employees") return employeesTable;
+      if (table === "jobs") return { select: vi.fn(() => jobsBuilder) };
       if (table === "daily_reports") return { select: vi.fn(() => dailyReportBuilder) };
       if (table === "job_files") return { select: vi.fn(() => jobFilesValidationBuilder) };
       if (table === "change_orders") return { insert: changeOrdersInsert };
-      if (table === "change_order_files") return { insert: changeOrderFilesInsert };
+      if (table === "change_order_files") return { delete: deleteChangeOrderFiles, insert: changeOrderFilesInsert };
       if (table === "documents") return { select: vi.fn(() => documentSelectBuilder) };
-      if (table === "document_links") return { upsert: documentLinksUpsert };
+      if (table === "document_links") return { delete: deleteDocumentLinks, upsert: documentLinksUpsert };
       if (table === "notifications") return { insert: notificationsInsert };
       if (table === "audit_logs") return { insert: auditInsert };
       throw new Error(`Unexpected table ${table}`);
@@ -269,6 +289,140 @@ describe("createChangeOrder", () => {
     expect(auditInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         action_type: "change_order.created",
+        target_id: "change-order-1",
+      }),
+    );
+  });
+
+  it("rejects updates when the selected job does not exist in the current company", async () => {
+    const usersTable = createUsersTable();
+    const jobsBuilder = createMaybeSingleBuilder(null);
+    const changeOrdersUpdate = vi.fn();
+
+    const from = vi.fn((table: string) => {
+      if (table === "users") return usersTable;
+      if (table === "jobs") return { select: vi.fn(() => jobsBuilder) };
+      if (table === "change_orders") return { update: changeOrdersUpdate };
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    vi.mocked(createClient).mockResolvedValue(createAuthenticatedClient(from));
+
+    const result = await updateChangeOrder("change-order-1", {
+      jobId: "job-missing",
+      title: "Extra slab prep",
+      description: "Additional edge work",
+      status: "draft",
+      directCostTotal: 100,
+      markupPercent: 10,
+      totalAmount: 110,
+      proofFileIds: [],
+    });
+
+    expect(result).toEqual({ error: "Selected job was not found." });
+    expect(changeOrdersUpdate).not.toHaveBeenCalled();
+  });
+
+  it("updates a change order and replaces linked proof files", async () => {
+    const usersTable = createUsersTable();
+    const employeesTable = createActorEmployeeTable();
+    const jobsBuilder = createMaybeSingleBuilder({ id: "job-1" });
+    const dailyReportBuilder = createMaybeSingleBuilder({ id: "report-2" });
+    const jobFilesValidationBuilder = {
+      eq: vi.fn(),
+      in: vi.fn().mockResolvedValue({
+        data: [{ id: "file-2", job_id: "job-1" }],
+        error: null,
+      }),
+    };
+    jobFilesValidationBuilder.eq.mockReturnValue(jobFilesValidationBuilder);
+
+    const changeOrdersUpdateBuilder: {
+      eq: ReturnType<typeof vi.fn>;
+      select: ReturnType<typeof vi.fn>;
+    } = {
+      eq: vi.fn(),
+      select: vi.fn(() => ({
+        single: vi.fn().mockResolvedValue({
+          data: { id: "change-order-1" },
+          error: null,
+        }),
+      })),
+    };
+    changeOrdersUpdateBuilder.eq.mockReturnValue(changeOrdersUpdateBuilder);
+    const changeOrdersUpdate = vi.fn(() => changeOrdersUpdateBuilder);
+
+    const deleteChangeOrderFiles = vi.fn(() => createDeleteBuilder());
+    const changeOrderFilesInsert = vi.fn().mockResolvedValue({ error: null });
+    const deleteDocumentLinks = vi.fn(() => createDeleteBuilder());
+
+    const documentSelectBuilder = {
+      eq: vi.fn(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: "document-2" }, error: null }),
+    };
+    documentSelectBuilder.eq.mockReturnValue(documentSelectBuilder);
+
+    const documentLinksUpsert = vi.fn().mockResolvedValue({ error: null });
+    const auditInsert = vi.fn().mockResolvedValue({ error: null });
+
+    const from = vi.fn((table: string) => {
+      if (table === "users") return usersTable;
+      if (table === "employees") return employeesTable;
+      if (table === "jobs") return { select: vi.fn(() => jobsBuilder) };
+      if (table === "daily_reports") return { select: vi.fn(() => dailyReportBuilder) };
+      if (table === "job_files") return { select: vi.fn(() => jobFilesValidationBuilder) };
+      if (table === "change_orders") return { update: changeOrdersUpdate };
+      if (table === "change_order_files") return { delete: deleteChangeOrderFiles, insert: changeOrderFilesInsert };
+      if (table === "documents") return { select: vi.fn(() => documentSelectBuilder) };
+      if (table === "document_links") return { delete: deleteDocumentLinks, upsert: documentLinksUpsert };
+      if (table === "audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    vi.mocked(createClient).mockResolvedValue(createAuthenticatedClient(from));
+
+    const result = await updateChangeOrder("change-order-1", {
+      jobId: "job-1",
+      dailyReportId: "report-2",
+      title: "Extra slab prep revised",
+      description: "Updated field conditions and scope.",
+      status: "approved",
+      directCostTotal: 250,
+      markupPercent: 12,
+      totalAmount: 280,
+      proofFileIds: ["file-2", "file-2"],
+    });
+
+    expect(result).toEqual({ data: { id: "change-order-1" } });
+    expect(changeOrdersUpdate).toHaveBeenCalledWith({
+      job_id: "job-1",
+      daily_report_id: "report-2",
+      title: "Extra slab prep revised",
+      description: "Updated field conditions and scope.",
+      status: "approved",
+      direct_cost_total: 250,
+      markup_percent: 12,
+      total_amount: 280,
+    });
+    expect(changeOrderFilesInsert).toHaveBeenCalledWith([
+      {
+        company_id: "company-1",
+        change_order_id: "change-order-1",
+        job_file_id: "file-2",
+      },
+    ]);
+    expect(documentLinksUpsert).toHaveBeenCalledWith(
+      {
+        company_id: "company-1",
+        document_id: "document-2",
+        link_type: "change_order",
+        linked_record_id: "change-order-1",
+      },
+      { onConflict: "document_id,link_type,linked_record_id" },
+    );
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action_type: "change_order.updated",
         target_id: "change-order-1",
       }),
     );
