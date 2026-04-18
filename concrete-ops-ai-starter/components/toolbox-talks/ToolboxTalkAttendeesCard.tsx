@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { createToolboxTalkAttendee, updateToolboxTalkAttendeeSignedAt } from "@/lib/db/mutations";
 import type { ToolboxTalkAttendeeOptionRow, ToolboxTalkAttendeeRow } from "@/lib/db/queries";
 
@@ -9,18 +10,6 @@ function getEmployee(attendee: ToolboxTalkAttendeeRow["employees"]) {
   if (!attendee) return null;
   if (Array.isArray(attendee)) return attendee[0] ?? null;
   return attendee;
-}
-
-function formatSignedAt(value: string | null) {
-  if (!value) return "Not signed";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 function AttendeeRow({ attendee }: { attendee: ToolboxTalkAttendeeRow }) {
@@ -52,7 +41,9 @@ function AttendeeRow({ attendee }: { attendee: ToolboxTalkAttendeeRow }) {
           {loading ? "Saving..." : isSigned ? "Clear Signature" : "Mark Signed"}
         </button>
       </div>
-      <p className="mt-3 text-sm text-zinc-500">Signed: {formatSignedAt(attendee.signed_at)}</p>
+      <p className="mt-3 text-sm text-zinc-500">
+        Signed: <ViewerDateTime value={attendee.signed_at} includeYear={false} includeTimeZoneName={false} emptyLabel="Not signed" />
+      </p>
     </li>
   );
 }

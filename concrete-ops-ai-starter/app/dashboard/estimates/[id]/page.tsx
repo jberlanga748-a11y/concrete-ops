@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EstimateForm } from "@/components/estimates/EstimateForm";
 import { getCustomerOptions, getDailyReportJobOptions, getEstimateById, getEstimateLineItems, type EstimateDetailRow } from "@/lib/db/queries";
+import { formatTimestamp } from "@/lib/time/formatting";
 
 function getCustomer(customer: EstimateDetailRow["customers"]) {
   if (!customer) return null;
@@ -19,19 +20,6 @@ function getCreator(user: EstimateDetailRow["users"]) {
   if (!user) return null;
   if (Array.isArray(user)) return user[0] ?? null;
   return user;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function EstimateDetailPage({
@@ -83,7 +71,7 @@ export default async function EstimateDetailPage({
         </section>
         <section className="rounded-2xl border bg-white p-4 shadow-sm">
           <h2 className="font-semibold">Created</h2>
-          <p className="mt-2 text-sm text-zinc-700">{formatDateTime(estimate.created_at)}</p>
+          <p className="mt-2 text-sm text-zinc-700">{formatTimestamp(estimate.created_at)}</p>
           <p className="mt-1 text-sm text-zinc-600">{creator?.full_name || "—"}</p>
         </section>
       </div>

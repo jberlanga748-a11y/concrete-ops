@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { refreshJobCostSnapshot } from "@/lib/db/mutations";
 import type { JobCostSnapshotRow } from "@/lib/db/queries";
 
@@ -17,19 +18,6 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 2,
   }).format(value || 0);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export function JobCostSnapshotCard({
@@ -104,7 +92,7 @@ export function JobCostSnapshotCard({
       </div>
 
       <p className="mt-4 text-sm text-zinc-600">
-        Last refreshed: {formatDateTime(snapshot?.updated_at)}
+        Last refreshed: <ViewerDateTime value={snapshot?.updated_at} includeYear includeTimeZoneName={false} />
       </p>
       {message ? <p className="mt-2 text-sm text-zinc-600">{message}</p> : null}
     </section>

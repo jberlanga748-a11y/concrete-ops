@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PolicyForm } from "@/components/policies/PolicyForm";
 import { getPolicyAcknowledgments, getPolicyById, type PolicyAcknowledgmentRow } from "@/lib/db/queries";
+import { formatTimestamp } from "@/lib/time/formatting";
 
 function getEmployee(ack: PolicyAcknowledgmentRow["employees"]) {
   if (!ack) return null;
@@ -13,19 +14,6 @@ function getUser(user: PolicyAcknowledgmentRow["users"]) {
   if (!user) return null;
   if (Array.isArray(user)) return user[0] ?? null;
   return user;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function PolicyDetailPage({
@@ -69,7 +57,7 @@ export default async function PolicyDetailPage({
 
         <section className="rounded-2xl border bg-white p-4 shadow-sm">
           <h2 className="font-semibold">Last Updated</h2>
-          <p className="mt-2 text-sm text-zinc-700">{formatDateTime(policy.updated_at)}</p>
+          <p className="mt-2 text-sm text-zinc-700">{formatTimestamp(policy.updated_at)}</p>
         </section>
       </div>
 
@@ -94,7 +82,7 @@ export default async function PolicyDetailPage({
                     {ack.status}
                   </span>
                 </div>
-                <p className="mt-2 text-zinc-500">Acknowledged: {formatDateTime(ack.acknowledged_at)}</p>
+                <p className="mt-2 text-zinc-500">Acknowledged: {formatTimestamp(ack.acknowledged_at)}</p>
               </li>
             );
           })}
