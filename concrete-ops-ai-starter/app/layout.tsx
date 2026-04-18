@@ -17,8 +17,8 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Concrete Ops AI",
-  description: "Concrete contractor operations platform",
+  title: "Concrete Ops",
+  description: "Operations workspace for concrete contractors, from field crews to office follow-up.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

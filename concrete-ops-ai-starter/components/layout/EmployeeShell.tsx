@@ -111,7 +111,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 border-b bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Concrete Ops AI</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Concrete Ops</p>
               <p className="mt-1 text-xl font-semibold text-zinc-900">Employee Portal</p>
             </div>
             <SignOutButton className="rounded-xl border px-4 py-3 text-sm font-medium disabled:opacity-50" />
@@ -125,7 +125,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
               <Card className="border-zinc-800 bg-zinc-900 text-zinc-100 ring-zinc-800">
                 <CardHeader>
                   <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Construction Operations</p>
-                  <CardTitle className="text-xl text-white">Concrete Ops AI</CardTitle>
+                  <CardTitle className="text-xl text-white">Concrete Ops</CardTitle>
                   <Badge variant="secondary" className="mt-1 w-fit bg-zinc-800 text-zinc-100">Employee Portal</Badge>
                 </CardHeader>
                 <CardContent className="text-sm leading-6 text-zinc-300">
