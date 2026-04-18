@@ -1977,10 +1977,59 @@ type ToolboxTalkInput = {
   attendeeEmployeeIds: string[];
 };
 
+type ToolboxTalkUpdateInput = Omit<ToolboxTalkInput, "attendeeEmployeeIds">;
+
+async function validateToolboxTalkTargets(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  foremanEmployeeId?: string;
+  attendeeEmployeeIds?: string[];
+}) {
+  const { supabase, companyId, foremanEmployeeId, attendeeEmployeeIds = [] } = args;
+
+  if (foremanEmployeeId) {
+    const { data: foreman, error: foremanError } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("id", foremanEmployeeId)
+      .maybeSingle();
+
+    if (foremanError) return { error: foremanError.message };
+    if (!foreman) return { error: "Selected foreman was not found." };
+  }
+
+  const dedupedAttendeeEmployeeIds = Array.from(new Set(attendeeEmployeeIds.filter(Boolean)));
+  if (dedupedAttendeeEmployeeIds.length > 0) {
+    const { data: attendees, error: attendeeError } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("company_id", companyId)
+      .in("id", dedupedAttendeeEmployeeIds);
+
+    if (attendeeError) return { error: attendeeError.message };
+    if ((attendees ?? []).length !== dedupedAttendeeEmployeeIds.length) {
+      return { error: "One or more selected attendees were not found." };
+    }
+  }
+
+  return { data: { attendeeEmployeeIds: dedupedAttendeeEmployeeIds } };
+}
+
 export async function createToolboxTalk(input: ToolboxTalkInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+
+  const targetValidation = await validateToolboxTalkTargets({
+    supabase,
+    companyId: appUser.company_id,
+    foremanEmployeeId: input.foremanEmployeeId,
+    attendeeEmployeeIds: input.attendeeEmployeeIds,
+  });
+  if (targetValidation.error || !targetValidation.data) {
+    return { error: targetValidation.error || "Failed to validate toolbox talk selections." };
+  }
 
   const payload = {
     company_id: appUser.company_id,
@@ -1993,7 +2042,7 @@ export async function createToolboxTalk(input: ToolboxTalkInput) {
   const { data, error } = await supabase.from("toolbox_talks").insert(payload).select("id").single();
   if (error) return { error: error.message };
 
-  const attendeeEmployeeIds = Array.from(new Set(input.attendeeEmployeeIds.filter(Boolean)));
+  const attendeeEmployeeIds = targetValidation.data.attendeeEmployeeIds;
   if (attendeeEmployeeIds.length > 0) {
     const { error: attendeeError } = await supabase.from("toolbox_talk_attendees").insert(
       attendeeEmployeeIds.map((employeeId) => ({
@@ -2020,6 +2069,53 @@ export async function createToolboxTalk(input: ToolboxTalkInput) {
     targetTable: "toolbox_talks",
     targetId: data.id,
     summary: `Created toolbox talk "${input.topic.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function updateToolboxTalk(id: string, input: ToolboxTalkUpdateInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const targetValidation = await validateToolboxTalkTargets({
+    supabase,
+    companyId: appUser.company_id,
+    foremanEmployeeId: input.foremanEmployeeId,
+  });
+  if (targetValidation.error) return { error: targetValidation.error };
+
+  const { data, error } = await supabase
+    .from("toolbox_talks")
+    .update({
+      topic: input.topic.trim(),
+      talk_date: input.talkDate,
+      foreman_employee_id: input.foremanEmployeeId || null,
+      notes: input.notes?.trim() || null,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: error?.message || "Failed to update toolbox talk." };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "toolbox_talk.updated",
+    targetTable: "toolbox_talks",
+    targetId: id,
+    summary: `Updated toolbox talk "${input.topic.trim()}".`,
   });
   if (audit.error) return { error: audit.error };
 
