@@ -41,6 +41,11 @@ export function LoginForm() {
       <div>
         <label className="text-sm font-medium">Password</label>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3" />
+        <p className="mt-2 text-sm text-zinc-600">
+          <Link href="/forgot-password" className="underline">
+            Forgot your password?
+          </Link>
+        </p>
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <button disabled={loading} className="w-full rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
