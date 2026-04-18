@@ -1,4 +1,5 @@
 import { PolicyAcknowledgmentButton } from "@/components/policies/PolicyAcknowledgmentButton";
+import { EmptyState } from "@/components/ui/feedback";
 import { getMyPolicyAcknowledgments, type PolicyDetailRow } from "@/lib/db/queries";
 import { formatTimestamp } from "@/lib/time/formatting";
 
@@ -46,9 +47,11 @@ export default async function EmployeePoliciesPage() {
         })}
 
         {activeAcknowledgments.length === 0 ? (
-          <div className="rounded-3xl border bg-white p-6 text-zinc-600 shadow-sm">
-            No active policy acknowledgments are assigned to you right now.
-          </div>
+          <EmptyState
+            icon="file"
+            title="You are caught up on policy acknowledgments"
+            description="There are no active company policies waiting on your signature right now. New or updated policies will show up here automatically."
+          />
         ) : null}
       </div>
     </div>

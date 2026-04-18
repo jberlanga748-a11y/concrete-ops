@@ -10,8 +10,16 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [loading, setLoading] = useState(false);
+  const hasJobs = jobOptions.length > 0;
+  const hasPhases = phaseOptions.length > 0;
 
   async function handleClockIn() {
+    if (!hasJobs) {
+      setMessageType("error");
+      setMessage("You do not have any active job assignments yet. Ask the office to assign you before clocking in.");
+      return;
+    }
+
     if (!jobId) {
       setMessageType("error");
       setMessage("Select a job before clocking in.");
@@ -42,26 +50,40 @@ export function EmployeeSelfClockCard({ employeeId, jobOptions, phaseOptions }: 
       <div className="mt-6 space-y-4">
         <div>
           <p className="mb-2 text-sm text-zinc-600">Job</p>
-          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
-            <option value="">Select job</option>
+          <select
+            value={jobId}
+            onChange={(e) => setJobId(e.target.value)}
+            disabled={!hasJobs || loading}
+            className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+          >
+            <option value="">{hasJobs ? "Select job" : "No active job assignments"}</option>
             {jobOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
+          {!hasJobs ? (
+            <p className="mt-2 text-xs text-amber-700">Your time card is ready, but job options only appear after an active assignment is added.</p>
+          ) : null}
         </div>
 
         <div>
           <p className="mb-2 text-sm text-zinc-600">Phase (optional)</p>
-          <select value={jobPhaseId} onChange={(e) => setJobPhaseId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
-            <option value="">Select phase</option>
+          <select
+            value={jobPhaseId}
+            onChange={(e) => setJobPhaseId(e.target.value)}
+            disabled={!hasPhases || loading}
+            className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+          >
+            <option value="">{hasPhases ? "Select phase" : "No phases available"}</option>
             {phaseOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
+          {!hasPhases ? <p className="mt-2 text-xs text-zinc-500">Phase tracking has not been set up yet, so you can clock time against the job only.</p> : null}
         </div>
 
         <div className="flex gap-3">
-          <button onClick={handleClockIn} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
+          <button onClick={handleClockIn} disabled={loading || !hasJobs} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
             {loading ? "Saving..." : "Clock In"}
           </button>
           <button onClick={handleClockOut} disabled={loading} className="rounded-2xl border px-5 py-3 disabled:opacity-50">
