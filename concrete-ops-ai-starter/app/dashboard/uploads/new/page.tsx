@@ -11,7 +11,7 @@ export default async function NewUploadPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold">New Upload</h1>
-            <p className="mt-2 text-zinc-600">Employee-friendly photo/document upload tied to job records.</p>
+            <p className="mt-2 text-zinc-600">Office-managed photo/document upload tied to job records.</p>
           </div>
           <Link href="/dashboard/uploads" className="rounded-xl border px-4 py-2 text-sm">
             Back to Uploads
@@ -19,7 +19,13 @@ export default async function NewUploadPage() {
         </div>
       </div>
 
-      <EmployeeUploadForm jobOptions={jobOptions} dailyReportOptions={dailyReportOptions} />
+      <EmployeeUploadForm
+        jobOptions={jobOptions}
+        dailyReportOptions={dailyReportOptions}
+        title="Office Upload"
+        description="Attach office-managed files to jobs and optional daily reports."
+        tipMessage="Tip: add a clear note so the office and field teams can trace this file back to the same job record quickly."
+      />
     </div>
   );
 }

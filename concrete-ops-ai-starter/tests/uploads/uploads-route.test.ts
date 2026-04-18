@@ -5,11 +5,11 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/uploads/employeeAccess", () => ({
-  getEmployeeUploadAccessFromClient: vi.fn(),
+  getUploadAccessFromClient: vi.fn(),
 }));
 
 import { createClient } from "@/lib/supabase/server";
-import { getEmployeeUploadAccessFromClient } from "@/lib/uploads/employeeAccess";
+import { getUploadAccessFromClient } from "@/lib/uploads/employeeAccess";
 import { POST as uploadsPost } from "@/app/api/uploads/route";
 
 function buildFormData(overrides?: { jobId?: string; dailyReportId?: string }) {
@@ -39,13 +39,14 @@ describe("/api/uploads", () => {
       from,
     } as never);
 
-    vi.mocked(getEmployeeUploadAccessFromClient).mockResolvedValue({
+    vi.mocked(getUploadAccessFromClient).mockResolvedValue({
       data: {
         appUserId: "user-1",
         companyId: "company-1",
         role: "employee",
         employeeId: "employee-1",
         assignedJobIds: ["job-allowed"],
+        scope: "employee",
       },
     });
 
@@ -74,6 +75,10 @@ describe("/api/uploads", () => {
     }));
     const documentLinksInsert = vi.fn().mockResolvedValue({ error: null });
 
+    const jobsBuilder = {
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: "job-123" }, error: null }),
+    };
     const jobFilesSelectBuilder = {
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: { id: "job-file-1" }, error: null }),
@@ -87,6 +92,12 @@ describe("/api/uploads", () => {
       if (table === "daily_reports") {
         return {
           select: vi.fn(() => dailyReportsBuilder),
+        };
+      }
+
+      if (table === "jobs") {
+        return {
+          select: vi.fn(() => jobsBuilder),
         };
       }
 
@@ -123,13 +134,14 @@ describe("/api/uploads", () => {
       from,
     } as never);
 
-    vi.mocked(getEmployeeUploadAccessFromClient).mockResolvedValue({
+    vi.mocked(getUploadAccessFromClient).mockResolvedValue({
       data: {
         appUserId: "user-1",
         companyId: "company-1",
         role: "employee",
         employeeId: "employee-1",
         assignedJobIds: ["job-123"],
+        scope: "employee",
       },
     });
 
@@ -174,6 +186,99 @@ describe("/api/uploads", () => {
         linked_record_id: "report-1",
       },
     ]);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("allows office users to upload without employee assignment scope", async () => {
+    const upload = vi.fn().mockResolvedValue({ error: null });
+    const remove = vi.fn();
+    const jobFilesInsert = vi.fn().mockResolvedValue({ error: null });
+    const documentsInsert = vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn().mockResolvedValue({ data: { id: "document-1" }, error: null }),
+      })),
+    }));
+    const documentLinksInsert = vi.fn().mockResolvedValue({ error: null });
+
+    const jobsBuilder = {
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: "job-777" }, error: null }),
+    };
+    const jobFilesSelectBuilder = {
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "job-file-1" }, error: null }),
+    };
+
+    const from = vi.fn((table: string) => {
+      if (table === "jobs") {
+        return {
+          select: vi.fn(() => jobsBuilder),
+        };
+      }
+
+      if (table === "job_files") {
+        return {
+          insert: jobFilesInsert,
+          select: vi.fn(() => jobFilesSelectBuilder),
+        };
+      }
+
+      if (table === "documents") {
+        return {
+          insert: documentsInsert,
+        };
+      }
+
+      if (table === "document_links") {
+        return {
+          insert: documentLinksInsert,
+        };
+      }
+
+      return {
+        delete: vi.fn(() => ({
+          eq: vi.fn().mockReturnThis(),
+        })),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      storage: {
+        from: vi.fn(() => ({ upload, remove })),
+      },
+      from,
+    } as never);
+
+    vi.mocked(getUploadAccessFromClient).mockResolvedValue({
+      data: {
+        appUserId: "office-user-1",
+        companyId: "company-1",
+        role: "office_admin",
+        employeeId: null,
+        assignedJobIds: [],
+        scope: "office",
+      },
+    });
+
+    const response = await uploadsPost(
+      new Request("http://localhost/api/uploads", {
+        method: "POST",
+        body: buildFormData({ jobId: "job-777" }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true });
+    expect(jobFilesInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        company_id: "company-1",
+        job_id: "job-777",
+        uploaded_by_user_id: "office-user-1",
+        uploaded_by_employee_id: null,
+      }),
+    );
+    expect(upload).toHaveBeenCalledOnce();
     expect(remove).not.toHaveBeenCalled();
   });
 });
