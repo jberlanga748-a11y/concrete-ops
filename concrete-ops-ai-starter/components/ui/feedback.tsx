@@ -69,15 +69,15 @@ export function StatusChip({
   tone?: StatusTone;
 }) {
   const toneClasses: Record<StatusTone, string> = {
-    neutral: "bg-zinc-100 text-zinc-700",
-    success: "bg-emerald-100 text-emerald-700",
-    warning: "bg-amber-100 text-amber-700",
-    error: "bg-rose-100 text-rose-700",
-    info: "bg-sky-100 text-sky-700",
+    neutral: "border border-zinc-200 bg-white/90 text-zinc-700 shadow-[0_8px_18px_rgba(15,23,42,0.05)]",
+    success: "border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_18px_rgba(16,185,129,0.08)]",
+    warning: "border border-amber-200 bg-amber-50 text-amber-700 shadow-[0_8px_18px_rgba(245,158,11,0.08)]",
+    error: "border border-rose-200 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.08)]",
+    info: "border border-sky-200 bg-sky-50 text-sky-700 shadow-[0_8px_18px_rgba(14,165,233,0.08)]",
   };
 
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${toneClasses[tone]}`}>
+    <span className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses[tone]}`}>
       {children}
     </span>
   );
@@ -99,19 +99,21 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-zinc-500 shadow-sm">
+    <div className="relative overflow-hidden rounded-[28px] border border-dashed border-zinc-300/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,247,248,0.92))] p-7 text-center shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
+      <div className="absolute inset-x-10 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(201,106,44,0.45),transparent)]" />
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] border border-white bg-white text-zinc-500 shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
         <FeedbackIcon kind={icon} />
       </div>
-      <h3 className="mt-4 text-base font-semibold text-zinc-950">{title}</h3>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-600">{description}</p>
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">Nothing to show yet</p>
+      <h3 className="mt-3 text-[1.15rem] font-semibold tracking-[-0.03em] text-zinc-950">{title}</h3>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-600">{description}</p>
       {action ? (
-        <div className="mt-5 flex justify-center">{action}</div>
+        <div className="mt-6 flex justify-center">{action}</div>
       ) : actionHref && actionLabel ? (
-        <div className="mt-5 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <Link
             href={actionHref}
-            className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(249,115,22,0.28)] transition hover:bg-orange-400"
+            className="inline-flex items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
           >
             {actionLabel}
           </Link>
@@ -135,21 +137,23 @@ export function ErrorPanel({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-5 shadow-[0_12px_30px_rgba(190,24,93,0.08)]">
+    <div className="relative overflow-hidden rounded-[30px] border border-rose-200/90 bg-[linear-gradient(180deg,rgba(255,245,247,0.96),rgba(255,241,242,0.92))] p-6 shadow-[0_18px_40px_rgba(190,24,93,0.08)]">
+      <div className="absolute inset-x-10 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(244,63,94,0.4),transparent)]" />
       <div className="flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-rose-600 shadow-sm">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] border border-white bg-white text-rose-600 shadow-[0_12px_28px_rgba(190,24,93,0.12)]">
           <FeedbackIcon kind="alert" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-950">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-700">{description}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-rose-500">Attention needed</p>
+          <h2 className="mt-3 text-[1.2rem] font-semibold tracking-[-0.03em] text-zinc-950">{title}</h2>
+          <p className="mt-3 text-sm leading-7 text-zinc-700">{description}</p>
           {action ? (
-            <div className="mt-4">{action}</div>
+            <div className="mt-5">{action}</div>
           ) : actionHref && actionLabel ? (
-            <div className="mt-4">
+            <div className="mt-5">
               <Link
                 href={actionHref}
-                className="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-rose-100"
+                className="inline-flex items-center justify-center rounded-[18px] border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_28px_rgba(190,24,93,0.08)] transition hover:bg-rose-100"
               >
                 {actionLabel}
               </Link>
