@@ -1,5 +1,24 @@
 import Link from "next/link";
+import type { ComponentProps, ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  ActivityIcon,
+  ArrowRightIcon,
+  BellDotIcon,
+  CalculatorIcon,
+  ClipboardListIcon,
+  Clock3Icon,
+  FileTextIcon,
+  HardHatIcon,
+  LayoutDashboardIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  UploadIcon,
+} from "lucide-react";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
+import { DashboardActivityTime } from "@/components/dashboard/DashboardActivityTime";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
 import {
   getDailyReports,
@@ -48,20 +67,164 @@ function formatDate(value: string | null | undefined) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
-}
-
 function formatRelativeCount(value: number, singular: string, plural = `${singular}s`) {
   return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function SurfaceCard({
+  children,
+  className,
+  ...props
+}: {
+  children: ReactNode;
+  className?: string;
+} & ComponentProps<"article">) {
+  return (
+    <article
+      className={cn(
+        "rounded-[32px] border border-white/80 bg-white/80 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </article>
+  );
+}
+
+type Metric = {
+  label: string;
+  value: string;
+  detail: string;
+  cta: string;
+  href: string;
+  icon: LucideIcon;
+  accentClass: string;
+};
+
+function MetricCard({ metric }: { metric: Metric }) {
+  const Icon = metric.icon;
+
+  return (
+    <SurfaceCard className="relative overflow-hidden p-5">
+      <div className={cn("absolute inset-x-5 top-0 h-1 rounded-full", metric.accentClass)} />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{metric.label}</p>
+          <p className="mt-4 text-[2.1rem] font-semibold tracking-[-0.06em] text-[#101828]">{metric.value}</p>
+        </div>
+        <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-zinc-200/80 bg-zinc-50 text-zinc-700">
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-zinc-600">{metric.detail}</p>
+      <Link href={metric.href} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
+        {metric.cta}
+        <ArrowRightIcon className="h-4 w-4" />
+      </Link>
+    </SurfaceCard>
+  );
+}
+
+type ActionLaneItem = {
+  href: string;
+  title: string;
+  detail: string;
+};
+
+type ActionLane = {
+  eyebrow: string;
+  title: string;
+  detail: string;
+  icon: LucideIcon;
+  accentClass: string;
+  items: ActionLaneItem[];
+};
+
+function ActionLaneCard({ lane }: { lane: ActionLane }) {
+  const Icon = lane.icon;
+
+  return (
+    <div className="rounded-[28px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,248,250,0.9))] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">{lane.eyebrow}</p>
+          <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">{lane.title}</h3>
+        </div>
+        <span className={cn("flex h-11 w-11 items-center justify-center rounded-[18px] border", lane.accentClass)}>
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-zinc-600">{lane.detail}</p>
+
+      <div className="mt-5 space-y-3">
+        {lane.items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="block rounded-[22px] border border-zinc-200 bg-white px-4 py-4 transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-zinc-950">{item.title}</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">{item.detail}</p>
+              </div>
+              <ArrowRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ActivityPanel<T>({
+  title,
+  eyebrow,
+  href,
+  icon: Icon,
+  items,
+  emptyLabel,
+  renderItem,
+}: {
+  title: string;
+  eyebrow: string;
+  href: string;
+  icon: LucideIcon;
+  items: T[];
+  emptyLabel: string;
+  renderItem: (item: T) => ReactNode;
+}) {
+  return (
+    <div className="rounded-[28px] border border-zinc-200/80 bg-[rgba(246,247,248,0.86)] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-[18px] border border-white bg-white text-zinc-700 shadow-sm">
+            <Icon className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{eyebrow}</p>
+            <h3 className="mt-1 text-base font-semibold text-zinc-950">{title}</h3>
+          </div>
+        </div>
+        <Link href={href} className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 transition hover:text-zinc-800">
+          View all
+        </Link>
+      </div>
+
+      <ul className="mt-4 space-y-3 text-sm">
+        {items.map((item, index) => (
+          <li key={index} className="rounded-[22px] border border-white bg-white/90 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+            {renderItem(item)}
+          </li>
+        ))}
+        {items.length === 0 ? (
+          <li className="rounded-[22px] border border-dashed border-zinc-300 bg-white/90 p-4 text-zinc-600">{emptyLabel}</li>
+        ) : null}
+      </ul>
+    </div>
+  );
 }
 
 export default async function DashboardPage() {
@@ -94,296 +257,418 @@ export default async function DashboardPage() {
   ).size;
   const canUseAdminOpsCopilot = appUser ? ["owner", "office_admin"].includes(appUser.role) : false;
 
-  const stats = [
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
+
+  const focusMessage =
+    allUnreadNotifications.length > 0
+      ? "Clear the unread office queue after reviewing today's reports so follow-up stays same-day."
+      : reportsToday === 0
+        ? "Prompt the field for today's report set before closeout so documentation doesn't slip."
+        : uploadsToday === 0
+          ? "Ask for supporting photos and files while the field context is still fresh."
+          : "The core queues look stable. Use this command view to keep records complete and crews unblocked.";
+
+  const metrics: Metric[] = [
     {
       label: "Active Crew Clocks",
       value: activeClocks.toString(),
-      detail: `${formatRelativeCount(allTimeEntries.length, "entry")} logged overall`,
+      detail: activeClocks > 0 ? `${activeClocks} people are currently clocked in.` : "No crews are clocked in right now.",
+      cta: "Open time board",
+      href: "/dashboard/time",
+      icon: Clock3Icon,
+      accentClass: "bg-[linear-gradient(90deg,#cf6f33_0%,#ebb086_100%)]",
     },
     {
       label: "Reports Filed Today",
       value: reportsToday.toString(),
-      detail: `${formatRelativeCount(allReports.length, "report")} total`,
+      detail: `${formatRelativeCount(allReports.length, "report")} across the record, with today's pace visible at a glance.`,
+      cta: "Review reports",
+      href: "/dashboard/daily-reports",
+      icon: ClipboardListIcon,
+      accentClass: "bg-[linear-gradient(90deg,#1f3b57_0%,#4c6c88_100%)]",
     },
     {
       label: "Uploads Captured",
       value: allUploads.length.toString(),
-      detail: uploadsToday > 0 ? `${uploadsToday} added today` : "No uploads added today",
+      detail: uploadsToday > 0 ? `${uploadsToday} file uploads landed today.` : "No uploads have been captured yet today.",
+      cta: "Open uploads",
+      href: "/dashboard/uploads",
+      icon: UploadIcon,
+      accentClass: "bg-[linear-gradient(90deg,#0f766e_0%,#4da89a_100%)]",
     },
     {
       label: "Unread Notifications",
       value: allUnreadNotifications.length.toString(),
-      detail: jobsTouchedToday > 0 ? `${jobsTouchedToday} jobs touched today` : "No job activity yet today",
+      detail: jobsTouchedToday > 0 ? `${jobsTouchedToday} jobs have labor activity today.` : "No jobs have logged labor activity yet today.",
+      cta: "Review alerts",
+      href: "/dashboard/notifications",
+      icon: BellDotIcon,
+      accentClass: "bg-[linear-gradient(90deg,#7c5b1f_0%,#c7a25f_100%)]",
+    },
+  ];
+
+  const actionLanes: ActionLane[] = [
+    {
+      eyebrow: "Field Execution",
+      title: "Keep crews, reports, and scope aligned.",
+      detail: "Use the live work surfaces first so the field record stays current while the day is in motion.",
+      icon: HardHatIcon,
+      accentClass: "border-[#f1d7c6] bg-[#fff4ed] text-[#b95f26]",
+      items: [
+        { href: "/dashboard/time", title: "Open live labor board", detail: "Review clock status, breaks, and active field coverage." },
+        { href: "/dashboard/daily-reports/new", title: "Create daily report", detail: "Capture production notes before end-of-day compression." },
+      ],
+    },
+    {
+      eyebrow: "Office Follow-Up",
+      title: "Work the queue before it turns reactive.",
+      detail: "Stay ahead of approvals, change capture, and notification cleanup without hunting across modules.",
+      icon: FileTextIcon,
+      accentClass: "border-[#d7e2ec] bg-[#f2f7fb] text-[#2c5678]",
+      items: [
+        { href: "/dashboard/change-orders/new", title: "Start change order", detail: "Log scope movement while the cost story is still fresh." },
+        { href: "/dashboard/notifications", title: "Clear notification queue", detail: "Keep office follow-up tight and visible." },
+      ],
+    },
+    {
+      eyebrow: "Project Record",
+      title: "Keep documentation credible and easy to trust.",
+      detail: "Centralize the latest job artifacts so office and field teams share the same source of truth.",
+      icon: ShieldCheckIcon,
+      accentClass: "border-[#d3e3dd] bg-[#eef7f2] text-[#1f6b52]",
+      items: [
+        { href: "/dashboard/uploads/new", title: "Add supporting upload", detail: "Bring photos and project files into the record quickly." },
+        { href: "/dashboard/jobs", title: "Open job board", detail: "Move from the command view into the active project roster." },
+      ],
+    },
+  ];
+
+  const briefingItems = [
+    {
+      label: "Field coverage",
+      value: activeClocks > 0 ? `${activeClocks} active clocks` : "No active clocks yet",
+      detail: jobsTouchedToday > 0 ? `${jobsTouchedToday} jobs have labor activity today.` : "Waiting on the first field signal.",
+    },
+    {
+      label: "Documentation pace",
+      value: reportsToday > 0 ? `${reportsToday} daily reports filed` : "No reports filed yet",
+      detail: uploadsToday > 0 ? `${uploadsToday} uploads were added today.` : "Supporting files still need to land.",
+    },
+    {
+      label: "Office queue",
+      value: allUnreadNotifications.length > 0 ? `${allUnreadNotifications.length} unread notifications` : "Queue is clear",
+      detail: allUnreadNotifications.length > 0 ? "Follow-up is waiting in the notification feed." : "No office escalations are sitting unreviewed.",
     },
   ];
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Operations Command</p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Run today&apos;s field and office workflow from one place.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
-              Watch labor, reports, uploads, and approvals without bouncing between modules. This dashboard is your daily control center for keeping crews moving and office follow-up tight.
+      <SurfaceCard className="relative overflow-hidden p-6 sm:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.06),_transparent_26%)]" />
+
+        <div className="relative grid gap-6 xl:grid-cols-[1.3fr,0.92fr] xl:items-start">
+          <div>
+            <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
+              Operations Command
+            </Badge>
+            <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{todayLabel}</p>
+            <h1 className="mt-4 max-w-3xl text-[clamp(2.25rem,4vw,4rem)] font-semibold tracking-[-0.07em] text-[#101828]">
+              A steadier command view for field work, documentation, and office follow-up.
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+              See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
             </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                href="/dashboard/daily-reports"
+                className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+              >
+                Review today&apos;s reports
+              </Link>
+              <Link
+                href="/dashboard/jobs"
+                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+              >
+                Open job board
+              </Link>
+              <Link
+                href="#tools-and-ai"
+                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+              >
+                Browse Tools &amp; AI
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Labor</p>
+                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{activeClocks}</p>
+                <p className="mt-1 text-sm text-zinc-600">active crew clocks</p>
+              </div>
+              <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Reports</p>
+                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{reportsToday}</p>
+                <p className="mt-1 text-sm text-zinc-600">filed today</p>
+              </div>
+              <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Alerts</p>
+                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{allUnreadNotifications.length}</p>
+                <p className="mt-1 text-sm text-zinc-600">awaiting review</p>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/dashboard/daily-reports/new"
-              className="inline-flex items-center justify-center rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-            >
-              Create Daily Report
-            </Link>
-            <Link
-              href="/dashboard/jobs"
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
-            >
-              View Job Board
-            </Link>
-            <Link
-              href="#tools-and-ai"
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
-            >
-              Browse Tools &amp; AI
-            </Link>
+
+          <div className="rounded-[30px] border border-[#1b2833] bg-[#0f1820] p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.28)] sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Today&apos;s Briefing</p>
+                <h2 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-white">Know where the day stands in under a minute.</h2>
+              </div>
+              <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-white/10 bg-white/5 text-zinc-200">
+                <LayoutDashboardIcon className="h-5 w-5" />
+              </span>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {briefingItems.map((item) => (
+                <div key={item.label} className="rounded-[22px] border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-white">{item.label}</p>
+                    <ActivityIcon className="h-4 w-4 text-zinc-400" />
+                  </div>
+                  <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-white">{item.value}</p>
+                  <p className="mt-1 text-sm leading-6 text-zinc-300">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-[#cf6f33]/30 bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] p-4">
+              <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-orange-100">Recommended Focus</p>
+              <p className="mt-2 text-sm leading-6 text-orange-50">{focusMessage}</p>
+              <Link
+                href="/dashboard/notifications"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-orange-100"
+              >
+                Review follow-up queue
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
-      </section>
+      </SurfaceCard>
 
       <section className="grid gap-4 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <article
-            key={stat.label}
-            className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)]"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
-            <p className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950">{stat.value}</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">{stat.detail}</p>
-          </article>
+        {metrics.map((metric) => (
+          <MetricCard key={metric.label} metric={metric} />
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
-        <article className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Today</p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">What needs attention right now</h2>
-            </div>
-            <Link href="/dashboard/notifications" className="text-sm font-medium text-orange-600 hover:text-orange-500">
-              View alerts
-            </Link>
-          </div>
-
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-sm font-medium text-zinc-900">Labor board</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                {activeClocks > 0 ? `${activeClocks} crew members are clocked in.` : "No one is clocked in yet."}
+      <section className="grid gap-6 xl:grid-cols-[1.25fr,0.95fr]">
+        <SurfaceCard>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="max-w-2xl">
+              <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Quick Actions</p>
+              <h2 className="mt-3 text-[1.85rem] font-semibold tracking-[-0.05em] text-[#101828]">Move the day forward from a smaller set of stronger decisions.</h2>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">
+                These action lanes keep the highest-value surfaces close at hand without reshaping how teams already work inside the product.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-sm font-medium text-zinc-900">Reporting pace</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                {reportsToday > 0 ? `${reportsToday} daily reports filed today.` : "No daily reports filed yet today."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-sm font-medium text-zinc-900">Office follow-up</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                {allUnreadNotifications.length > 0
-                  ? `${allUnreadNotifications.length} unread notifications need review.`
-                  : "Notification queue is clear right now."}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-[24px] border border-orange-200 bg-orange-50 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-zinc-900">Recommended next move</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">
-                  Start with today&apos;s report queue and then review uploads so field activity stays documented before the day gets away from the office.
-                </p>
-              </div>
-              <Link
-                href="/dashboard/daily-reports"
-                className="inline-flex items-center justify-center rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-              >
-                Review reports
-              </Link>
-            </div>
-          </div>
-        </article>
-
-        <article className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Quick Actions</p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Move work forward</h2>
-            </div>
-            <Link href="/dashboard/jobs" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+            <Link href="/dashboard/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
               Open jobs
+              <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="mt-5 space-y-3">
-            {[
-              { href: "/dashboard/time", title: "Open Time Board", detail: "Review live labor, breaks, and clock status." },
-              { href: "/dashboard/change-orders/new", title: "Start Change Order", detail: "Capture scope changes before they slip." },
-              { href: "/dashboard/uploads/new", title: "Add Upload", detail: "Get photos and supporting files into the record." },
-              { href: "/dashboard/concrete-calculator", title: "Concrete Calculator", detail: "Build yardage totals with waste before ordering." },
-              { href: "/dashboard/notifications", title: "Open Notifications", detail: "Clear office follow-up and escalations." },
-            ].map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="block rounded-2xl border border-zinc-200 px-4 py-4 transition hover:border-orange-300 hover:bg-orange-50"
-              >
-                <p className="text-sm font-semibold text-zinc-950">{action.title}</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">{action.detail}</p>
-              </Link>
+          <div className="mt-6 grid gap-4 xl:grid-cols-3">
+            {actionLanes.map((lane) => (
+              <ActionLaneCard key={lane.title} lane={lane} />
             ))}
           </div>
-        </article>
-      </section>
+        </SurfaceCard>
 
-      <section id="tools-and-ai" className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Tools &amp; AI</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Use the right tool without guessing who should see it</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              The concrete calculator stays available to field and office teams, while Admin Ops Copilot remains limited to owner and office admin workflows.
-            </p>
-          </div>
-          <Link
-            href="/dashboard/concrete-calculator"
-            className="inline-flex items-center justify-center rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-          >
-            Open Concrete Calculator
-          </Link>
-        </div>
-
-        <div className="mt-5 grid gap-4 xl:grid-cols-[0.9fr,1.1fr]">
-          <article className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4 sm:p-5">
-            <p className="text-sm font-semibold text-zinc-950">Concrete Calculator</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              Build yardage totals, include waste, and move straight into ordering conversations without leaving the dashboard flow.
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Link
-                href="/dashboard/concrete-calculator"
-                className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100"
-              >
-                Launch calculator
-              </Link>
-              {canUseAdminOpsCopilot ? (
-                <Link href="#admin-ops-copilot" className="text-sm font-medium text-orange-600 hover:text-orange-500">
-                  Jump to Admin Ops Copilot
-                </Link>
-              ) : (
-                <p className="text-sm leading-6 text-zinc-600">Admin Ops Copilot is limited to owner and office admin users.</p>
-              )}
+        <div className="space-y-6">
+          <SurfaceCard id="tools-and-ai" className="overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div className="max-w-xl">
+                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Tools &amp; AI</p>
+                <h2 className="mt-3 text-[1.7rem] font-semibold tracking-[-0.05em] text-[#101828]">Keep specialty tools visible without cluttering the whole command surface.</h2>
+              </div>
+              <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
+                <SparklesIcon className="h-5 w-5" />
+              </span>
             </div>
-          </article>
+
+            <p className="mt-4 text-sm leading-6 text-zinc-600">
+              The concrete calculator stays accessible to both field and office roles, while Admin Ops Copilot remains constrained to owner and office admin access.
+            </p>
+
+            <div className="mt-5 grid gap-4">
+              <div className="rounded-[26px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Concrete Calculator</p>
+                    <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">Estimate yardage quickly, then move back into delivery conversations.</h3>
+                  </div>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#d7e2ec] bg-white text-[#2c5678]">
+                    <CalculatorIcon className="h-5 w-5" />
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">
+                  This is the utility surface that belongs in the shell-level toolkit: useful, role-safe, and immediately actionable.
+                </p>
+                <Link
+                  href="/dashboard/concrete-calculator"
+                  className="mt-5 inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+                >
+                  Open Concrete Calculator
+                </Link>
+              </div>
+
+              <div className="rounded-[26px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Copilot Access</p>
+                    <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">
+                      {canUseAdminOpsCopilot ? "Office-side AI follow-up is available in this workspace." : "AI follow-up remains intentionally hidden outside office-side roles."}
+                    </h3>
+                  </div>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#ead3c3] bg-white text-[#b95f26]">
+                    <SparklesIcon className="h-5 w-5" />
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">
+                  {canUseAdminOpsCopilot
+                    ? "Jump directly into the assistant without leaving the command center."
+                    : "Role-based restraint keeps the dashboard cleaner for the field while still preserving the office workflow."}
+                </p>
+                {canUseAdminOpsCopilot ? (
+                  <Link
+                    href="#admin-ops-copilot"
+                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
+                  >
+                    Jump to Admin Ops Copilot
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </SurfaceCard>
 
           <div id="admin-ops-copilot">
             {canUseAdminOpsCopilot ? (
               <AdminOpsCopilotCard />
             ) : (
-              <article className="rounded-[28px] border border-zinc-200 bg-zinc-50/70 p-5 sm:p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Admin Ops Copilot</p>
-                <h3 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Reserved for office-side operations follow-up</h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">
-                  This AI assistant is intentionally hidden outside owner and office admin roles so field users only see the tools that match their day-to-day workflow.
-                </p>
-              </article>
+              <SurfaceCard className="bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(247,248,250,0.92))]">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="max-w-xl">
+                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Admin Ops Copilot</p>
+                    <h3 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-[#101828]">Reserved for owner and office admin follow-up.</h3>
+                    <p className="mt-3 text-sm leading-6 text-zinc-600">
+                      This keeps the command surface focused on field-safe tools while reserving this workflow for owner and office admin roles.
+                    </p>
+                  </div>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
+                    <SparklesIcon className="h-5 w-5" />
+                  </span>
+                </div>
+              </SurfaceCard>
             )}
           </div>
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <SurfaceCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Recent Activity</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Latest movement across the operation</h2>
+            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Recent Activity</p>
+            <h2 className="mt-3 text-[1.85rem] font-semibold tracking-[-0.05em] text-[#101828]">Latest movement across the operation.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+              Read the newest field, reporting, and upload signals without leaving the command surface.
+            </p>
           </div>
-          <Link href="/dashboard/time" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+          <Link href="/dashboard/time" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
             View time board
+            <ArrowRightIcon className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-3">
-          <article className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-zinc-950">Time activity</h3>
-              <Link href="/dashboard/time" className="text-xs font-medium text-zinc-500 hover:text-zinc-800">
-                View all
-              </Link>
-            </div>
-            <ul className="mt-4 space-y-3 text-sm">
-              {recentTimeEntries.map((entry) => (
-                <li key={entry.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
-                  <p className="font-medium text-zinc-950">{getEmployeeName(entry.employees)}</p>
-                  <p className="mt-1 text-zinc-600">{getJobLabel(entry.jobs)}</p>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">
-                    {entry.status.replaceAll("_", " ")} · {formatDateTime(entry.clock_in_at)}
-                  </p>
-                </li>
-              ))}
-              {recentTimeEntries.length === 0 ? (
-                <li className="rounded-2xl border border-dashed border-zinc-300 bg-white p-4 text-zinc-600">No time activity yet.</li>
-              ) : null}
-            </ul>
-          </article>
+        <div className="mt-6 grid gap-4 xl:grid-cols-3">
+          <ActivityPanel
+            title="Time activity"
+            eyebrow="Labor"
+            href="/dashboard/time"
+            icon={Clock3Icon}
+            items={recentTimeEntries}
+            emptyLabel="No time activity has been recorded yet."
+            renderItem={(entry) => (
+              <>
+                <p className="font-semibold text-zinc-950">{getEmployeeName(entry.employees)}</p>
+                <p className="mt-1 text-zinc-600">{getJobLabel(entry.jobs)}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
+                    {entry.status.replaceAll("_", " ")}
+                  </Badge>
+                  <DashboardActivityTime
+                    value={entry.clock_in_at}
+                    className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500"
+                  />
+                </div>
+              </>
+            )}
+          />
 
-          <article className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-zinc-950">Daily reports</h3>
-              <Link href="/dashboard/daily-reports" className="text-xs font-medium text-zinc-500 hover:text-zinc-800">
-                View all
-              </Link>
-            </div>
-            <ul className="mt-4 space-y-3 text-sm">
-              {recentReports.map((report) => (
-                <li key={report.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
-                  <p className="font-medium text-zinc-950">{getJobLabel(report.jobs)}</p>
-                  <p className="mt-1 text-zinc-600">{getSubmitter(report.users)}</p>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">{formatDate(report.report_date)}</p>
-                </li>
-              ))}
-              {recentReports.length === 0 ? (
-                <li className="rounded-2xl border border-dashed border-zinc-300 bg-white p-4 text-zinc-600">No daily reports yet.</li>
-              ) : null}
-            </ul>
-          </article>
+          <ActivityPanel
+            title="Daily reports"
+            eyebrow="Reporting"
+            href="/dashboard/daily-reports"
+            icon={ClipboardListIcon}
+            items={recentReports}
+            emptyLabel="No daily reports have been filed yet."
+            renderItem={(report) => (
+              <>
+                <p className="font-semibold text-zinc-950">{getJobLabel(report.jobs)}</p>
+                <p className="mt-1 text-zinc-600">{getSubmitter(report.users)}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
+                    Filed
+                  </Badge>
+                  <span className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{formatDate(report.report_date)}</span>
+                </div>
+              </>
+            )}
+          />
 
-          <article className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-zinc-950">Uploads</h3>
-              <Link href="/dashboard/uploads" className="text-xs font-medium text-zinc-500 hover:text-zinc-800">
-                View all
-              </Link>
-            </div>
-            <ul className="mt-4 space-y-3 text-sm">
-              {recentUploads.map((upload) => (
-                <li key={upload.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
-                  <p className="font-medium text-zinc-950">{upload.file_name}</p>
-                  <p className="mt-1 text-zinc-600">{getJobLabel(upload.jobs)}</p>
-                  <p className="mt-1 text-zinc-600">{getSubmitter(upload.users, upload.employees)}</p>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">{formatDateTime(upload.created_at)}</p>
-                </li>
-              ))}
-              {recentUploads.length === 0 ? (
-                <li className="rounded-2xl border border-dashed border-zinc-300 bg-white p-4 text-zinc-600">No uploads yet.</li>
-              ) : null}
-            </ul>
-          </article>
+          <ActivityPanel
+            title="Uploads"
+            eyebrow="Project Record"
+            href="/dashboard/uploads"
+            icon={UploadIcon}
+            items={recentUploads}
+            emptyLabel="No files have been uploaded yet."
+            renderItem={(upload) => (
+              <>
+                <p className="font-semibold text-zinc-950">{upload.file_name}</p>
+                <p className="mt-1 text-zinc-600">{getJobLabel(upload.jobs)}</p>
+                <p className="mt-1 text-zinc-600">{getSubmitter(upload.users, upload.employees)}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
+                    Upload
+                  </Badge>
+                  <DashboardActivityTime
+                    value={upload.created_at}
+                    className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500"
+                  />
+                </div>
+              </>
+            )}
+          />
         </div>
-      </section>
+      </SurfaceCard>
     </div>
   );
 }
