@@ -1,16 +1,10 @@
 import { getMyPPEItems, type PPEItemRow } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getEmployee(employee: PPEItemRow["employees"]) {
   if (!employee) return null;
   if (Array.isArray(employee)) return employee[0] ?? null;
   return employee;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 function formatLabel(value: string) {
@@ -47,11 +41,11 @@ export default async function EmployeePPEPage() {
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-700">
                   <p className="font-medium">Issued</p>
-                  <p className="mt-1">{formatDate(item.issued_at)}</p>
+                  <p className="mt-1">{formatDateOnly(item.issued_at)}</p>
                 </div>
                 <div className="rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-700">
                   <p className="font-medium">Replacement Due</p>
-                  <p className="mt-1">{formatDate(item.replacement_due_at)}</p>
+                  <p className="mt-1">{formatDateOnly(item.replacement_due_at)}</p>
                 </div>
               </div>
 

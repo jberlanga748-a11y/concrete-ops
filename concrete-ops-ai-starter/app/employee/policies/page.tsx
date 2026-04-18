@@ -1,23 +1,11 @@
 import { PolicyAcknowledgmentButton } from "@/components/policies/PolicyAcknowledgmentButton";
 import { getMyPolicyAcknowledgments, type PolicyDetailRow } from "@/lib/db/queries";
+import { formatTimestamp } from "@/lib/time/formatting";
 
 function getPolicy(policy: PolicyDetailRow[] | PolicyDetailRow | null) {
   if (!policy) return null;
   if (Array.isArray(policy)) return policy[0] ?? null;
   return policy;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function EmployeePoliciesPage() {
@@ -45,7 +33,7 @@ export default async function EmployeePoliciesPage() {
                 <div>
                   <h2 className="text-xl font-semibold">{policy.title}</h2>
                   <p className="mt-1 text-sm text-zinc-600">
-                    {[policy.category, policy.version_label, ack.status === "signed" ? `Signed ${formatDateTime(ack.acknowledged_at)}` : "Awaiting acknowledgment"].filter(Boolean).join(" · ")}
+                    {[policy.category, policy.version_label, ack.status === "signed" ? `Signed ${formatTimestamp(ack.acknowledged_at)}` : "Awaiting acknowledgment"].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <PolicyAcknowledgmentButton policyId={policy.id} signed={ack.status === "signed"} />

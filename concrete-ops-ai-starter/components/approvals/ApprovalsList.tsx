@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { updateApprovalStatus } from "@/lib/db/mutations";
 import type { ApprovalRow } from "@/lib/db/queries";
 
@@ -21,19 +22,6 @@ function getRelatedHref(approval: ApprovalRow) {
   if (approval.approval_type === "proposal" && approval.proposal_id) return `/dashboard/proposals/${approval.proposal_id}`;
   if (approval.approval_type === "change_order" && approval.change_order_id) return `/dashboard/change-orders/${approval.change_order_id}`;
   return null;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export function ApprovalsList({
@@ -58,10 +46,12 @@ export function ApprovalsList({
               <div>
                 <p className="font-medium text-zinc-900">{getTitle(approval)}</p>
                 <p className="mt-1 text-sm text-zinc-600">
-                  {[approval.approval_type, approval.status, `Sent ${formatDateTime(approval.sent_at)}`].join(" · ")}
+                  <span className="capitalize">{approval.approval_type}</span> · {approval.status} · Sent{" "}
+                  <ViewerDateTime value={approval.sent_at} includeYear includeTimeZoneName={false} />
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Viewed: {formatDateTime(approval.viewed_at)} · Decided: {formatDateTime(approval.decided_at)}
+                  Viewed: <ViewerDateTime value={approval.viewed_at} includeYear includeTimeZoneName={false} /> · Decided:{" "}
+                  <ViewerDateTime value={approval.decided_at} includeYear includeTimeZoneName={false} />
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

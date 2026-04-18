@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuditLogs, type AuditLogRow } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
+import { formatTimestamp } from "@/lib/time/formatting";
 
 function getActorUser(actorUser: AuditLogRow["actor_user"]) {
   if (!actorUser) return null;
@@ -13,18 +14,6 @@ function getActorEmployee(actorEmployee: AuditLogRow["actor_employee"]) {
   if (!actorEmployee) return null;
   if (Array.isArray(actorEmployee)) return actorEmployee[0] ?? null;
   return actorEmployee;
-}
-
-function formatDateTime(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function AuditLogsPage({
@@ -96,7 +85,7 @@ export default async function AuditLogsPage({
               const actorEmployee = getActorEmployee(log.actor_employee);
               return (
                 <tr key={log.id} className="border-t align-top">
-                  <td className="px-4 py-4">{formatDateTime(log.created_at)}</td>
+                  <td className="px-4 py-4">{formatTimestamp(log.created_at)}</td>
                   <td className="px-4 py-4">
                     <div>
                       <p>{actorUser?.full_name || actorEmployee?.full_name || "System"}</p>

@@ -7,8 +7,32 @@ const DATE_ONLY_PATTERN = "MMM d, yyyy";
 const DATE_TIME_PATTERN = "MMM d, h:mm aa";
 const DATE_TIME_WITH_YEAR_PATTERN = "MMM d, yyyy, h:mm aa";
 
+type TimestampFormatOptions = {
+  timeZone?: string;
+  includeYear?: boolean;
+  includeTimeZoneName?: boolean;
+  emptyLabel?: string;
+};
+
+type TimestampDateOnlyFormatOptions = {
+  timeZone?: string;
+  emptyLabel?: string;
+};
+
+type CurrentDateLabelOptions = {
+  timeZone?: string;
+  includeWeekday?: boolean;
+  monthStyle?: "long" | "short";
+  date?: Date;
+};
+
 function getDateTimePattern(includeYear: boolean) {
   return includeYear ? DATE_TIME_WITH_YEAR_PATTERN : DATE_TIME_PATTERN;
+}
+
+function getCurrentDateLabelPattern(includeWeekday: boolean, monthStyle: "long" | "short") {
+  const monthPattern = monthStyle === "long" ? "MMMM" : "MMM";
+  return includeWeekday ? `EEEE, ${monthPattern} d` : `${monthPattern} d`;
 }
 
 function parseDateOnlyValue(value: string) {
@@ -85,4 +109,47 @@ export function formatTimestampInTimeZone(
   if (!includeTimeZoneName) return timestamp;
 
   return `${timestamp} ${getTimeZoneLabel(parsed, timeZone)}`;
+}
+
+export function formatTimestamp(
+  value: string | null | undefined,
+  {
+    timeZone = DEFAULT_TIME_ZONE,
+    includeYear = true,
+    includeTimeZoneName = false,
+    emptyLabel = "—",
+  }: TimestampFormatOptions = {},
+) {
+  return formatTimestampInTimeZone(value, {
+    timeZone,
+    includeYear,
+    includeTimeZoneName,
+    emptyLabel,
+  });
+}
+
+export function formatTimestampDateOnly(
+  value: string | null | undefined,
+  {
+    timeZone = DEFAULT_TIME_ZONE,
+    emptyLabel = "—",
+  }: TimestampDateOnlyFormatOptions = {},
+) {
+  if (!value) return emptyLabel;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  return formatInTimeZone(parsed, timeZone, DATE_ONLY_PATTERN);
+}
+
+export function formatCurrentDateLabel(
+  {
+    timeZone,
+    includeWeekday = true,
+    monthStyle = "long",
+    date = new Date(),
+  }: CurrentDateLabelOptions = {},
+) {
+  return formatInTimeZone(date, timeZone ?? getViewerTimeZone(), getCurrentDateLabelPattern(includeWeekday, monthStyle));
 }

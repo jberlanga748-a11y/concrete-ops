@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { getDocumentsForEntity, getIncidentById, type IncidentDetailRow } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getJob(job: IncidentDetailRow["jobs"]) {
   if (!job) return null;
@@ -25,13 +26,6 @@ function getReportedByEmployee(employee: IncidentDetailRow["reported_by_employee
   if (!employee) return null;
   if (Array.isArray(employee)) return employee[0] ?? null;
   return employee;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 function formatLabel(value: string) {
@@ -62,7 +56,7 @@ export default async function IncidentDetailPage({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold capitalize">{formatLabel(incident.incident_type)}</h1>
-            <p className="mt-2 text-zinc-600">{formatDate(incident.incident_date)}</p>
+            <p className="mt-2 text-zinc-600">{formatDateOnly(incident.incident_date)}</p>
           </div>
           <div className="flex gap-3">
             {job ? (

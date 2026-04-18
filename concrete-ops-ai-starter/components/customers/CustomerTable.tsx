@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { CustomerListRow } from "@/lib/db/queries";
 import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import { formatTimestampDateOnly } from "@/lib/time/formatting";
 import {
   DataTable,
   TableActionLink,
@@ -12,12 +13,6 @@ import {
   TableRow,
   TableShell,
 } from "@/components/ui/table";
-
-function formatDate(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
-}
 
 export function CustomerTable({
   customers,
@@ -51,7 +46,7 @@ export function CustomerTable({
                   {customer.status}
                 </StatusChip>
               </TableCell>
-              <TableCell>{formatDate(customer.created_at)}</TableCell>
+              <TableCell>{formatTimestampDateOnly(customer.created_at)}</TableCell>
               <TableCell>
                 <TableActionLink href={`/dashboard/customers/${customer.id}`} label="Edit" />
               </TableCell>

@@ -2,20 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/db/mutations";
 import type { NotificationRow } from "@/lib/db/queries";
-
-function formatDateTime(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
-}
 
 function getPriorityClasses(priority: NotificationRow["priority"]) {
   if (priority === "high") return "bg-red-100 text-red-800";
@@ -89,7 +78,12 @@ export function NotificationsList({
                     ) : null}
                   </div>
                   <p className="mt-2 text-sm text-zinc-700">{notification.body}</p>
-                  <p className="mt-2 text-xs text-zinc-500">{formatDateTime(notification.created_at)}</p>
+                  <ViewerDateTime
+                    value={notification.created_at}
+                    className="mt-2 text-xs text-zinc-500"
+                    includeYear
+                    includeTimeZoneName={false}
+                  />
                 </div>
 
                 <div className="flex flex-wrap gap-2">

@@ -1,7 +1,7 @@
 import { getChangeOrderById, getChangeOrderLineItems, getDailyReportById, getDailyReportCrewEntries, getProposalById, getProposalSections, type ChangeOrderDetailRow, type DailyReportCrewEntryRow, type DailyReportDetailRow, type ProposalDetailRow } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
 import { createSimplePdf } from "@/lib/pdf/simplePdf";
-import { formatDateOnly } from "@/lib/time/formatting";
+import { formatDateOnly, formatTimestamp } from "@/lib/time/formatting";
 
 export type ExportRecordType = "proposal" | "change_order" | "daily_report";
 
@@ -16,19 +16,6 @@ type ExportDocument = {
 function getSingle<T>(value: T[] | T | null | undefined) {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 function slugify(value: string) {
@@ -89,7 +76,7 @@ async function getProposalDocument(id: string): Promise<ExportDocument | null> {
       `Customer: ${customer?.name || "—"}`,
       `Customer Contact: ${[customer?.contact_name, customer?.phone, customer?.email].filter(Boolean).join(" · ") || "—"}`,
       `Job: ${job ? `${job.job_number} · ${job.name}` : "—"}`,
-      `Created: ${formatDateTime(proposal.created_at)}`,
+      `Created: ${formatTimestamp(proposal.created_at)}`,
       `Created By: ${creator?.full_name || "—"}`,
       "",
       "Notes",
@@ -138,7 +125,7 @@ async function getChangeOrderDocument(id: string): Promise<ExportDocument | null
       `Status: ${changeOrder.status}`,
       `Job: ${job ? `${job.job_number} · ${job.name}` : "—"}`,
       `Daily Report: ${report ? `${report.report_date} (${report.id})` : "—"}`,
-      `Created: ${formatDateTime(changeOrder.created_at)}`,
+      `Created: ${formatTimestamp(changeOrder.created_at)}`,
       `Description: ${changeOrder.description || "—"}`,
       ...(!isForeman
         ? [
