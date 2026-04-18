@@ -132,10 +132,11 @@ describe("shared dashboard role visibility", () => {
 
     render(await ChangeOrdersPage({ searchParams: {} }));
 
-    expect(screen.getByText("Track scope shifts with linked field proof and a cleaner handoff into office review.")).toBeInTheDocument();
+    expect(screen.getByText("Track scope shifts with linked field proof and a cleaner handoff into shared review.")).toBeInTheDocument();
     expect(screen.queryByText("Direct Cost")).not.toBeInTheDocument();
     expect(screen.queryByText("Markup %")).not.toBeInTheDocument();
     expect(screen.queryByText("Total")).not.toBeInTheDocument();
+    expect(screen.queryByText("Track scope shifts with linked field proof and a cleaner handoff into office review.")).not.toBeInTheDocument();
   });
 
   it("keeps new daily report workflow copy shared-team friendly", async () => {

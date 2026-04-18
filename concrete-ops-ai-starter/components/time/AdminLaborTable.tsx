@@ -84,9 +84,16 @@ function DetailPair({
 export function AdminLaborTable({
   entries,
   toolbar,
+  emptyState,
 }: {
   entries: JobTimeEntryRow[];
   toolbar?: ReactNode;
+  emptyState?: {
+    title: string;
+    description: string;
+    actionHref?: string;
+    actionLabel?: string;
+  };
 }) {
   const [timeZone, setTimeZone] = useState("UTC");
 
@@ -106,10 +113,10 @@ export function AdminLaborTable({
         <div className="p-5 sm:p-6">
           <EmptyState
             icon="clock"
-            title="No time entries match this view"
-            description="Adjust the filters or add a new clock entry above to start building the labor log for this period."
-            actionHref="/dashboard/time"
-            actionLabel="Clear filters"
+            title={emptyState?.title ?? "No time entries match this view"}
+            description={emptyState?.description ?? "Adjust the filters or add a new clock entry above to start building the labor log for this period."}
+            actionHref={emptyState?.actionHref}
+            actionLabel={emptyState?.actionLabel}
           />
         </div>
       ) : (

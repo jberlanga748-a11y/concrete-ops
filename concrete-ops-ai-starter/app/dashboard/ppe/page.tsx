@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { getPPEItems, type PPEItemRow } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
 
@@ -13,7 +14,7 @@ function formatLabel(value: string) {
 }
 
 export default async function PPEPage() {
-  const { data: items } = await getPPEItems();
+  const { data: items, error } = await getPPEItems();
 
   return (
     <div className="space-y-6">
@@ -30,49 +31,63 @@ export default async function PPEPage() {
       </div>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-100">
-            <tr>
-              <th className="px-4 py-3 text-left">Employee</th>
-              <th className="px-4 py-3 text-left">Item</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Issued</th>
-              <th className="px-4 py-3 text-left">Replacement Due</th>
-              <th className="px-4 py-3 text-left">Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(items ?? []).map((item) => {
-              const employee = getEmployee(item.employees);
-              return (
-                <tr key={item.id} className="border-t">
-                  <td className="px-4 py-4">
-                    <div>
-                      <p>{employee?.full_name || "Employee"}</p>
-                      <p className="text-xs text-zinc-500">{[employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ") || "—"}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">{item.item_name}</td>
-                  <td className="px-4 py-4 capitalize">{formatLabel(item.status)}</td>
-                  <td className="px-4 py-4">{formatDateOnly(item.issued_at)}</td>
-                  <td className="px-4 py-4">{formatDateOnly(item.replacement_due_at)}</td>
-                  <td className="px-4 py-4">
-                    <Link href={`/dashboard/ppe/${item.id}`} className="underline">
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-            {(items ?? []).length === 0 ? (
+        {error ? (
+          <div className="p-4">
+            <ErrorPanel
+              title="We couldn’t load PPE tracking right now"
+              description="The PPE log is temporarily unavailable. Try refreshing the page or come back in a moment."
+              actionHref="/dashboard/ppe"
+              actionLabel="Try again"
+            />
+          </div>
+        ) : (items ?? []).length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon="file"
+              title="No PPE items tracked yet"
+              description="Log the first issued item so replacement timing and fit-check follow-up stay visible for the crew."
+              actionHref="/dashboard/ppe/new"
+              actionLabel="Add PPE item"
+            />
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100">
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={6}>
-                  No PPE items tracked yet.
-                </td>
+                <th className="px-4 py-3 text-left">Employee</th>
+                <th className="px-4 py-3 text-left">Item</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Issued</th>
+                <th className="px-4 py-3 text-left">Replacement Due</th>
+                <th className="px-4 py-3 text-left">Open</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(items ?? []).map((item) => {
+                const employee = getEmployee(item.employees);
+                return (
+                  <tr key={item.id} className="border-t">
+                    <td className="px-4 py-4">
+                      <div>
+                        <p>{employee?.full_name || "Employee"}</p>
+                        <p className="text-xs text-zinc-500">{[employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ") || "—"}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">{item.item_name}</td>
+                    <td className="px-4 py-4 capitalize">{formatLabel(item.status)}</td>
+                    <td className="px-4 py-4">{formatDateOnly(item.issued_at)}</td>
+                    <td className="px-4 py-4">{formatDateOnly(item.replacement_due_at)}</td>
+                    <td className="px-4 py-4">
+                      <Link href={`/dashboard/ppe/${item.id}`} className="underline">
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
