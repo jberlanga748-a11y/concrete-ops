@@ -110,7 +110,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
               {job.job_number} · {job.name}
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
-              Keep this project moving with one shared job view for field activity, crew assignments, documents, and office follow-up.
+              Keep this project moving with one shared job view for field activity, crew assignments, documents, and next-step follow-up.
             </p>
           </div>
 

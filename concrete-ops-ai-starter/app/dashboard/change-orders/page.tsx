@@ -36,10 +36,10 @@ export default async function ChangeOrdersPage({
     getDailyReportJobOptions(),
   ]);
   const description = isForeman
-    ? "Track scope shifts with linked field proof and a cleaner handoff into office review."
+    ? "Track scope shifts with linked field proof and a cleaner handoff into shared review."
     : "Manage scope and cost changes backed by optional daily reports and field-proof uploads.";
   const emptyDescription = isForeman
-    ? "No change orders match this view yet. Start one when field conditions shift so the office has clean backup."
+    ? "No change orders match this view yet. Start one when field conditions shift so the shared record has clean backup."
     : "No change orders match this view yet. Start one when scope or cost movement needs a documented record.";
 
   return (

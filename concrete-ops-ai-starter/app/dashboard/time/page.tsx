@@ -194,6 +194,19 @@ export default async function TimePage({
         ) : (
           <AdminLaborTable
             entries={timeEntries}
+            emptyState={
+              hasFilters
+                ? {
+                    title: "No time entries match this filtered view",
+                    description: "Clear the filters or widen the selection to bring matching labor activity back into view.",
+                    actionHref: "/dashboard/time",
+                    actionLabel: "Clear filters",
+                  }
+                : {
+                    title: "No time entries are on the board yet",
+                    description: "Clock the crew in above to start building the live labor board for this period.",
+                  }
+            }
             toolbar={
               <div className="space-y-5">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">

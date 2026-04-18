@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { getIncidents, type IncidentListRow } from "@/lib/db/queries";
 
 function getJobLabel(jobs: IncidentListRow["jobs"]) {
@@ -21,7 +22,7 @@ function formatIncidentType(value: string) {
 }
 
 export default async function IncidentsPage() {
-  const { data: incidents } = await getIncidents();
+  const { data: incidents, error } = await getIncidents();
 
   return (
     <div className="space-y-6">
@@ -38,41 +39,55 @@ export default async function IncidentsPage() {
       </div>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-100">
-            <tr>
-              <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-left">Type</th>
-              <th className="px-4 py-3 text-left">Job</th>
-              <th className="px-4 py-3 text-left">Employee</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(incidents ?? []).map((incident) => (
-              <tr key={incident.id} className="border-t">
-                <td className="px-4 py-4">{incident.incident_date}</td>
-                <td className="px-4 py-4 capitalize">{formatIncidentType(incident.incident_type)}</td>
-                <td className="px-4 py-4">{getJobLabel(incident.jobs)}</td>
-                <td className="px-4 py-4">{getEmployeeLabel(incident.incident_employee)}</td>
-                <td className="px-4 py-4 capitalize">{formatIncidentType(incident.status)}</td>
-                <td className="px-4 py-4">
-                  <Link href={`/dashboard/incidents/${incident.id}`} className="underline">
-                    Open
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {(incidents ?? []).length === 0 ? (
+        {error ? (
+          <div className="p-4">
+            <ErrorPanel
+              title="We couldn’t load incidents right now"
+              description="The incident log is temporarily unavailable. Try refreshing the page or come back in a moment."
+              actionHref="/dashboard/incidents"
+              actionLabel="Try again"
+            />
+          </div>
+        ) : (incidents ?? []).length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon="alert"
+              title="No incidents logged yet"
+              description="Log the first incident or site observation so the shared safety record stays complete for field and office follow-up."
+              actionHref="/dashboard/incidents/new"
+              actionLabel="Log incident"
+            />
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100">
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={6}>
-                  No incidents logged yet.
-                </td>
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-left">Type</th>
+                <th className="px-4 py-3 text-left">Job</th>
+                <th className="px-4 py-3 text-left">Employee</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Open</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(incidents ?? []).map((incident) => (
+                <tr key={incident.id} className="border-t">
+                  <td className="px-4 py-4">{incident.incident_date}</td>
+                  <td className="px-4 py-4 capitalize">{formatIncidentType(incident.incident_type)}</td>
+                  <td className="px-4 py-4">{getJobLabel(incident.jobs)}</td>
+                  <td className="px-4 py-4">{getEmployeeLabel(incident.incident_employee)}</td>
+                  <td className="px-4 py-4 capitalize">{formatIncidentType(incident.status)}</td>
+                  <td className="px-4 py-4">
+                    <Link href={`/dashboard/incidents/${incident.id}`} className="underline">
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
