@@ -1,31 +1,18 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ApprovalsList } from "@/components/approvals/ApprovalsList";
+import { requireOfficeUser } from "@/lib/auth/server";
 import {
   getApprovals,
   getApprovalStatusOptions,
   getApprovalTypeOptions,
 } from "@/lib/db/queries";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function ApprovalsPage({
   searchParams,
 }: {
   searchParams?: Promise<{ approvalType?: string; status?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?next=/dashboard/approvals");
-  }
-
-  const { data: appUser } = await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle();
-  if (!appUser || !["owner", "office_admin"].includes(appUser.role)) {
-    redirect("/dashboard");
-  }
+  await requireOfficeUser("/dashboard/approvals");
 
   const params = (await searchParams) ?? {};
   const approvalType = params.approvalType?.trim() || "";
