@@ -1004,6 +1004,42 @@ function normalizeProposalSections(sections: ProposalSectionInput[]) {
     }));
 }
 
+async function validateEstimateTargets(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  customerId: string;
+  jobId?: string;
+}) {
+  const { supabase, companyId, customerId, jobId } = args;
+
+  const { data: customer, error: customerError } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", customerId)
+    .maybeSingle();
+
+  if (customerError) return { error: customerError.message };
+  if (!customer) return { error: "Selected customer was not found." };
+
+  if (!jobId) return { data: true };
+
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("id, customer_id")
+    .eq("company_id", companyId)
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (jobError) return { error: jobError.message };
+  if (!job) return { error: "Selected job was not found." };
+  if (job.customer_id !== customerId) {
+    return { error: "Selected job does not belong to the selected customer." };
+  }
+
+  return { data: true };
+}
+
 export async function createPPEItem(input: PPEItemInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
@@ -1156,6 +1192,14 @@ export async function createEstimate(input: EstimateInput) {
   const officeError = getOfficeAdminRoleError(appUser.role, "manage estimates");
   if (officeError) return { error: officeError };
 
+  const targetValidation = await validateEstimateTargets({
+    supabase,
+    companyId: appUser.company_id,
+    customerId: input.customerId,
+    jobId: input.jobId,
+  });
+  if (targetValidation.error) return { error: targetValidation.error };
+
   const normalizedLineItems = normalizeEstimateLineItems(input.lineItems);
   const subtotal = Number(
     normalizedLineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2),
@@ -1216,6 +1260,14 @@ export async function updateEstimate(id: string, input: EstimateInput) {
   const { supabase, appUser } = auth;
   const officeError = getOfficeAdminRoleError(appUser.role, "manage estimates");
   if (officeError) return { error: officeError };
+
+  const targetValidation = await validateEstimateTargets({
+    supabase,
+    companyId: appUser.company_id,
+    customerId: input.customerId,
+    jobId: input.jobId,
+  });
+  if (targetValidation.error) return { error: targetValidation.error };
 
   const normalizedLineItems = normalizeEstimateLineItems(input.lineItems);
   const subtotal = Number(
