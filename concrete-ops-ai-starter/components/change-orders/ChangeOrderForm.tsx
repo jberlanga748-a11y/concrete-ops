@@ -4,7 +4,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/ai/client";
 import { createChangeOrder, updateChangeOrder } from "@/lib/db/mutations";
-import type { ChangeOrderDetailRow, DailyReportOption, JobFileRow, TimeOption } from "@/lib/db/queries";
+import type { ChangeOrderDetailRow, ChangeOrderLineItemRow, DailyReportOption, JobFileRow, TimeOption } from "@/lib/db/queries";
 import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
 
 function FormShell({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
@@ -41,6 +41,24 @@ type ChangeOrderFormInitialValues = Pick<
   "job_id" | "daily_report_id" | "title" | "description" | "status" | "direct_cost_total" | "markup_percent"
 >;
 
+type ChangeOrderLineItemFormRow = {
+  description: string;
+  quantity: string;
+  unitCost: string;
+};
+
+function buildInitialLineItems(lineItems?: ChangeOrderLineItemRow[]) {
+  if (!lineItems?.length) {
+    return [{ description: "", quantity: "1", unitCost: "0" }];
+  }
+
+  return lineItems.map((lineItem) => ({
+    description: lineItem.description,
+    quantity: String(lineItem.quantity),
+    unitCost: String(lineItem.unit_cost),
+  }));
+}
+
 export function ChangeOrderForm({
   changeOrderId,
   jobOptions,
@@ -49,6 +67,7 @@ export function ChangeOrderForm({
   hideFinancials = false,
   initialValues,
   initialProofFileIds = [],
+  initialLineItems,
 }: {
   changeOrderId?: string;
   jobOptions: TimeOption[];
@@ -57,6 +76,7 @@ export function ChangeOrderForm({
   hideFinancials?: boolean;
   initialValues?: ChangeOrderFormInitialValues | null;
   initialProofFileIds?: string[];
+  initialLineItems?: ChangeOrderLineItemRow[];
 }) {
   const router = useRouter();
   const isEditing = Boolean(changeOrderId);
@@ -67,6 +87,7 @@ export function ChangeOrderForm({
   const [status, setStatus] = useState<"draft" | "submitted" | "approved" | "rejected" | "executed">(initialValues?.status ?? "draft");
   const [directCostTotal, setDirectCostTotal] = useState(String(initialValues?.direct_cost_total ?? 0));
   const [markupPercent, setMarkupPercent] = useState(String(initialValues?.markup_percent ?? 0));
+  const [lineItems, setLineItems] = useState<ChangeOrderLineItemFormRow[]>(buildInitialLineItems(initialLineItems));
   const [proofFileIds, setProofFileIds] = useState<string[]>(initialProofFileIds);
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -89,14 +110,49 @@ export function ChangeOrderForm({
     return dailyReportOptions.filter((report) => report.jobId === jobId);
   }, [dailyReportOptions, jobId]);
 
+  const normalizedLineItems = useMemo(
+    () =>
+      lineItems
+        .filter((row) => row.description.trim())
+        .map((row) => ({
+          description: row.description.trim(),
+          quantity: Number(row.quantity) || 0,
+          unitCost: Number(row.unitCost) || 0,
+        })),
+    [lineItems],
+  );
+
+  const lineItemSubtotal = useMemo(
+    () =>
+      Number(
+        normalizedLineItems
+          .reduce((sum, row) => sum + row.quantity * row.unitCost, 0)
+          .toFixed(2),
+      ),
+    [normalizedLineItems],
+  );
+
+  const effectiveDirectCostTotal = normalizedLineItems.length > 0 ? lineItemSubtotal : Number(directCostTotal) || 0;
+
   const totalAmountPreview = useMemo(() => {
-    const direct = Number(directCostTotal) || 0;
     const markup = Number(markupPercent) || 0;
-    return Number((direct * (1 + markup / 100)).toFixed(2));
-  }, [directCostTotal, markupPercent]);
+    return Number((effectiveDirectCostTotal * (1 + markup / 100)).toFixed(2));
+  }, [effectiveDirectCostTotal, markupPercent]);
 
   function toggleProof(fileId: string) {
     setProofFileIds((current) => (current.includes(fileId) ? current.filter((id) => id !== fileId) : [...current, fileId]));
+  }
+
+  function updateLineItem(index: number, patch: Partial<ChangeOrderLineItemFormRow>) {
+    setLineItems((current) => current.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+  }
+
+  function addLineItem() {
+    setLineItems((current) => [...current, { description: "", quantity: "1", unitCost: "0" }]);
+  }
+
+  function removeLineItem(index: number) {
+    setLineItems((current) => (current.length === 1 ? current : current.filter((_, rowIndex) => rowIndex !== index)));
   }
 
   function handleJobChange(nextJobId: string) {
@@ -171,10 +227,11 @@ export function ChangeOrderForm({
       title,
       description,
       status,
-      directCostTotal: Number(directCostTotal) || 0,
+      directCostTotal: effectiveDirectCostTotal,
       markupPercent: Number(markupPercent) || 0,
       totalAmount: totalAmountPreview,
       proofFileIds,
+      lineItems: normalizedLineItems,
     };
 
     const result = changeOrderId ? await updateChangeOrder(changeOrderId, payload) : await createChangeOrder(payload);
@@ -291,8 +348,82 @@ export function ChangeOrderForm({
 
         {!hideFinancials ? (
           <FormSection
+            title="Line items"
+            description="Add an optional cost breakdown. When present, line items drive the direct cost subtotal automatically."
+          >
+            <div className="space-y-3">
+              {lineItems.map((row, index) => {
+                const lineTotal = Number(((Number(row.quantity) || 0) * (Number(row.unitCost) || 0)).toFixed(2));
+
+                return (
+                  <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-4">
+                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_140px]">
+                      <div>
+                        <FieldLabel>Description</FieldLabel>
+                        <input
+                          value={row.description}
+                          onChange={(e) => updateLineItem(index, { description: e.target.value })}
+                          placeholder="Concrete saw cutting, additional rebar, pump mobilization"
+                          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Qty</FieldLabel>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={row.quantity}
+                          onChange={(e) => updateLineItem(index, { quantity: e.target.value })}
+                          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Unit cost</FieldLabel>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={row.unitCost}
+                          onChange={(e) => updateLineItem(index, { unitCost: e.target.value })}
+                          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <p className="text-sm text-zinc-600">Line total: ${lineTotal.toFixed(2)}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeLineItem(index)}
+                        className="rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                      >
+                        Remove line
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+              <div>
+                <p className="text-sm text-zinc-600">Line item subtotal</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-950">${lineItemSubtotal.toFixed(2)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={addLineItem}
+                className="rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+              >
+                Add line item
+              </button>
+            </div>
+          </FormSection>
+        ) : null}
+
+        {!hideFinancials ? (
+          <FormSection
             title="Pricing"
-            description="Enter direct cost and markup. Total updates automatically so reviewers can validate quickly."
+            description="Use markup to calculate the customer-facing total. Direct cost is driven by line items when any are provided."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -301,10 +432,14 @@ export function ChangeOrderForm({
                   type="number"
                   min="0"
                   step="0.01"
-                  value={directCostTotal}
+                  value={normalizedLineItems.length > 0 ? effectiveDirectCostTotal.toFixed(2) : directCostTotal}
                   onChange={(e) => setDirectCostTotal(e.target.value)}
+                  disabled={normalizedLineItems.length > 0}
                   className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
                 />
+                {normalizedLineItems.length > 0 ? (
+                  <FieldHint>Direct cost is currently driven by the line items above.</FieldHint>
+                ) : null}
               </div>
               <div>
                 <FieldLabel>Markup percent</FieldLabel>
