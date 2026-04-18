@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { requireOfficeUser } from "@/lib/auth/server";
 import { getAuditLogs, type AuditLogRow } from "@/lib/db/queries";
 import { formatTimestamp } from "@/lib/time/formatting";
@@ -25,7 +26,7 @@ export default async function AuditLogsPage({
   const params = (await searchParams) ?? {};
   const actionType = params.actionType?.trim() || "";
   const targetTable = params.targetTable?.trim() || "";
-  const { data: logs } = await getAuditLogs({
+  const { data: logs, error } = await getAuditLogs({
     actionType: actionType || undefined,
     targetTable: targetTable || undefined,
   });
@@ -56,51 +57,63 @@ export default async function AuditLogsPage({
       </form>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-100">
-            <tr>
-              <th className="px-4 py-3 text-left">When</th>
-              <th className="px-4 py-3 text-left">Actor</th>
-              <th className="px-4 py-3 text-left">Action</th>
-              <th className="px-4 py-3 text-left">Target</th>
-              <th className="px-4 py-3 text-left">Summary</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(logs ?? []).map((log) => {
-              const actorUser = getActorUser(log.actor_user);
-              const actorEmployee = getActorEmployee(log.actor_employee);
-              return (
-                <tr key={log.id} className="border-t align-top">
-                  <td className="px-4 py-4">{formatTimestamp(log.created_at)}</td>
-                  <td className="px-4 py-4">
-                    <div>
-                      <p>{actorUser?.full_name || actorEmployee?.full_name || "System"}</p>
-                      <p className="text-xs text-zinc-500">
-                        {[actorUser?.role, actorUser?.email, actorEmployee?.job_title, actorEmployee?.crew_name].filter(Boolean).join(" · ") || "—"}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">{log.action_type}</td>
-                  <td className="px-4 py-4">
-                    <div>
-                      <p>{log.target_table}</p>
-                      <p className="text-xs text-zinc-500">{log.target_id}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">{log.summary}</td>
-                </tr>
-              );
-            })}
-            {(logs ?? []).length === 0 ? (
+        {error ? (
+          <div className="p-4">
+            <ErrorPanel
+              title="We couldn’t load audit logs right now"
+              description="The audit log is temporarily unavailable. Try refreshing the page or come back in a moment."
+              actionHref="/dashboard/audit-logs"
+              actionLabel="Try again"
+            />
+          </div>
+        ) : (logs ?? []).length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon="table"
+              title="No audit log entries found"
+              description="Important app actions will appear here once the workspace starts recording activity against tracked records."
+            />
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100">
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={5}>
-                  No audit log entries found.
-                </td>
+                <th className="px-4 py-3 text-left">When</th>
+                <th className="px-4 py-3 text-left">Actor</th>
+                <th className="px-4 py-3 text-left">Action</th>
+                <th className="px-4 py-3 text-left">Target</th>
+                <th className="px-4 py-3 text-left">Summary</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(logs ?? []).map((log) => {
+                const actorUser = getActorUser(log.actor_user);
+                const actorEmployee = getActorEmployee(log.actor_employee);
+                return (
+                  <tr key={log.id} className="border-t align-top">
+                    <td className="px-4 py-4">{formatTimestamp(log.created_at)}</td>
+                    <td className="px-4 py-4">
+                      <div>
+                        <p>{actorUser?.full_name || actorEmployee?.full_name || "System"}</p>
+                        <p className="text-xs text-zinc-500">
+                          {[actorUser?.role, actorUser?.email, actorEmployee?.job_title, actorEmployee?.crew_name].filter(Boolean).join(" · ") || "—"}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">{log.action_type}</td>
+                    <td className="px-4 py-4">
+                      <div>
+                        <p>{log.target_table}</p>
+                        <p className="text-xs text-zinc-500">{log.target_id}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">{log.summary}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <Link href="/dashboard" className="text-sm underline">

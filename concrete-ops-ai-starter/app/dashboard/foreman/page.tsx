@@ -7,6 +7,7 @@ import {
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
 import { requireForemanUser } from "@/lib/auth/server";
+import { ErrorPanel } from "@/components/ui/feedback";
 import { formatDateOnly, formatTimestamp } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
@@ -28,11 +29,28 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"])
 export default async function ForemanHomePage() {
   await requireForemanUser();
 
-  const [{ data: jobs }, { data: reports }, { data: timeEntries }] = await Promise.all([
+  const [
+    { data: jobs, error: jobsError },
+    { data: reports, error: reportsError },
+    { data: timeEntries, error: timeEntriesError },
+  ] = await Promise.all([
     getJobs(),
     getDailyReports(),
     getTimeEntries(),
   ]);
+
+  if (jobsError || reportsError || timeEntriesError) {
+    return (
+      <div className="space-y-6 lg:space-y-8">
+        <ErrorPanel
+          title="We couldn’t load the foreman workspace right now"
+          description="The foreman workspace is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/dashboard/foreman"
+          actionLabel="Try again"
+        />
+      </div>
+    );
+  }
 
   const allJobs = jobs ?? [];
   const allReports = reports ?? [];
