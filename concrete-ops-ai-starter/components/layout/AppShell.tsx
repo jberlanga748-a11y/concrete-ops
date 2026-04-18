@@ -322,19 +322,21 @@ export function AppShell({
   const activeTitle = activeEntry?.label ?? portalTitle;
   const activeSection = activeEntry?.sectionTitle ?? "Overview";
   const totalModules = navEntries.filter((entry) => !entry.href.includes("#")).length;
+  const currentModuleHref =
+    activeEntry && !activeEntry.href.includes("#") ? activeEntry.href : role === "foreman" ? "/dashboard/foreman" : "/dashboard";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_22%),linear-gradient(180deg,#eef2f4_0%,#f7f8f6_55%,#fbfbfa_100%)] text-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1760px] gap-4 px-3 pb-28 pt-3 sm:px-4 lg:gap-7 lg:px-6 lg:pb-6 lg:pt-6">
-        <aside className="hidden w-[344px] shrink-0 lg:block">
-          <div className="sticky top-6 overflow-hidden rounded-[32px] border border-[#18232d] bg-[#0c141c] text-zinc-100 shadow-[0_32px_70px_rgba(15,23,42,0.24)]">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1720px] gap-3 px-3 pb-28 pt-3 sm:px-4 lg:gap-6 lg:px-6 lg:pb-6 lg:pt-6">
+        <aside className="hidden w-[312px] shrink-0 lg:block">
+          <div className="sticky top-6 overflow-hidden rounded-[34px] border border-[#16222d] bg-[linear-gradient(180deg,#0f1820_0%,#14212b_100%)] text-zinc-100 shadow-[0_28px_60px_rgba(15,23,42,0.2)]">
             <div className="border-b border-white/10 p-5">
               <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Premium Operations Platform</p>
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
-                    <h1 className="text-[1.7rem] font-semibold tracking-[-0.05em] text-white">Concrete Ops</h1>
-                    <p className="mt-2 max-w-[18rem] text-sm leading-6 text-zinc-300">
+                    <h1 className="text-[1.85rem] font-semibold tracking-[-0.06em] text-white">Concrete Ops</h1>
+                    <p className="mt-3 max-w-[16rem] text-sm leading-6 text-zinc-300">
                       A sharper control layer for field execution, office coordination, and documentation.
                     </p>
                   </div>
@@ -354,7 +356,7 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="max-h-[calc(100vh-22rem)] overflow-y-auto px-5 py-5">
+            <div className="max-h-[calc(100vh-21rem)] overflow-y-auto px-5 py-5">
               {sections.map((section) => (
                 <section key={section.title} className="mb-6 last:mb-0">
                   <div className="mb-3 px-1">
@@ -362,7 +364,7 @@ export function AppShell({
                     <p className="mt-2 text-xs leading-5 text-zinc-400">{getSectionSummary(section.title)}</p>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 rounded-[26px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-3">
                     {section.items.map((item) => {
                       const active = isActive(pathname, item.href);
 
@@ -498,35 +500,68 @@ export function AppShell({
             </details>
           </header>
 
-          <section className="hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,249,250,0.78))] px-6 py-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:block">
-            <div className="flex items-start justify-between gap-6">
+          <section className="hidden rounded-[36px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,249,250,0.84))] px-7 py-7 shadow-[0_28px_68px_rgba(15,23,42,0.08)] backdrop-blur lg:block">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr),minmax(320px,0.82fr)] xl:items-start">
               <div className="min-w-0">
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{activeSection}</p>
-                <h2 className="mt-3 text-[2rem] font-semibold tracking-[-0.055em] text-[#101828]">{activeTitle}</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
+                <h2 className="mt-4 text-[2.4rem] font-semibold tracking-[-0.065em] text-[#101828]">{activeTitle}</h2>
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={currentModuleHref}
+                    className="rounded-[20px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
+                  >
+                    Stay in this module
+                  </Link>
+                  <Link
+                    href="/employee"
+                    className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                  >
+                    Employee Portal
+                  </Link>
+                  {showSettingsShortcut ? (
+                    <Link
+                      href="/dashboard/settings"
+                      className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                    >
+                      Settings
+                    </Link>
+                  ) : null}
+                </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3">
-                <div className="rounded-[24px] border border-zinc-200/80 bg-white/90 px-4 py-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-                  <p className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
-                  <p className="mt-1 text-sm font-semibold text-zinc-900">
-                    <ViewerCurrentDateLabel monthStyle="short" />
-                  </p>
+              <div className="rounded-[30px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,246,248,0.9))] p-5 shadow-[0_18px_38px_rgba(15,23,42,0.06)]">
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">Workspace Summary</p>
+                <div className="mt-5 space-y-4">
+                  <div className="rounded-[22px] border border-white bg-white/92 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
+                    <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-zinc-950">
+                      <ViewerCurrentDateLabel monthStyle="short" />
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600">Use the current date as the anchor for labor, reporting, and office follow-up.</p>
+                  </div>
+                  <div className="rounded-[22px] border border-white bg-white/92 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Access Mode</p>
+                    <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-zinc-950">{getRoleLabel(role)}</p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600">{getRoleSummary(role)}</p>
+                  </div>
+                  <div className="rounded-[22px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Current View</p>
+                        <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-zinc-950">{activeTitle}</p>
+                        <p className="mt-2 text-sm leading-6 text-zinc-600">Keep the current module as the center of gravity and move outward only when the workflow requires it.</p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="rounded-full border border-[#ead3c3] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#b95f26]"
+                      >
+                        {activeSection}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-                <Link
-                  href="/employee"
-                  className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-                >
-                  Employee Portal
-                </Link>
-                {showSettingsShortcut ? (
-                  <Link
-                    href="/dashboard/settings"
-                    className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-                  >
-                    Settings
-                  </Link>
-                ) : null}
               </div>
             </div>
           </section>

@@ -118,7 +118,7 @@ describe("shared dashboard release readiness", () => {
     render(await ToolboxTalksPage());
 
     expect(screen.getByText("No toolbox talks logged yet")).toBeInTheDocument();
-    expect(screen.getByText("Field-ready safety talks with simple attendance tracking and clean follow-up history.")).toBeInTheDocument();
+    expect(screen.getByText("Start the first safety talk so the crew has a clean attendance trail and the shared safety log stays current.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create toolbox talk" })).toHaveAttribute("href", "/dashboard/toolbox-talks/new");
   });
 

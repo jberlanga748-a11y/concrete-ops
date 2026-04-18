@@ -99,79 +99,108 @@ export function AdminOpsCopilotCard() {
   }
 
   return (
-    <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Admin Ops Copilot</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Grounded operations Q&A</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-600">
-            Read-only pilot. Answers are concise and grounded in existing records only.
-          </p>
-        </div>
-        <Badge variant="outline">Read-only beta</Badge>
-      </div>
+    <section className="relative overflow-hidden rounded-[32px] border border-zinc-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,249,0.94))] p-6 shadow-[0_26px_60px_rgba(15,23,42,0.08)] sm:p-7">
+      <div className="absolute inset-x-16 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(201,106,44,0.4),transparent)]" />
+      <div className="absolute right-0 top-0 h-40 w-40 bg-[radial-gradient(circle,rgba(201,106,44,0.12),transparent_68%)]" />
 
-      <div className="mt-4 space-y-3">
-        <textarea
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Example: Which jobs had both a daily report and a change order in the last week?"
-          className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm"
-        />
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleAsk}
-            disabled={loading}
-            className="rounded-2xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
-          >
-            {loading ? "Thinking..." : "Ask Copilot"}
-          </button>
-          <p className="text-xs leading-5 text-zinc-500">
-            If data is missing, the answer will call that out explicitly.
-          </p>
+      <div className="relative grid gap-6 xl:grid-cols-[1.25fr,0.9fr]">
+        <div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-app-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">Admin Ops Copilot</p>
+              <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-zinc-950">Grounded operations Q&amp;A</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-600">
+                Read-only pilot. Ask one sharp operational question and get a concise answer grounded only in jobs, reports, uploads, and change orders already in the system.
+              </p>
+            </div>
+            <Badge
+              variant="outline"
+              className="rounded-full border border-zinc-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700"
+            >
+              Read-only beta
+            </Badge>
+          </div>
+
+          <div className="mt-6 rounded-[28px] border border-zinc-200/80 bg-white/90 p-4 shadow-[0_16px_32px_rgba(15,23,42,0.05)] sm:p-5">
+            <textarea
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder="Example: Which jobs had both a daily report and a change order in the last week?"
+              className="min-h-28 w-full rounded-[22px] border border-zinc-200 bg-[linear-gradient(180deg,#ffffff_0%,#fbfbfa_100%)] px-4 py-4 text-sm leading-6 text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition placeholder:text-zinc-400 focus:border-[#d69a72]"
+            />
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleAsk}
+                disabled={loading}
+                className="rounded-[20px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110 disabled:opacity-50"
+              >
+                {loading ? "Thinking..." : "Ask Copilot"}
+              </button>
+              <p className="text-xs leading-6 text-zinc-500">
+                If data is missing, the answer will call that out explicitly.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-[#ead3c3] bg-[linear-gradient(180deg,rgba(255,248,242,0.96),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+          <p className="font-app-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">How to use it well</p>
+          <div className="mt-5 space-y-3">
+            {[
+              "Ask one operational question at a time so the answer stays grounded and readable.",
+              "Use it for follow-up, prioritization, and recent activity checks rather than speculative planning.",
+              "Treat citations as the handoff point back into the real record.",
+            ].map((tip) => (
+              <div key={tip} className="rounded-[22px] border border-white bg-white/88 p-4 shadow-[0_12px_24px_rgba(15,23,42,0.04)]">
+                <p className="text-sm leading-7 text-zinc-700">{tip}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {answer ? (
-        <div className="mt-5 space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <div className="mt-6 space-y-5 rounded-[30px] border border-zinc-200/90 bg-[linear-gradient(180deg,rgba(245,247,248,0.96),rgba(255,255,255,0.94))] p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)] sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold text-zinc-950">Answer</p>
               <span
-                className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${confidenceTone(answer.confidence)}`}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize shadow-[0_8px_18px_rgba(15,23,42,0.05)] ${confidenceTone(answer.confidence)}`}
               >
                 {answer.confidence} confidence
               </span>
             </div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-zinc-500">
+            <p className="font-app-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
               {answer.citations.length} source{answer.citations.length === 1 ? "" : "s"}
             </p>
           </div>
-          <p className="text-sm leading-6 text-zinc-700">{answer.answer}</p>
+          <div className="rounded-[24px] border border-white bg-white/92 p-5 shadow-[0_14px_30px_rgba(15,23,42,0.05)]">
+            <p className="text-sm leading-7 text-zinc-700">{answer.answer}</p>
+          </div>
           {answer.uncertaintyNote ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <p className="rounded-[22px] border border-amber-200 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(254,243,199,0.88))] px-4 py-3 text-sm leading-7 text-amber-800">
               {answer.uncertaintyNote}
             </p>
           ) : null}
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Grounding records</p>
+            <p className="font-app-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Grounding records</p>
             {answer.citations.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {answer.citations.map((citation) => (
-                  <li key={`${citation.entityType}:${citation.id}`} className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm">
+                  <li key={`${citation.entityType}:${citation.id}`} className="rounded-[24px] border border-zinc-200 bg-white px-4 py-4 text-sm shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="space-y-1">
-                        <span className="inline-flex rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-600">
+                        <span className="inline-flex rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
                           {citationTypeLabel(citation.entityType)}
                         </span>
                         <p className="font-medium text-zinc-900">{citation.label}</p>
                       </div>
-                      <Link href={citationHref(citation)} className="text-xs font-semibold text-orange-600 hover:text-orange-500">
+                      <Link href={citationHref(citation)} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600 hover:text-orange-500">
                         {citationCtaLabel(citation)}
                       </Link>
                     </div>
-                    <p className="mt-2 text-xs leading-5 text-zinc-600">{citation.reason}</p>
+                    <p className="mt-3 text-xs leading-6 text-zinc-600">{citation.reason}</p>
                   </li>
                 ))}
               </ul>

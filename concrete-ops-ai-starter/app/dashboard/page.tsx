@@ -439,10 +439,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <SurfaceCard className="relative overflow-hidden p-6 sm:p-8">
+      <SurfaceCard className="relative overflow-hidden p-7 sm:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
 
-        <div className="relative grid gap-6 xl:grid-cols-[1.3fr,0.92fr] xl:items-start">
+        <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1.45fr),minmax(320px,0.82fr)] xl:items-start">
           <div>
             <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
               Operations Command
@@ -457,7 +457,7 @@ export default async function DashboardPage() {
               See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
             </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href="/dashboard/daily-reports"
                 className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
@@ -478,23 +478,38 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[24px] border border-white bg-white/88 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
-                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Labor</p>
-                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{activeClocks}</p>
-                <p className="mt-1 text-sm text-zinc-600">active crew clocks</p>
-              </div>
-              <div className="rounded-[24px] border border-white bg-white/88 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
-                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Reports</p>
-                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{reportsToday}</p>
-                <p className="mt-1 text-sm text-zinc-600">filed today</p>
-              </div>
-              <div className="rounded-[24px] border border-white bg-white/88 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
-                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Alerts</p>
-                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">
-                  {notificationsUnavailable ? "—" : allUnreadNotifications.length}
-                </p>
-                <p className="mt-1 text-sm text-zinc-600">{notificationsUnavailable ? "queue unavailable" : "awaiting review"}</p>
+            <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
+              <div className="grid gap-px bg-zinc-200/80 sm:grid-cols-3">
+                <div className="bg-white/92 px-5 py-4">
+                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Labor</p>
+                  <div className="mt-3 flex items-end justify-between gap-4">
+                    <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-zinc-950">{activeClocks}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">active now</p>
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-600">Crews currently clocked in and visible on the board.</p>
+                </div>
+                <div className="bg-white/92 px-5 py-4">
+                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Reports</p>
+                  <div className="mt-3 flex items-end justify-between gap-4">
+                    <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-zinc-950">{reportsToday}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">today</p>
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-600">Daily reports filed while the field context is still fresh.</p>
+                </div>
+                <div className="bg-white/92 px-5 py-4">
+                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Alerts</p>
+                  <div className="mt-3 flex items-end justify-between gap-4">
+                    <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-zinc-950">
+                      {notificationsUnavailable ? "—" : allUnreadNotifications.length}
+                    </p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+                      {notificationsUnavailable ? "offline" : "waiting"}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-600">
+                    {notificationsUnavailable ? "Queue unavailable for this view." : "Office follow-up items still awaiting review."}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -538,13 +553,13 @@ export default async function DashboardPage() {
         </div>
       </SurfaceCard>
 
-      <section className="grid gap-5 xl:grid-cols-4">
+      <section className="grid gap-5 xl:grid-cols-2 2xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.28fr,0.92fr]">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr),minmax(320px,0.82fr)]">
         <SurfaceCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-2xl">
@@ -560,9 +575,11 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="mt-7 grid gap-4 xl:grid-cols-3">
-            {actionLanes.map((lane) => (
-              <ActionLaneCard key={lane.title} lane={lane} />
+          <div className="mt-8 grid gap-4 xl:grid-cols-2">
+            {actionLanes.map((lane, index) => (
+              <div key={lane.title} className={cn(index === 2 && "xl:col-span-2")}>
+                <ActionLaneCard lane={lane} />
+              </div>
             ))}
           </div>
         </SurfaceCard>
@@ -673,7 +690,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mt-7 grid gap-4 xl:grid-cols-3">
+        <div className="mt-8 grid gap-4 xl:grid-cols-[minmax(0,1.08fr),minmax(0,1.08fr),minmax(280px,0.88fr)]">
           <ActivityPanel
             title="Time activity"
             eyebrow="Labor"
