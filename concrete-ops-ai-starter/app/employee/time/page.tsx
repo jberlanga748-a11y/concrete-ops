@@ -13,7 +13,7 @@ export default async function EmployeeTimePage() {
     redirect("/login?next=/employee/time");
   }
 
-  const { data: appUser } = await supabase.from("users").select("id").eq("auth_user_id", user.id).maybeSingle();
+  const { data: appUser } = await supabase.from("users").select("id, company_id").eq("auth_user_id", user.id).maybeSingle();
 
   if (!appUser) {
     redirect("/login");
@@ -30,10 +30,33 @@ export default async function EmployeeTimePage() {
     );
   }
 
-  const [{ data: jobs }, { data: phases }] = await Promise.all([
-    supabase.from("jobs").select("id, job_number, name").order("job_number", { ascending: true }),
-    supabase.from("job_phases").select("id, name").eq("is_active", true).order("sort_order", { ascending: true }),
+  const [{ data: assignments }, { data: phases }] = await Promise.all([
+    supabase
+      .from("job_assignments")
+      .select("job_id")
+      .eq("company_id", appUser.company_id)
+      .eq("employee_id", employee.id)
+      .eq("is_active", true),
+    supabase
+      .from("job_phases")
+      .select("id, name")
+      .eq("company_id", appUser.company_id)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
   ]);
+
+  const assignedJobIds = Array.from(
+    new Set((assignments ?? []).map((assignment: { job_id: string }) => assignment.job_id)),
+  );
+  const { data: jobs } =
+    assignedJobIds.length > 0
+      ? await supabase
+          .from("jobs")
+          .select("id, job_number, name")
+          .eq("company_id", appUser.company_id)
+          .in("id", assignedJobIds)
+          .order("job_number", { ascending: true })
+      : { data: [] };
 
   const jobOptions = (jobs ?? []).map((job: Pick<Job, "id" | "job_number" | "name">) => ({
     id: job.id,
