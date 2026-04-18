@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { inviteAppUser, resendAppUserInvite, updateManagedUser } from "@/lib/db/mutations";
 import type { EmployeeUserLinkOption, ManagedUserRow } from "@/lib/db/queries";
 import type { AppRole, UserStatus } from "@/lib/db/schema";
@@ -17,19 +18,6 @@ const statusOptions: { value: UserStatus; label: string }[] = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
-}
 
 function ManagedUserCard({
   user,
@@ -96,7 +84,8 @@ function ManagedUserCard({
         <div>
           <p className="font-medium text-zinc-900">{user.email}</p>
           <p className="mt-1 text-sm text-zinc-600">
-            Created {formatDateTime(user.created_at)} · Last login {formatDateTime(user.last_login_at)}
+            Created <ViewerDateTime value={user.created_at} includeYear includeTimeZoneName={false} /> · Last login{" "}
+            <ViewerDateTime value={user.last_login_at} includeYear includeTimeZoneName={false} />
           </p>
         </div>
         <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600">

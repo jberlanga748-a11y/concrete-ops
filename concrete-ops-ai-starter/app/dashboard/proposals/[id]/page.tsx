@@ -11,6 +11,7 @@ import {
   getProposalSections,
   type ProposalDetailRow,
 } from "@/lib/db/queries";
+import { formatTimestamp } from "@/lib/time/formatting";
 
 function getCustomer(customer: ProposalDetailRow["customers"]) {
   if (!customer) return null;
@@ -28,19 +29,6 @@ function getCreator(user: ProposalDetailRow["users"]) {
   if (!user) return null;
   if (Array.isArray(user)) return user[0] ?? null;
   return user;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function ProposalDetailPage({
@@ -93,7 +81,7 @@ export default async function ProposalDetailPage({
         </section>
         <section className="rounded-2xl border bg-white p-4 shadow-sm">
           <h2 className="font-semibold">Created</h2>
-          <p className="mt-2 text-sm text-zinc-700">{formatDateTime(proposal.created_at)}</p>
+          <p className="mt-2 text-sm text-zinc-700">{formatTimestamp(proposal.created_at)}</p>
           <p className="mt-1 text-sm text-zinc-600">{creator?.full_name || "—"}</p>
         </section>
       </div>
