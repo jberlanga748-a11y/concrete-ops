@@ -623,6 +623,39 @@ export async function createChangeOrder(input: ChangeOrderInput) {
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
 
+  if (input.dailyReportId) {
+    const { data: dailyReport, error: dailyReportError } = await supabase
+      .from("daily_reports")
+      .select("id")
+      .eq("company_id", appUser.company_id)
+      .eq("job_id", input.jobId)
+      .eq("id", input.dailyReportId)
+      .maybeSingle();
+
+    if (dailyReportError || !dailyReport) {
+      return { error: dailyReportError?.message || "Selected daily report is not available for this change order." };
+    }
+  }
+
+  const proofFileIds = Array.from(new Set(input.proofFileIds.filter(Boolean)));
+  if (proofFileIds.length > 0) {
+    const { data: proofFiles, error: proofFilesError } = await supabase
+      .from("job_files")
+      .select("id, job_id")
+      .eq("company_id", appUser.company_id)
+      .in("id", proofFileIds);
+
+    if (proofFilesError) return { error: proofFilesError.message };
+
+    const allProofFilesMatchJob =
+      (proofFiles ?? []).length === proofFileIds.length &&
+      (proofFiles ?? []).every((file: { id: string; job_id: string }) => file.job_id === input.jobId);
+
+    if (!allProofFilesMatchJob) {
+      return { error: "Selected proof files must belong to the same job as the change order." };
+    }
+  }
+
   const payload = {
     company_id: appUser.company_id,
     job_id: input.jobId,
@@ -639,7 +672,6 @@ export async function createChangeOrder(input: ChangeOrderInput) {
   const { data: changeOrder, error: changeOrderError } = await supabase.from("change_orders").insert(payload).select("id").single();
   if (changeOrderError || !changeOrder) return { error: changeOrderError?.message || "Failed to create change order." };
 
-  const proofFileIds = Array.from(new Set(input.proofFileIds.filter(Boolean)));
   if (proofFileIds.length > 0) {
     const { error: proofError } = await supabase.from("change_order_files").insert(
       proofFileIds.map((jobFileId) => ({
