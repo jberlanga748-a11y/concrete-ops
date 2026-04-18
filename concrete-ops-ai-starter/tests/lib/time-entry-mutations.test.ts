@@ -148,6 +148,18 @@ describe("time entry mutations", () => {
       data: [{ job_id: "job-1" }],
       error: null,
     });
+    const openEntriesBuilder = {
+      eq: vi.fn(),
+      is: vi.fn(),
+      in: vi.fn(),
+      limit: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    };
+    openEntriesBuilder.eq.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.is.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.in.mockReturnValue(openEntriesBuilder);
 
     const timeEntriesInsert = vi.fn(() => ({
       select: vi.fn(() => ({
@@ -172,7 +184,12 @@ describe("time entry mutations", () => {
       if (table === "job_assignments") return { select: vi.fn(() => assignmentsBuilder) };
       if (table === "jobs") return { select: vi.fn(() => targetJobBuilder) };
       if (table === "job_phases") return { select: vi.fn(() => targetPhaseBuilder) };
-      if (table === "time_entries") return { insert: timeEntriesInsert };
+      if (table === "time_entries") {
+        return {
+          select: vi.fn(() => openEntriesBuilder),
+          insert: timeEntriesInsert,
+        };
+      }
       throw new Error(`Unexpected table ${table}`);
     });
 
@@ -203,6 +220,18 @@ describe("time entry mutations", () => {
     const usersTable = createUsersTable("foreman");
     const targetEmployeeBuilder = createMaybeSingleBuilder({ id: "employee-2" });
     const targetJobBuilder = createMaybeSingleBuilder({ id: "job-2" });
+    const openEntriesBuilder = {
+      eq: vi.fn(),
+      is: vi.fn(),
+      in: vi.fn(),
+      limit: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    };
+    openEntriesBuilder.eq.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.is.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.in.mockReturnValue(openEntriesBuilder);
 
     const timeEntriesInsert = vi.fn(() => ({
       select: vi.fn(() => ({
@@ -217,7 +246,12 @@ describe("time entry mutations", () => {
       if (table === "users") return usersTable;
       if (table === "employees") return { select: vi.fn(() => targetEmployeeBuilder) };
       if (table === "jobs") return { select: vi.fn(() => targetJobBuilder) };
-      if (table === "time_entries") return { insert: timeEntriesInsert };
+      if (table === "time_entries") {
+        return {
+          select: vi.fn(() => openEntriesBuilder),
+          insert: timeEntriesInsert,
+        };
+      }
       throw new Error(`Unexpected table ${table}`);
     });
 
@@ -238,6 +272,48 @@ describe("time entry mutations", () => {
       status: "clocked_in",
       source: "admin_entry",
     });
+  });
+
+  it("rejects clock-ins when the employee already has an open time entry", async () => {
+    const usersTable = createUsersTable("foreman");
+    const targetEmployeeBuilder = createMaybeSingleBuilder({ id: "employee-2" });
+    const targetJobBuilder = createMaybeSingleBuilder({ id: "job-2" });
+    const openEntriesBuilder = {
+      eq: vi.fn(),
+      is: vi.fn(),
+      in: vi.fn(),
+      limit: vi.fn().mockResolvedValue({
+        data: [{ id: "time-entry-open" }],
+        error: null,
+      }),
+    };
+    openEntriesBuilder.eq.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.is.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.in.mockReturnValue(openEntriesBuilder);
+    const timeEntriesInsert = vi.fn();
+
+    const from = vi.fn((table: string) => {
+      if (table === "users") return usersTable;
+      if (table === "employees") return { select: vi.fn(() => targetEmployeeBuilder) };
+      if (table === "jobs") return { select: vi.fn(() => targetJobBuilder) };
+      if (table === "time_entries") {
+        return {
+          select: vi.fn(() => openEntriesBuilder),
+          insert: timeEntriesInsert,
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    vi.mocked(createClient).mockResolvedValue(createAuthenticatedClient(from));
+
+    const result = await createClockInEntry({
+      employeeId: "employee-2",
+      jobId: "job-2",
+    });
+
+    expect(result).toEqual({ error: "This employee already has an open time entry." });
+    expect(timeEntriesInsert).not.toHaveBeenCalled();
   });
 
   it("rejects employee clock-outs for another employee", async () => {
@@ -337,5 +413,52 @@ describe("time entry mutations", () => {
     });
     expect(updateBuilder.eq).toHaveBeenNthCalledWith(1, "company_id", "company-1");
     expect(updateBuilder.eq).toHaveBeenNthCalledWith(2, "id", "time-entry-open");
+  });
+
+  it("returns a clear error when there is no open time entry to clock out", async () => {
+    const usersTable = createUsersTable("employee");
+    const actorEmployeeBuilder = createMaybeSingleBuilder({ id: "employee-self" });
+    const targetEmployeeBuilder = createMaybeSingleBuilder({ id: "employee-self" });
+    const assignmentsBuilder = createAwaitableBuilder({
+      data: [{ job_id: "job-1" }],
+      error: null,
+    });
+
+    const openEntriesBuilder = {
+      eq: vi.fn(),
+      is: vi.fn(),
+      in: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    };
+    openEntriesBuilder.eq.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.is.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.in.mockReturnValue(openEntriesBuilder);
+    openEntriesBuilder.order.mockReturnValue(openEntriesBuilder);
+
+    let employeeSelectCount = 0;
+    const from = vi.fn((table: string) => {
+      if (table === "users") return usersTable;
+      if (table === "employees") {
+        return {
+          select: vi.fn(() => {
+            employeeSelectCount += 1;
+            return employeeSelectCount === 1 ? actorEmployeeBuilder : targetEmployeeBuilder;
+          }),
+        };
+      }
+      if (table === "job_assignments") return { select: vi.fn(() => assignmentsBuilder) };
+      if (table === "time_entries") return { select: vi.fn(() => openEntriesBuilder) };
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    vi.mocked(createClient).mockResolvedValue(createAuthenticatedClient(from));
+
+    const result = await clockOutLatestEntry({ employeeId: "employee-self" });
+
+    expect(result).toEqual({ error: "No open time entry found for this employee." });
   });
 });

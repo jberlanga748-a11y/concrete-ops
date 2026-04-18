@@ -568,6 +568,20 @@ export async function createClockInEntry(input: ClockInInput) {
     if (phaseResult.error) return { error: phaseResult.error };
   }
 
+  const { data: existingOpenEntries, error: existingOpenEntriesError } = await supabase
+    .from("time_entries")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("employee_id", input.employeeId)
+    .is("clock_out_at", null)
+    .in("status", ["clocked_in", "on_break"])
+    .limit(1);
+
+  if (existingOpenEntriesError) return { error: existingOpenEntriesError.message };
+  if (existingOpenEntries?.length) {
+    return { error: "This employee already has an open time entry." };
+  }
+
   const payload = {
     company_id: appUser.company_id,
     employee_id: input.employeeId,
