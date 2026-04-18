@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { JobTimeEntryRow } from "@/lib/db/queries";
 import { EmptyState } from "@/components/ui/feedback";
+import { ZonedDateTime } from "@/components/time/ZonedDateTime";
+import { getViewerTimeZone } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -27,21 +29,6 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"]) {
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
-export function formatLaborDateTime(value: string | null | undefined, timeZone: string) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone,
-    timeZoneName: "short",
-  }).format(parsed);
-}
-
 function formatHours(value: number | null | undefined) {
   if (value == null) return "—";
 
@@ -59,24 +46,6 @@ function getStatusClasses(status: string) {
   if (status === "clocked_in") return "border-sky-200 bg-sky-50 text-sky-800";
   if (status === "on_break") return "border-amber-200 bg-amber-50 text-amber-800";
   return "border-zinc-200 bg-zinc-100 text-zinc-700";
-}
-
-function getViewerTimeZone() {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-}
-
-function LaborTime({
-  value,
-  timeZone,
-  emptyLabel = "—",
-}: {
-  value: string | null | undefined;
-  timeZone: string;
-  emptyLabel?: string;
-}) {
-  if (!value) return <span>{emptyLabel}</span>;
-
-  return <time dateTime={value}>{formatLaborDateTime(value, timeZone)}</time>;
 }
 
 function SummaryTile({
@@ -156,7 +125,7 @@ export function AdminLaborTable({
               <SummaryTile label="Logged Hours" value={formatHours(loggedHours)} detail="Recorded totals from the entries in view" />
               <SummaryTile
                 label="Latest Movement"
-                value={<LaborTime value={entries[0]?.clock_out_at ?? entries[0]?.clock_in_at} timeZone={timeZone} />}
+                value={<ZonedDateTime value={entries[0]?.clock_out_at ?? entries[0]?.clock_in_at} timeZone={timeZone} />}
                 detail="Most recent clock activity on this board"
               />
             </div>
@@ -189,10 +158,10 @@ export function AdminLaborTable({
                     </p>
 
                     <dl className="mt-4 grid gap-4 sm:grid-cols-3">
-                      <DetailPair label="Clock in" value={<LaborTime value={entry.clock_in_at} timeZone={timeZone} />} />
+                      <DetailPair label="Clock in" value={<ZonedDateTime value={entry.clock_in_at} timeZone={timeZone} />} />
                       <DetailPair
                         label="Clock out"
-                        value={<LaborTime value={entry.clock_out_at} timeZone={timeZone} emptyLabel="Still open" />}
+                        value={<ZonedDateTime value={entry.clock_out_at} timeZone={timeZone} emptyLabel="Still open" />}
                       />
                       <DetailPair label="Hours" value={entry.clock_out_at ? formatHours(entry.total_hours) : "In progress"} />
                     </dl>
@@ -235,10 +204,10 @@ export function AdminLaborTable({
                         </p>
                       </td>
                       <td className="px-5 py-4 align-top text-zinc-700">
-                        <LaborTime value={entry.clock_in_at} timeZone={timeZone} />
+                        <ZonedDateTime value={entry.clock_in_at} timeZone={timeZone} />
                       </td>
                       <td className="px-5 py-4 align-top text-zinc-700">
-                        <LaborTime value={entry.clock_out_at} timeZone={timeZone} emptyLabel="Still open" />
+                        <ZonedDateTime value={entry.clock_out_at} timeZone={timeZone} emptyLabel="Still open" />
                       </td>
                       <td className="px-5 py-4 align-top">
                         <span className="font-semibold text-zinc-950">

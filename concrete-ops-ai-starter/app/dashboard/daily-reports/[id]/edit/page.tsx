@@ -7,32 +7,10 @@ import {
   getDailyReportCrewEntries,
   getDailyReportJobOptions,
 } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getJobLabel(label: string | undefined) {
   return label ?? "Job not found";
-}
-
-function formatDateOnly(value: string | null | undefined) {
-  if (!value) return "—";
-
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return value;
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 export default async function EditDailyReportPage({

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { RecordDeliveryCard } from "@/components/exports/RecordDeliveryCard";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { EmptyState } from "@/components/ui/feedback";
 import {
   getDailyReportById,
@@ -10,6 +11,7 @@ import {
   type DailyReportCrewEntryRow,
   type DailyReportDetailRow,
 } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getJobLabel(jobs: DailyReportDetailRow["jobs"]) {
   if (!jobs) return "—";
@@ -31,41 +33,6 @@ function getCrewEmployee(entry: DailyReportCrewEntryRow["employees"]) {
   if (!entry) return null;
   if (Array.isArray(entry)) return entry[0] ?? null;
   return entry;
-}
-
-function formatDateOnly(value: string | null | undefined) {
-  if (!value) return "—";
-
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return value;
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function DailyReportDetailPage({
@@ -105,7 +72,7 @@ export default async function DailyReportDetailPage({
     },
     {
       label: "Last update",
-      value: formatDateTime(report.updated_at || report.created_at),
+      value: <ViewerDateTime value={report.updated_at || report.created_at} />,
       detail: "Most recent record activity captured on this report.",
     },
   ];

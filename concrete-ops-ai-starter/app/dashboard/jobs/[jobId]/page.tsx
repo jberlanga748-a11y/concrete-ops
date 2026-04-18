@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { JobAssignmentsCard } from "@/components/jobs/JobAssignmentsCard";
 import { JobCostSnapshotCard } from "@/components/jobs/JobCostSnapshotCard";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { EmptyState } from "@/components/ui/feedback";
 import {
   getDocumentsForEntity,
@@ -13,28 +14,13 @@ import {
   getTimeEntries,
 } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
+import { formatDateOnly } from "@/lib/time/formatting";
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(parsed);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
+function formatSchedule(startDate: string | null | undefined, targetFinishDate: string | null | undefined) {
+  if (startDate && targetFinishDate) return `${formatDateOnly(startDate)} - ${formatDateOnly(targetFinishDate)}`;
+  if (startDate) return `Starts ${formatDateOnly(startDate)}`;
+  if (targetFinishDate) return `Target ${formatDateOnly(targetFinishDate)}`;
+  return "Schedule not fully set";
 }
 
 function getStatusTone(status: string) {
@@ -106,8 +92,8 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
     },
     {
       label: "Schedule",
-      value: `${formatDate(job.start_date)} - ${formatDate(job.target_finish_date)}`,
-      detail: job.target_finish_date ? `Target finish ${formatDate(job.target_finish_date)}` : "Schedule not fully set",
+      value: formatSchedule(job.start_date, job.target_finish_date),
+      detail: job.target_finish_date ? `Target finish ${formatDateOnly(job.target_finish_date)}` : "Schedule not fully set",
       tone: "bg-zinc-100 text-zinc-700",
     },
   ];
@@ -242,7 +228,10 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
                       {entry.status.replaceAll("_", " ")}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">{formatDateTime(entry.clock_in_at)}</p>
+                  <ViewerDateTime
+                    value={entry.clock_in_at}
+                    className="mt-2 text-xs uppercase tracking-wide text-zinc-500"
+                  />
                 </li>
               );
             })}
@@ -282,7 +271,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
                   {[assignment.assignment_role, employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ")}
                 </p>
                 <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">
-                  {formatDate(assignment.start_date)} to {formatDate(assignment.end_date)}
+                  {formatDateOnly(assignment.start_date)} to {formatDateOnly(assignment.end_date)}
                 </p>
               </li>
             );
