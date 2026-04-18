@@ -442,238 +442,193 @@ export default async function DashboardPage() {
       <SurfaceCard className="relative overflow-hidden p-7 sm:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
 
-        <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1.45fr),minmax(320px,0.82fr)] xl:items-start">
-          <div>
-            <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
-              Operations Command
-            </Badge>
-            <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
-              <ViewerCurrentDateLabel />
-            </p>
-            <h1 className="mt-4 max-w-3xl text-[clamp(2.25rem,4vw,4rem)] font-semibold tracking-[-0.07em] text-[#101828]">
-              A steadier command view for field work, documentation, and office follow-up.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-600">
-              See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
-            </p>
+        <div className="relative">
+          <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
+            Operations Command
+          </Badge>
+          <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+            <ViewerCurrentDateLabel />
+          </p>
+          <h1 className="mt-4 max-w-4xl text-[clamp(2.35rem,4.2vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#101828]">
+            A steadier command view for field work, documentation, and office follow-up.
+          </h1>
+          <p className="mt-5 max-w-3xl text-base leading-8 text-zinc-600">
+            See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
+          </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                href="/dashboard/daily-reports"
-                className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
-              >
-                Review today&apos;s reports
-              </Link>
-              <Link
-                href="/dashboard/jobs"
-                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-              >
-                Open job board
-              </Link>
-              <Link
-                href="#tools-and-ai"
-                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-              >
-                Browse Tools &amp; AI
-              </Link>
-            </div>
-
-            <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
-              <div className="grid gap-px bg-zinc-200/80 sm:grid-cols-3">
-                <div className="bg-white/92 px-5 py-4">
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Labor</p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-zinc-950">{activeClocks}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">active now</p>
-                  </div>
-                  <p className="mt-2 text-sm text-zinc-600">Crews currently clocked in and visible on the board.</p>
-                </div>
-                <div className="bg-white/92 px-5 py-4">
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Reports</p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-zinc-950">{reportsToday}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">today</p>
-                  </div>
-                  <p className="mt-2 text-sm text-zinc-600">Daily reports filed while the field context is still fresh.</p>
-                </div>
-                <div className="bg-white/92 px-5 py-4">
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Alerts</p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-zinc-950">
-                      {notificationsUnavailable ? "—" : allUnreadNotifications.length}
-                    </p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                      {notificationsUnavailable ? "offline" : "waiting"}
-                    </p>
-                  </div>
-                  <p className="mt-2 text-sm text-zinc-600">
-                    {notificationsUnavailable ? "Queue unavailable for this view." : "Office follow-up items still awaiting review."}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/dashboard/daily-reports"
+              className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
+            >
+              Review today&apos;s reports
+            </Link>
+            <Link
+              href="/dashboard/jobs"
+              className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+            >
+              Open job board
+            </Link>
+            <Link
+              href="#tools-and-ai"
+              className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+            >
+              Browse Tools &amp; AI
+            </Link>
           </div>
 
-          <div className="rounded-[32px] border border-[#1b2833] bg-[linear-gradient(180deg,#0f1820_0%,#121e28_100%)] p-6 text-white shadow-[0_28px_70px_rgba(15,23,42,0.28)] sm:p-7">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Today&apos;s Briefing</p>
-                <h2 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-white">Know where the day stands in under a minute.</h2>
-              </div>
-              <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-white/10 bg-white/5 text-zinc-200">
-                <LayoutDashboardIcon className="h-5 w-5" />
-              </span>
-            </div>
-
-            <div className="mt-7 space-y-3">
+          <div className="mt-8 overflow-hidden rounded-[30px] border border-white/85 bg-white/90 shadow-[0_22px_44px_rgba(15,23,42,0.06)]">
+            <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.9fr,0.9fr,0.9fr,1.25fr]">
               {briefingItems.map((item) => (
-                <div key={item.label} className="rounded-[24px] border border-white/10 bg-white/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <div key={item.label} className="bg-white/94 px-5 py-5">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-white">{item.label}</p>
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">{item.label}</p>
                     <ActivityIcon className="h-4 w-4 text-zinc-400" />
                   </div>
-                  <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-white">{item.value}</p>
-                  <p className="mt-1 text-sm leading-6 text-zinc-300">{item.detail}</p>
+                  <p className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-zinc-950">{item.value}</p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-600">{item.detail}</p>
                 </div>
               ))}
-            </div>
 
-            <div className="mt-6 rounded-[26px] border border-[#cf6f33]/30 bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] p-5">
-              <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-orange-100">Recommended Focus</p>
-              <p className="mt-2 text-sm leading-6 text-orange-50">{focusMessage}</p>
-              <Link
-                href="/dashboard/notifications"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-orange-100"
-              >
-                Review follow-up queue
-                <ArrowRightIcon className="h-4 w-4" />
-              </Link>
+              <div className="bg-[linear-gradient(135deg,#0f1820_0%,#15222d_100%)] px-6 py-5 text-white">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recommended Focus</p>
+                    <h2 className="mt-3 text-[1.45rem] font-semibold tracking-[-0.04em] text-white">Keep the day moving from one wider command surface.</h2>
+                  </div>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-white/10 bg-white/5 text-zinc-200">
+                    <LayoutDashboardIcon className="h-5 w-5" />
+                  </span>
+                </div>
+                <p className="mt-4 text-sm leading-7 text-zinc-300">{focusMessage}</p>
+                <Link
+                  href="/dashboard/notifications"
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-orange-100"
+                >
+                  Review follow-up queue
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </SurfaceCard>
 
-      <section className="grid gap-5 xl:grid-cols-2 2xl:grid-cols-4">
+      <section className="grid gap-5 xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr),minmax(320px,0.82fr)]">
-        <SurfaceCard>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-2xl">
-              <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Quick Actions</p>
-              <h2 className="mt-3 text-[1.85rem] font-semibold tracking-[-0.05em] text-[#101828]">Move the day forward from a smaller set of stronger decisions.</h2>
-              <p className="mt-3 text-sm leading-6 text-zinc-600">
-                These action lanes keep the highest-value surfaces close at hand without reshaping how teams already work inside the product.
-              </p>
+      <SurfaceCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Quick Actions</p>
+            <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-[#101828]">Move the day forward from a smaller set of stronger decisions.</h2>
+            <p className="mt-3 text-sm leading-6 text-zinc-600">
+              These action lanes keep the highest-value surfaces close at hand without reshaping how teams already work inside the product.
+            </p>
+          </div>
+          <Link href="/dashboard/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
+            Open jobs
+            <ArrowRightIcon className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-4 xl:grid-cols-3">
+          {actionLanes.map((lane) => (
+            <ActionLaneCard key={lane.title} lane={lane} />
+          ))}
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard id="tools-and-ai" className="overflow-hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div className="max-w-2xl">
+            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Tools &amp; AI</p>
+            <h2 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.05em] text-[#101828]">Keep specialty tools visible without turning the desktop workspace into a right-side utility column.</h2>
+          </div>
+          <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
+            <SparklesIcon className="h-5 w-5" />
+          </span>
+        </div>
+
+        <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600">
+          The concrete calculator stays accessible to both field and office roles, while Admin Ops Copilot remains constrained to owner and office admin access.
+        </p>
+
+        <div className="mt-7 grid gap-4 xl:grid-cols-2">
+          <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Concrete Calculator</p>
+                <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">Estimate yardage quickly, then move back into delivery conversations.</h3>
+              </div>
+              <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#d7e2ec] bg-white text-[#2c5678]">
+                <CalculatorIcon className="h-5 w-5" />
+              </span>
             </div>
-            <Link href="/dashboard/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
-              Open jobs
-              <ArrowRightIcon className="h-4 w-4" />
+            <p className="mt-4 text-sm leading-7 text-zinc-600">
+              This is the utility surface that belongs in the shell-level toolkit: useful, role-safe, and immediately actionable.
+            </p>
+            <Link
+              href="/dashboard/concrete-calculator"
+              className="mt-6 inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
+            >
+              Open Concrete Calculator
             </Link>
           </div>
 
-          <div className="mt-8 grid gap-4 xl:grid-cols-2">
-            {actionLanes.map((lane, index) => (
-              <div key={lane.title} className={cn(index === 2 && "xl:col-span-2")}>
-                <ActionLaneCard lane={lane} />
+          <div className="rounded-[30px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Copilot Access</p>
+                <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">
+                  {canUseAdminOpsCopilot ? "Office-side AI follow-up is available in this workspace." : "AI follow-up remains intentionally hidden outside office-side roles."}
+                </h3>
               </div>
-            ))}
+              <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#ead3c3] bg-white text-[#b95f26]">
+                <SparklesIcon className="h-5 w-5" />
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-zinc-600">
+              {canUseAdminOpsCopilot
+                ? "Jump directly into the assistant without leaving the command center."
+                : "Role-based restraint keeps the dashboard cleaner for the field while still preserving the office workflow."}
+            </p>
+            {canUseAdminOpsCopilot ? (
+              <Link
+                href="#admin-ops-copilot"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
+              >
+                Jump to Admin Ops Copilot
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            ) : null}
           </div>
-        </SurfaceCard>
+        </div>
+      </SurfaceCard>
 
-        <div className="space-y-6">
-          <SurfaceCard id="tools-and-ai" className="overflow-hidden">
+      <div id="admin-ops-copilot">
+        {canUseAdminOpsCopilot ? (
+          <AdminOpsCopilotCard />
+        ) : (
+          <SurfaceCard className="bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(247,248,250,0.92))]">
             <div className="flex items-start justify-between gap-4">
               <div className="max-w-xl">
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Tools &amp; AI</p>
-                <h2 className="mt-3 text-[1.7rem] font-semibold tracking-[-0.05em] text-[#101828]">Keep specialty tools visible without cluttering the whole command surface.</h2>
+                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Admin Ops Copilot</p>
+                <h3 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-[#101828]">Reserved for owner and office admin follow-up.</h3>
+                <p className="mt-4 text-sm leading-7 text-zinc-600">
+                  This keeps the command surface focused on field-safe tools while reserving this workflow for owner and office admin roles.
+                </p>
               </div>
               <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
                 <SparklesIcon className="h-5 w-5" />
               </span>
             </div>
-
-            <p className="mt-4 text-sm leading-7 text-zinc-600">
-              The concrete calculator stays accessible to both field and office roles, while Admin Ops Copilot remains constrained to owner and office admin access.
-            </p>
-
-            <div className="mt-6 grid gap-4">
-              <div className="rounded-[28px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Concrete Calculator</p>
-                    <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">Estimate yardage quickly, then move back into delivery conversations.</h3>
-                  </div>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#d7e2ec] bg-white text-[#2c5678]">
-                    <CalculatorIcon className="h-5 w-5" />
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-zinc-600">
-                  This is the utility surface that belongs in the shell-level toolkit: useful, role-safe, and immediately actionable.
-                </p>
-                <Link
-                  href="/dashboard/concrete-calculator"
-                  className="mt-6 inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
-                >
-                  Open Concrete Calculator
-                </Link>
-              </div>
-
-              <div className="rounded-[28px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Copilot Access</p>
-                    <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">
-                      {canUseAdminOpsCopilot ? "Office-side AI follow-up is available in this workspace." : "AI follow-up remains intentionally hidden outside office-side roles."}
-                    </h3>
-                  </div>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#ead3c3] bg-white text-[#b95f26]">
-                    <SparklesIcon className="h-5 w-5" />
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-zinc-600">
-                  {canUseAdminOpsCopilot
-                    ? "Jump directly into the assistant without leaving the command center."
-                    : "Role-based restraint keeps the dashboard cleaner for the field while still preserving the office workflow."}
-                </p>
-                {canUseAdminOpsCopilot ? (
-                  <Link
-                    href="#admin-ops-copilot"
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
-                  >
-                    Jump to Admin Ops Copilot
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
           </SurfaceCard>
-
-          <div id="admin-ops-copilot">
-            {canUseAdminOpsCopilot ? (
-              <AdminOpsCopilotCard />
-            ) : (
-              <SurfaceCard className="bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(247,248,250,0.92))]">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="max-w-xl">
-                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Admin Ops Copilot</p>
-                    <h3 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-[#101828]">Reserved for owner and office admin follow-up.</h3>
-                    <p className="mt-4 text-sm leading-7 text-zinc-600">
-                      This keeps the command surface focused on field-safe tools while reserving this workflow for owner and office admin roles.
-                    </p>
-                  </div>
-                  <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
-                    <SparklesIcon className="h-5 w-5" />
-                  </span>
-                </div>
-              </SurfaceCard>
-            )}
-          </div>
-        </div>
-      </section>
+        )}
+      </div>
 
       <SurfaceCard>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -690,7 +645,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 xl:grid-cols-[minmax(0,1.08fr),minmax(0,1.08fr),minmax(280px,0.88fr)]">
+        <div className="mt-8 grid gap-4 xl:grid-cols-3">
           <ActivityPanel
             title="Time activity"
             eyebrow="Labor"

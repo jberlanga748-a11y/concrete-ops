@@ -75,56 +75,35 @@ export default async function EstimatesPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <section className="overflow-hidden rounded-[32px] border border-zinc-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(245,247,248,0.92))] p-6 shadow-[0_20px_48px_rgba(15,23,42,0.08)] sm:p-8">
-        <div className="grid gap-7 xl:grid-cols-[minmax(0,1.45fr),minmax(320px,0.8fr)] xl:items-start">
-          <div>
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Estimating Workflow</p>
-            <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
-              Keep scope, customer context, and pricing confidence on one board.
-            </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-              Review estimate work with a calmer desktop composition, then move straight into the record that still needs scope refinement, pricing review, or customer follow-up.
-            </p>
+        <div className="max-w-4xl">
+          <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Estimating Workflow</p>
+          <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
+            Keep scope, customer context, and pricing confidence on one board.
+          </h1>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
+            Review estimate work with a calmer desktop composition, then move straight into the record that still needs scope refinement, pricing review, or customer follow-up.
+          </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/dashboard/estimates/new"
+              className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+            >
+              New estimate
+            </Link>
+            {latestEstimate ? (
               <Link
-                href="/dashboard/estimates/new"
-                className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+                href={`/dashboard/estimates/${latestEstimate.id}`}
+                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
               >
-                New estimate
+                Open latest estimate
               </Link>
-              {latestEstimate ? (
-                <Link
-                  href={`/dashboard/estimates/${latestEstimate.id}`}
-                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
-                >
-                  Open latest estimate
-                </Link>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(180deg,rgba(244,248,251,0.96),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_42px_rgba(15,23,42,0.08)] sm:p-6">
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Board Focus</p>
-            <h2 className="mt-4 text-[1.45rem] font-semibold tracking-[-0.04em] text-zinc-950">Use this board for active pricing follow-up.</h2>
-            <p className="mt-4 text-sm leading-7 text-zinc-600">
-              Keep the estimate log readable from the office side, then move into the exact record that still needs scope refinement or customer-ready polish.
-            </p>
-            <div className="mt-6 rounded-[24px] border border-white bg-white/92 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-              <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Latest board signal</p>
-              <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-zinc-950">
-                {latestEstimate ? latestEstimate.title : "No estimates on the board yet."}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                {latestEstimate
-                  ? `${getCustomer(latestEstimate.customers)} · ${getJob(latestEstimate.jobs)}`
-                  : "Create the first estimate to start the estimating workflow."}
-              </p>
-            </div>
+            ) : null}
           </div>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-px bg-zinc-200/80 md:grid-cols-3">
+          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.82fr,0.82fr,0.95fr,1.25fr]">
             <BoardStat
               label="Estimates in view"
               value={estimateRows.length}
@@ -140,6 +119,18 @@ export default async function EstimatesPage() {
               value={formatCurrency(boardSubtotal)}
               detail={`${linkedCustomers} customer${linkedCustomers === 1 ? "" : "s"} represented across the board.`}
             />
+            <div className="bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] px-5 py-4">
+              <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Board focus</p>
+              <p className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-zinc-950">Use this board for active pricing follow-up.</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">
+                Keep the estimate log readable from the office side, then move into the exact record that still needs scope refinement or customer-ready polish.
+              </p>
+              <p className="mt-3 text-sm font-medium text-zinc-900">
+                {latestEstimate
+                  ? `${latestEstimate.title} · ${getCustomer(latestEstimate.customers)}`
+                  : "Create the first estimate to start the estimating workflow."}
+              </p>
+            </div>
           </div>
         </div>
       </section>

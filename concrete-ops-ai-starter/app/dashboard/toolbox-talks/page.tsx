@@ -48,56 +48,35 @@ export default async function ToolboxTalksPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <section className="overflow-hidden rounded-[32px] border border-zinc-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(245,247,248,0.92))] p-6 shadow-[0_20px_48px_rgba(15,23,42,0.08)] sm:p-8">
-        <div className="grid gap-7 xl:grid-cols-[minmax(0,1.45fr),minmax(320px,0.8fr)] xl:items-start">
-          <div>
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Safety Workflow</p>
-            <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
-              Keep safety talks readable, current, and easy to follow up on.
-            </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-              Review the toolbox-talk log from a calmer office board, then move straight into the attendance or documentation record that still needs attention.
-            </p>
+        <div className="max-w-4xl">
+          <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Safety Workflow</p>
+          <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
+            Keep safety talks readable, current, and easy to follow up on.
+          </h1>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
+            Review the toolbox-talk log from a calmer office board, then move straight into the attendance or documentation record that still needs attention.
+          </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/dashboard/toolbox-talks/new"
+              className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+            >
+              New toolbox talk
+            </Link>
+            {latestTalk ? (
               <Link
-                href="/dashboard/toolbox-talks/new"
-                className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+                href={`/dashboard/toolbox-talks/${latestTalk.id}`}
+                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
               >
-                New toolbox talk
+                Open latest talk
               </Link>
-              {latestTalk ? (
-                <Link
-                  href={`/dashboard/toolbox-talks/${latestTalk.id}`}
-                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
-                >
-                  Open latest talk
-                </Link>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(180deg,rgba(244,248,251,0.96),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_42px_rgba(15,23,42,0.08)] sm:p-6">
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Board Focus</p>
-            <h2 className="mt-4 text-[1.45rem] font-semibold tracking-[-0.04em] text-zinc-950">Use the board as the safety follow-up layer.</h2>
-            <p className="mt-4 text-sm leading-7 text-zinc-600">
-              Keep attendance and topic history readable from the office side so the next safety check-in starts from a trustworthy shared record.
-            </p>
-            <div className="mt-6 rounded-[24px] border border-white bg-white/92 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-              <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Latest board signal</p>
-              <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-zinc-950">
-                {latestTalk ? latestTalk.topic : "No toolbox talks on the board yet."}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                {latestTalk
-                  ? `${formatDateOnly(latestTalk.talk_date)} · ${getForemanLabel(latestTalk.foreman_employee)}`
-                  : "Create the first safety talk to start the shared attendance record."}
-              </p>
-            </div>
+            ) : null}
           </div>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-px bg-zinc-200/80 md:grid-cols-3">
+          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.82fr,0.82fr,0.95fr,1.25fr]">
             <BoardStat
               label="Talks in view"
               value={talkRows.length}
@@ -113,6 +92,16 @@ export default async function ToolboxTalksPage() {
               value={latestTalk ? formatDateOnly(latestTalk.talk_date) : "—"}
               detail="Most recent toolbox-talk date visible in this view."
             />
+            <div className="bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] px-5 py-4">
+              <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Board focus</p>
+              <p className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-zinc-950">Use the board as the safety follow-up layer.</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">
+                Keep attendance and topic history readable from the office side so the next safety check-in starts from a trustworthy shared record.
+              </p>
+              <p className="mt-3 text-sm font-medium text-zinc-900">
+                {latestTalk ? `${latestTalk.topic} · ${getForemanLabel(latestTalk.foreman_employee)}` : "Create the first safety talk to start the shared attendance record."}
+              </p>
+            </div>
           </div>
         </div>
       </section>
