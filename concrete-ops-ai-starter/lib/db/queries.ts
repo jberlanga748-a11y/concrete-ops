@@ -624,32 +624,49 @@ export async function getDailyReportOptions(jobId?: string) {
 
 export async function getEmployeeUploadJobOptions() {
   const accessResult = await getEmployeeUploadAccess();
-  const assignedJobIds = accessResult.data?.assignedJobIds ?? [];
+  if (accessResult.error || !accessResult.data) {
+    return {
+      data: [] as TimeOption[],
+      error: accessResult.error || "Could not resolve upload access.",
+    };
+  }
+
+  const assignedJobIds = accessResult.data.assignedJobIds;
 
   if (assignedJobIds.length === 0) {
-    return [] as TimeOption[];
+    return { data: [] as TimeOption[], error: null };
   }
 
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("jobs")
     .select("id, job_number, name")
     .in("id", assignedJobIds)
     .order("job_number", { ascending: true });
 
-  return (data ?? []).map((job: Pick<Job, "id" | "job_number" | "name">) => ({
-    id: job.id,
-    label: `${job.job_number} · ${job.name}`,
-  }));
+  return {
+    data: (data ?? []).map((job: Pick<Job, "id" | "job_number" | "name">) => ({
+      id: job.id,
+      label: `${job.job_number} · ${job.name}`,
+    })) as TimeOption[],
+    error: error?.message ?? null,
+  };
 }
 
 export async function getEmployeeUploadDailyReportOptions(jobId?: string) {
   const accessResult = await getEmployeeUploadAccess();
-  const assignedJobIds = accessResult.data?.assignedJobIds ?? [];
+  if (accessResult.error || !accessResult.data) {
+    return {
+      data: [] as DailyReportOption[],
+      error: accessResult.error || "Could not resolve upload access.",
+    };
+  }
+
+  const assignedJobIds = accessResult.data.assignedJobIds;
   const scopedJobIds = jobId ? assignedJobIds.filter((assignedJobId) => assignedJobId === jobId) : assignedJobIds;
 
   if (scopedJobIds.length === 0) {
-    return [] as DailyReportOption[];
+    return { data: [] as DailyReportOption[], error: null };
   }
 
   const supabase = await createClient();
@@ -662,13 +679,16 @@ export async function getEmployeeUploadDailyReportOptions(jobId?: string) {
 
   if (jobId) query = query.eq("job_id", jobId);
 
-  const { data } = await query;
+  const { data, error } = await query;
 
-  return (data ?? []).map((report: { id: string; job_id?: string; report_date: string; jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null }) => {
-    const job = Array.isArray(report.jobs) ? report.jobs[0] : report.jobs;
-    const jobLabel = job ? `${job.job_number} · ${job.name}` : "Job";
-    return { id: report.id, label: `${report.report_date} · ${jobLabel}`, jobId: report.job_id || "" };
-  }) as DailyReportOption[];
+  return {
+    data: (data ?? []).map((report: { id: string; job_id?: string; report_date: string; jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null }) => {
+      const job = Array.isArray(report.jobs) ? report.jobs[0] : report.jobs;
+      const jobLabel = job ? `${job.job_number} · ${job.name}` : "Job";
+      return { id: report.id, label: `${report.report_date} · ${jobLabel}`, jobId: report.job_id || "" };
+    }) as DailyReportOption[],
+    error: error?.message ?? null,
+  };
 }
 
 export async function getDailyReports(filters?: { jobId?: string; date?: string }) {

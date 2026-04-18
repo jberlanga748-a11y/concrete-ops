@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { EmployeeSelfClockCard } from "@/components/employee/EmployeeSelfClockCard";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { createClient } from "@/lib/supabase/server";
 import type { Job, JobPhase } from "@/lib/db/schema";
 
@@ -14,13 +14,49 @@ export default async function EmployeeTimePage() {
     redirect("/login?next=/employee/time");
   }
 
-  const { data: appUser } = await supabase.from("users").select("id, company_id").eq("auth_user_id", user.id).maybeSingle();
+  const { data: appUser, error: appUserError } = await supabase.from("users").select("id, company_id").eq("auth_user_id", user.id).maybeSingle();
+
+  if (appUserError) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-3xl border bg-white p-6 shadow-sm">
+          <h1 className="text-3xl font-semibold">Employee Time</h1>
+          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
+        </div>
+
+        <ErrorPanel
+          title="We couldn’t load your time board right now"
+          description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/employee/time"
+          actionLabel="Try again"
+        />
+      </div>
+    );
+  }
 
   if (!appUser) {
     redirect("/login");
   }
 
-  const { data: employee } = await supabase.from("employees").select("id").eq("user_id", appUser.id).maybeSingle();
+  const { data: employee, error: employeeError } = await supabase.from("employees").select("id").eq("user_id", appUser.id).maybeSingle();
+
+  if (employeeError) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-3xl border bg-white p-6 shadow-sm">
+          <h1 className="text-3xl font-semibold">Employee Time</h1>
+          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
+        </div>
+
+        <ErrorPanel
+          title="We couldn’t load your time board right now"
+          description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/employee/time"
+          actionLabel="Try again"
+        />
+      </div>
+    );
+  }
 
   if (!employee) {
     return (
@@ -39,7 +75,10 @@ export default async function EmployeeTimePage() {
     );
   }
 
-  const [{ data: assignments }, { data: phases }] = await Promise.all([
+  const [
+    { data: assignments, error: assignmentsError },
+    { data: phases, error: phasesError },
+  ] = await Promise.all([
     supabase
       .from("job_assignments")
       .select("job_id")
@@ -54,10 +93,28 @@ export default async function EmployeeTimePage() {
       .order("sort_order", { ascending: true }),
   ]);
 
+  if (assignmentsError || phasesError) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-3xl border bg-white p-6 shadow-sm">
+          <h1 className="text-3xl font-semibold">Employee Time</h1>
+          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
+        </div>
+
+        <ErrorPanel
+          title="We couldn’t load your time board right now"
+          description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/employee/time"
+          actionLabel="Try again"
+        />
+      </div>
+    );
+  }
+
   const assignedJobIds = Array.from(
     new Set((assignments ?? []).map((assignment: { job_id: string }) => assignment.job_id)),
   );
-  const { data: jobs } =
+  const { data: jobs, error: jobsError } =
     assignedJobIds.length > 0
       ? await supabase
           .from("jobs")
@@ -65,7 +122,25 @@ export default async function EmployeeTimePage() {
           .eq("company_id", appUser.company_id)
           .in("id", assignedJobIds)
           .order("job_number", { ascending: true })
-      : { data: [] };
+      : { data: [], error: null };
+
+  if (jobsError) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-3xl border bg-white p-6 shadow-sm">
+          <h1 className="text-3xl font-semibold">Employee Time</h1>
+          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
+        </div>
+
+        <ErrorPanel
+          title="We couldn’t load your time board right now"
+          description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/employee/time"
+          actionLabel="Try again"
+        />
+      </div>
+    );
+  }
 
   const jobOptions = (jobs ?? []).map((job: Pick<Job, "id" | "job_number" | "name">) => ({
     id: job.id,
