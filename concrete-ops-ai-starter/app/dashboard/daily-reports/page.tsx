@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getCurrentAppUserContext } from "@/lib/auth/server";
+import { isForemanRole } from "@/lib/auth/roles";
 import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
 import {
@@ -45,6 +47,8 @@ export default async function DailyReportsPage({
     getDailyReports({ jobId: selectedJobId || undefined, date: selectedDate || undefined }),
     getDailyReportJobOptions(),
   ]);
+  const appUser = await getCurrentAppUserContext();
+  const isForeman = isForemanRole(appUser?.role);
 
   const dailyReports = reports ?? [];
   const activeFilterCount = Number(Boolean(selectedJobId)) + Number(Boolean(selectedDate));
@@ -54,6 +58,18 @@ export default async function DailyReportsPage({
     dailyReports.map((report) => getSubmitter(report.users)).filter((name) => name && name !== "—"),
   ).size;
   const latestReport = dailyReports[0] ?? null;
+  const heroTitle = isForeman
+    ? "Keep the field record readable without losing the daily handoff."
+    : "Review the field record from a board built for real office follow-up.";
+  const heroDescription = isForeman
+    ? "Filter reports fast, see which jobs are represented, and move straight into the site update that still needs attention from the field side."
+    : "Keep report review tight with clearer filtering, stronger hierarchy, and a board that surfaces what changed without forcing the office to dig through every entry.";
+  const toolbarDescription = isForeman
+    ? "Filter the log to find the exact site update you need, then jump directly into the shared report record without losing field context."
+    : "Filter the log to isolate the exact site update you need, then jump directly into the record without losing context.";
+  const emptyDescription = isForeman
+    ? "Clear the filters or file a new report so the crew and office share the same current picture of progress."
+    : "Clear the filters or file a new report so the office and field teams have a current record of progress.";
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -61,11 +77,9 @@ export default async function DailyReportsPage({
         <div className="grid gap-6 xl:grid-cols-[1.35fr,0.95fr] xl:items-start">
           <div>
             <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Daily Reports Workflow</p>
-            <h1 className="mt-4 text-[clamp(2rem,3vw,3.45rem)] font-semibold tracking-[-0.06em] text-[#101828]">
-              Review the field record from a board built for real office follow-up.
-            </h1>
+            <h1 className="mt-4 text-[clamp(2rem,3vw,3.45rem)] font-semibold tracking-[-0.06em] text-[#101828]">{heroTitle}</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-              Keep report review tight with clearer filtering, stronger hierarchy, and a board that surfaces what changed without forcing the office to dig through every entry.
+              {heroDescription}
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -125,7 +139,7 @@ export default async function DailyReportsPage({
           toolbar={
             <TableToolbar
               title="Report log"
-              description="Filter the log to isolate the exact site update you need, then jump directly into the record without losing context."
+              description={toolbarDescription}
               countLabel={`${dailyReports.length} report${dailyReports.length === 1 ? "" : "s"}`}
               actions={
                 <Link
@@ -260,7 +274,7 @@ export default async function DailyReportsPage({
                     <TableCell className="hidden lg:table-cell">
                       <div className="space-y-1">
                         <ViewerDateTime value={report.created_at} className="font-medium text-zinc-900" />
-                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Logged to office record</p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Logged to shared record</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -277,7 +291,7 @@ export default async function DailyReportsPage({
                   <EmptyState
                     icon="file"
                     title="No daily reports match this view"
-                    description="Clear the filters or file a new report so the office and field teams have a current record of progress."
+                    description={emptyDescription}
                     actionHref="/dashboard/daily-reports/new"
                     actionLabel="Create report"
                   />

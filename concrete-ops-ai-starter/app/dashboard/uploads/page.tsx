@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
+import { getCurrentAppUserContext } from "@/lib/auth/server";
+import { isForemanRole } from "@/lib/auth/roles";
 import { getDailyReportOptions, getDailyReportJobOptions, getDocuments, type DocumentRow } from "@/lib/db/queries";
 
 function getJobLabel(jobs: DocumentRow["jobs"]) {
@@ -48,7 +52,10 @@ export default async function UploadsPage({
   const selectedDailyReportId = params.dailyReportId?.trim() || "";
   const selectedTag = params.tag?.trim() || "";
 
-  const [{ data: files }, jobOptions, dailyReportOptions] = await Promise.all([
+  const appUser = await getCurrentAppUserContext();
+  const isForeman = isForemanRole(appUser?.role);
+
+  const [{ data: files, error }, jobOptions, dailyReportOptions] = await Promise.all([
     getDocuments({
       jobId: selectedJobId || undefined,
       dailyReportId: selectedDailyReportId || undefined,
@@ -57,6 +64,12 @@ export default async function UploadsPage({
     getDailyReportJobOptions(),
     getDailyReportOptions(selectedJobId || undefined),
   ]);
+  const description = isForeman
+    ? "Field-visible photo and document record tied to jobs and reports."
+    : "Office-managed photo and document record tied to jobs and reports.";
+  const emptyDescription = isForeman
+    ? "No uploads match this view yet. Clear the filters or add field proof so the shared record stays current."
+    : "No uploads match this view yet. Clear the filters or add a file so the shared project record stays complete.";
 
   return (
     <div className="space-y-6">
@@ -64,7 +77,7 @@ export default async function UploadsPage({
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Job Uploads</h1>
-            <p className="mt-2 text-zinc-600">Admin list of uploaded photos/documents tied to jobs and reports.</p>
+            <p className="mt-2 text-zinc-600">{description}</p>
           </div>
           <Link href="/dashboard/uploads/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
             New Upload
@@ -107,47 +120,66 @@ export default async function UploadsPage({
       </form>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-100">
-            <tr>
-              <th className="px-4 py-3 text-left">Uploaded At</th>
-              <th className="px-4 py-3 text-left">Job</th>
-              <th className="px-4 py-3 text-left">Daily Report</th>
-              <th className="px-4 py-3 text-left">Tag</th>
-              <th className="px-4 py-3 text-left">File</th>
-              <th className="px-4 py-3 text-left">Size</th>
-              <th className="px-4 py-3 text-left">Uploader</th>
-              <th className="px-4 py-3 text-left">Note</th>
-              <th className="px-4 py-3 text-left">Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(files ?? []).map((file) => (
-              <tr key={file.id} className="border-t">
-                <td className="px-4 py-4">{file.created_at}</td>
-                <td className="px-4 py-4">{getJobLabel(file.jobs)}</td>
-                <td className="px-4 py-4">{getReportDate(file.daily_reports)}</td>
-                <td className="px-4 py-4">{file.tag}</td>
-                <td className="px-4 py-4">{file.file_name}</td>
-                <td className="px-4 py-4">{formatFileSize(file.file_size_bytes)}</td>
-                <td className="px-4 py-4">{getUploader(file.users, file.employees)}</td>
-                <td className="max-w-md truncate px-4 py-4">{file.note || "—"}</td>
-                <td className="px-4 py-4">
-                  <Link href={`/api/documents/${file.id}`} className="underline">
-                    Open
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {(files ?? []).length === 0 ? (
+        {error ? (
+          <div className="p-4">
+            <ErrorPanel
+              title="We couldn’t load uploads right now"
+              description="The upload record is temporarily unavailable. Try refreshing the page or come back in a moment."
+              actionHref="/dashboard/uploads"
+              actionLabel="Try again"
+            />
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100">
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={9}>
-                  No uploads found. Try changing filters or add a new upload.
-                </td>
+                <th className="px-4 py-3 text-left">Uploaded At</th>
+                <th className="px-4 py-3 text-left">Job</th>
+                <th className="px-4 py-3 text-left">Daily Report</th>
+                <th className="px-4 py-3 text-left">Tag</th>
+                <th className="px-4 py-3 text-left">File</th>
+                <th className="px-4 py-3 text-left">Size</th>
+                <th className="px-4 py-3 text-left">Uploader</th>
+                <th className="px-4 py-3 text-left">Note</th>
+                <th className="px-4 py-3 text-left">Open</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(files ?? []).map((file) => (
+                <tr key={file.id} className="border-t">
+                  <td className="px-4 py-4">
+                    <ViewerDateTime value={file.created_at} includeYear includeTimeZoneName={false} />
+                  </td>
+                  <td className="px-4 py-4">{getJobLabel(file.jobs)}</td>
+                  <td className="px-4 py-4">{getReportDate(file.daily_reports)}</td>
+                  <td className="px-4 py-4">{file.tag}</td>
+                  <td className="px-4 py-4">{file.file_name}</td>
+                  <td className="px-4 py-4">{formatFileSize(file.file_size_bytes)}</td>
+                  <td className="px-4 py-4">{getUploader(file.users, file.employees)}</td>
+                  <td className="max-w-md truncate px-4 py-4">{file.note || "—"}</td>
+                  <td className="px-4 py-4">
+                    <Link href={`/api/documents/${file.id}`} className="underline">
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+              {(files ?? []).length === 0 ? (
+                <tr>
+                  <td className="px-4 py-6 text-zinc-600" colSpan={9}>
+                    <EmptyState
+                      icon="file"
+                      title="No uploads match this view"
+                      description={emptyDescription}
+                      actionHref="/dashboard/uploads/new"
+                      actionLabel="New Upload"
+                    />
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

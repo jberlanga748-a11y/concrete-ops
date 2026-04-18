@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { getCurrentAppUserContext } from "@/lib/auth/server";
+import { isForemanRole } from "@/lib/auth/roles";
 import { JobList } from "@/components/jobs/JobList";
 import { ErrorPanel } from "@/components/ui/feedback";
 import { TableToolbar } from "@/components/ui/table";
 import { getJobs } from "@/lib/db/queries";
-import { createClient } from "@/lib/supabase/server";
 
 function getCustomerName(customers: { name: string }[] | { name: string } | null) {
   if (!customers) return null;
@@ -12,19 +13,22 @@ function getCustomerName(customers: { name: string }[] | { name: string } | null
 }
 
 export default async function JobsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: appUser } = user
-    ? await supabase.from("users").select("role").eq("auth_user_id", user.id).maybeSingle()
-    : { data: null };
-  const isForeman = appUser?.role === "foreman";
+  const appUser = await getCurrentAppUserContext();
+  const isForeman = isForemanRole(appUser?.role);
   const { data, error } = await getJobs();
   const jobs = data ?? [];
   const liveJobs = jobs.filter((job) => !["completed", "archived"].includes(job.status)).length;
   const onHoldJobs = jobs.filter((job) => job.status === "on_hold").length;
   const customerCount = new Set(jobs.map((job) => getCustomerName(job.customers)).filter(Boolean)).size;
+  const heroTitle = isForeman
+    ? "Track active jobs, field status, and handoffs from a cleaner job board."
+    : "Run project setup and handoff from a cleaner job board.";
+  const heroDescription = isForeman
+    ? "Stay on top of assigned jobs, schedule movement, and upload-ready field context before you dive into each Job Hub."
+    : "Keep planning details, assigned ownership, and schedule visibility tight before teams move into the Job Hub for daily execution.";
+  const toolbarDescription = isForeman
+    ? "Open a job to review field activity, documents, assignments, and the shared project record without losing the crew’s operating context."
+    : "Open a job to manage field activity, documents, assignments, and the planning details that keep office and field teams aligned.";
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -32,9 +36,9 @@ export default async function JobsPage() {
         <div className="grid gap-6 xl:grid-cols-[1.4fr,0.95fr] xl:items-start">
           <div>
             <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Jobs Workflow</p>
-            <h1 className="mt-4 text-[clamp(2rem,3vw,3.5rem)] font-semibold tracking-[-0.06em] text-[#101828]">Run project setup and handoff from a cleaner job board.</h1>
+            <h1 className="mt-4 text-[clamp(2rem,3vw,3.5rem)] font-semibold tracking-[-0.06em] text-[#101828]">{heroTitle}</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-              Keep planning details, assigned ownership, and schedule visibility tight before teams move into the Job Hub for daily execution.
+              {heroDescription}
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -92,7 +96,7 @@ export default async function JobsPage() {
           toolbar={
             <TableToolbar
               title="Project board"
-              description="Open a job to manage field activity, documents, assignments, and the planning details that keep office and field teams aligned."
+              description={toolbarDescription}
               countLabel={`${jobs.length} job${jobs.length === 1 ? "" : "s"}`}
               actions={
                 !isForeman ? (
