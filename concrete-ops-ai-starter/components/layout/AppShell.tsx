@@ -322,13 +322,11 @@ export function AppShell({
   const activeTitle = activeEntry?.label ?? portalTitle;
   const activeSection = activeEntry?.sectionTitle ?? "Overview";
   const totalModules = navEntries.filter((entry) => !entry.href.includes("#")).length;
-  const currentModuleHref =
-    activeEntry && !activeEntry.href.includes("#") ? activeEntry.href : role === "foreman" ? "/dashboard/foreman" : "/dashboard";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_22%),linear-gradient(180deg,#eef2f4_0%,#f7f8f6_55%,#fbfbfa_100%)] text-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1980px] gap-3 px-3 pb-28 pt-3 sm:px-4 lg:gap-4 lg:px-5 lg:pb-6 lg:pt-6 2xl:px-6">
-        <aside className="hidden w-[248px] shrink-0 lg:block">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1940px] gap-3 px-3 pb-28 pt-3 sm:px-4 lg:gap-4 lg:px-5 lg:pb-6 lg:pt-6">
+        <aside className="hidden w-[236px] shrink-0 lg:block">
           <div className="sticky top-6 overflow-hidden rounded-[30px] border border-[#1b2833] bg-[linear-gradient(180deg,#111a22_0%,#17242d_100%)] text-zinc-100 shadow-[0_22px_44px_rgba(15,23,42,0.16)]">
             <div className="border-b border-white/10 p-5">
               <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
@@ -361,7 +359,7 @@ export function AppShell({
                     <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{section.title}</p>
                   </div>
 
-                  <div className="space-y-1.5 rounded-[24px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-2.5">
+                  <div className="space-y-1">
                     {section.items.map((item) => {
                       const active = isActive(pathname, item.href);
 
@@ -369,17 +367,17 @@ export function AppShell({
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`group flex items-center gap-3 rounded-[18px] border px-3 py-2.5 transition ${
+                          className={`group flex items-center gap-3 rounded-[18px] px-3 py-2.5 transition ${
                             active
-                              ? "border-[#cf6f33]/55 bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] text-white shadow-[0_14px_28px_rgba(201,106,44,0.16)]"
-                              : "border-white/8 bg-white/[0.03] text-zinc-300 hover:border-white/14 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04))] hover:text-white"
+                              ? "bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] text-white shadow-[0_14px_28px_rgba(201,106,44,0.16)]"
+                              : "text-zinc-300 hover:bg-white/[0.05] hover:text-white"
                           }`}
                         >
                           <span
                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[16px] border ${
                               active
                                 ? "border-white/20 bg-white/10 text-white"
-                                : "border-white/10 bg-black/10 text-zinc-400 group-hover:border-white/15 group-hover:text-white"
+                                : "border-white/10 bg-black/10 text-zinc-400 group-hover:border-white/15 group-hover:bg-white/[0.05] group-hover:text-white"
                             }`}
                           >
                             <NavIcon icon={item.icon} />
@@ -500,25 +498,27 @@ export function AppShell({
           <section className="hidden rounded-[36px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,249,250,0.84))] px-7 py-6 shadow-[0_28px_68px_rgba(15,23,42,0.08)] backdrop-blur lg:block xl:px-8">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0 max-w-none">
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{activeSection}</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{activeSection}</p>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700"
+                  >
+                    {getRoleLabel(role)}
+                  </Badge>
+                </div>
                 <h2 className="mt-4 text-[2.6rem] font-semibold tracking-[-0.07em] text-[#101828]">{activeTitle}</h2>
                 <p className="mt-4 max-w-5xl text-sm leading-7 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
               </div>
-              <Badge
-                variant="outline"
-                className="rounded-full border border-[#ead3c3] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#b95f26]"
-              >
-                {activeSection}
-              </Badge>
+              <div className="shrink-0 rounded-full border border-zinc-200 bg-white/92 px-4 py-2 shadow-[0_10px_22px_rgba(15,23,42,0.05)]">
+                <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
+                <p className="mt-1 text-sm font-semibold text-zinc-950">
+                  <ViewerCurrentDateLabel monthStyle="short" />
+                </p>
+              </div>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href={currentModuleHref}
-                className="rounded-[20px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
-              >
-                Stay in this module
-              </Link>
               <Link
                 href="/employee"
                 className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
@@ -533,30 +533,6 @@ export function AppShell({
                   Settings
                 </Link>
               ) : null}
-            </div>
-
-            <div className="mt-7 overflow-hidden rounded-[28px] border border-white/85 bg-white/92 shadow-[0_20px_42px_rgba(15,23,42,0.06)]">
-              <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.72fr,0.92fr,1.36fr]">
-                <div className="bg-white/94 px-5 py-5">
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
-                  <p className="mt-3 text-base font-semibold tracking-[-0.03em] text-zinc-950">
-                    <ViewerCurrentDateLabel monthStyle="short" />
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">Keep this module anchored to the current operating day.</p>
-                </div>
-                <div className="bg-white/94 px-5 py-5">
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Access Mode</p>
-                  <p className="mt-3 text-base font-semibold tracking-[-0.03em] text-zinc-950">{getRoleLabel(role)}</p>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">{getRoleSummary(role)}</p>
-                </div>
-                <div className="bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] px-5 py-5">
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Current View</p>
-                  <p className="mt-3 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{activeTitle}</p>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
-                    The workspace is tuned to keep the current module in the center and reduce side-navigation weight while you work.
-                  </p>
-                </div>
-              </div>
             </div>
           </section>
 
