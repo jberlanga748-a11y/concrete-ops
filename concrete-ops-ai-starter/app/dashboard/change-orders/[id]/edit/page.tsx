@@ -4,6 +4,7 @@ import { ChangeOrderForm } from "@/components/change-orders/ChangeOrderForm";
 import {
   getChangeOrderById,
   getChangeOrderFiles,
+  getChangeOrderLineItems,
   getDailyReportJobOptions,
   getDailyReportOptions,
   getJobFiles,
@@ -25,9 +26,10 @@ export default async function EditChangeOrderPage({
     : { data: null };
   const isForeman = appUser?.role === "foreman";
 
-  const [{ data: changeOrder }, jobOptions, dailyReportOptions, { data: proofFiles }, { data: linkedFiles }] =
+  const [{ data: changeOrder }, { data: lineItems }, jobOptions, dailyReportOptions, { data: proofFiles }, { data: linkedFiles }] =
     await Promise.all([
       getChangeOrderById(id),
+      getChangeOrderLineItems(id),
       getDailyReportJobOptions(),
       getDailyReportOptions(),
       getJobFiles(),
@@ -58,6 +60,7 @@ export default async function EditChangeOrderPage({
         hideFinancials={isForeman}
         initialValues={changeOrder}
         initialProofFileIds={(linkedFiles ?? []).map((file) => file.job_file_id)}
+        initialLineItems={lineItems ?? []}
       />
     </div>
   );

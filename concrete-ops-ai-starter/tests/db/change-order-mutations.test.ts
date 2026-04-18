@@ -203,6 +203,8 @@ describe("change order mutations", () => {
     }));
     const deleteChangeOrderFiles = vi.fn(() => createDeleteBuilder());
     const changeOrderFilesInsert = vi.fn().mockResolvedValue({ error: null });
+    const deleteLineItems = vi.fn(() => createDeleteBuilder());
+    const lineItemsInsert = vi.fn().mockResolvedValue({ error: null });
     const deleteDocumentLinks = vi.fn(() => createDeleteBuilder());
 
     const documentSelectBuilder = {
@@ -224,6 +226,7 @@ describe("change order mutations", () => {
       if (table === "daily_reports") return { select: vi.fn(() => dailyReportBuilder) };
       if (table === "job_files") return { select: vi.fn(() => jobFilesValidationBuilder) };
       if (table === "change_orders") return { insert: changeOrdersInsert };
+      if (table === "change_order_line_items") return { delete: deleteLineItems, insert: lineItemsInsert };
       if (table === "change_order_files") return { delete: deleteChangeOrderFiles, insert: changeOrderFilesInsert };
       if (table === "documents") return { select: vi.fn(() => documentSelectBuilder) };
       if (table === "document_links") return { delete: deleteDocumentLinks, upsert: documentLinksUpsert };
@@ -244,6 +247,11 @@ describe("change order mutations", () => {
       markupPercent: 10,
       totalAmount: 110,
       proofFileIds: ["file-1", "file-2", "file-1"],
+      lineItems: [
+        { description: " Extra labor ", quantity: 2, unitCost: 40 },
+        { description: " Pump setup ", quantity: 1, unitCost: 65 },
+        { description: "   ", quantity: 5, unitCost: 10 },
+      ],
     });
 
     expect(result).toEqual({ data: { id: "change-order-1" } });
@@ -254,11 +262,29 @@ describe("change order mutations", () => {
       title: "Extra slab prep",
       description: "Additional edge work",
       status: "submitted",
-      direct_cost_total: 100,
+      direct_cost_total: 145,
       markup_percent: 10,
-      total_amount: 110,
+      total_amount: 159.5,
       created_by_user_id: "user-1",
     });
+    expect(lineItemsInsert).toHaveBeenCalledWith([
+      {
+        company_id: "company-1",
+        change_order_id: "change-order-1",
+        description: "Extra labor",
+        quantity: 2,
+        unit_cost: 40,
+        line_total: 80,
+      },
+      {
+        company_id: "company-1",
+        change_order_id: "change-order-1",
+        description: "Pump setup",
+        quantity: 1,
+        unit_cost: 65,
+        line_total: 65,
+      },
+    ]);
     expect(changeOrderFilesInsert).toHaveBeenCalledWith([
       {
         company_id: "company-1",
@@ -354,6 +380,8 @@ describe("change order mutations", () => {
 
     const deleteChangeOrderFiles = vi.fn(() => createDeleteBuilder());
     const changeOrderFilesInsert = vi.fn().mockResolvedValue({ error: null });
+    const deleteLineItems = vi.fn(() => createDeleteBuilder());
+    const lineItemsInsert = vi.fn().mockResolvedValue({ error: null });
     const deleteDocumentLinks = vi.fn(() => createDeleteBuilder());
 
     const documentSelectBuilder = {
@@ -372,6 +400,7 @@ describe("change order mutations", () => {
       if (table === "daily_reports") return { select: vi.fn(() => dailyReportBuilder) };
       if (table === "job_files") return { select: vi.fn(() => jobFilesValidationBuilder) };
       if (table === "change_orders") return { update: changeOrdersUpdate };
+      if (table === "change_order_line_items") return { delete: deleteLineItems, insert: lineItemsInsert };
       if (table === "change_order_files") return { delete: deleteChangeOrderFiles, insert: changeOrderFilesInsert };
       if (table === "documents") return { select: vi.fn(() => documentSelectBuilder) };
       if (table === "document_links") return { delete: deleteDocumentLinks, upsert: documentLinksUpsert };
@@ -391,6 +420,7 @@ describe("change order mutations", () => {
       markupPercent: 12,
       totalAmount: 280,
       proofFileIds: ["file-2", "file-2"],
+      lineItems: [{ description: " Final cleanup ", quantity: 4, unitCost: 25 }],
     });
 
     expect(result).toEqual({ data: { id: "change-order-1" } });
@@ -400,10 +430,20 @@ describe("change order mutations", () => {
       title: "Extra slab prep revised",
       description: "Updated field conditions and scope.",
       status: "approved",
-      direct_cost_total: 250,
+      direct_cost_total: 100,
       markup_percent: 12,
-      total_amount: 280,
+      total_amount: 112,
     });
+    expect(lineItemsInsert).toHaveBeenCalledWith([
+      {
+        company_id: "company-1",
+        change_order_id: "change-order-1",
+        description: "Final cleanup",
+        quantity: 4,
+        unit_cost: 25,
+        line_total: 100,
+      },
+    ]);
     expect(changeOrderFilesInsert).toHaveBeenCalledWith([
       {
         company_id: "company-1",

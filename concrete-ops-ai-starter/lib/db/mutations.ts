@@ -616,7 +616,23 @@ type ChangeOrderInput = {
   markupPercent: number;
   totalAmount: number;
   proofFileIds: string[];
+  lineItems?: Array<{
+    description: string;
+    quantity: number;
+    unitCost: number;
+  }>;
 };
+
+function normalizeChangeOrderLineItems(lineItems: ChangeOrderInput["lineItems"]) {
+  return (lineItems ?? [])
+    .filter((item) => item.description.trim())
+    .map((item) => ({
+      description: item.description.trim(),
+      quantity: Number(item.quantity) || 0,
+      unit_cost: Number(item.unitCost) || 0,
+      line_total: Number(((Number(item.quantity) || 0) * (Number(item.unitCost) || 0)).toFixed(2)),
+    }));
+}
 
 async function validateChangeOrderTargets(args: {
   supabase: Awaited<ReturnType<typeof createClient>>;
@@ -735,6 +751,39 @@ async function syncChangeOrderProofFiles(args: {
   return { data: true };
 }
 
+async function syncChangeOrderLineItems(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  changeOrderId: string;
+  lineItems: ReturnType<typeof normalizeChangeOrderLineItems>;
+}) {
+  const { supabase, companyId, changeOrderId, lineItems } = args;
+
+  const { error: deleteLineItemsError } = await supabase
+    .from("change_order_line_items")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("change_order_id", changeOrderId);
+
+  if (deleteLineItemsError) return { error: deleteLineItemsError.message };
+
+  if (lineItems.length === 0) {
+    return { data: true };
+  }
+
+  const { error: insertLineItemsError } = await supabase.from("change_order_line_items").insert(
+    lineItems.map((lineItem) => ({
+      company_id: companyId,
+      change_order_id: changeOrderId,
+      ...lineItem,
+    })),
+  );
+
+  if (insertLineItemsError) return { error: insertLineItemsError.message };
+
+  return { data: true };
+}
+
 export async function createChangeOrder(input: ChangeOrderInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
@@ -752,6 +801,12 @@ export async function createChangeOrder(input: ChangeOrderInput) {
   }
 
   const { proofFileIds } = targetValidation.data;
+  const normalizedLineItems = normalizeChangeOrderLineItems(input.lineItems);
+  const directCostTotal =
+    normalizedLineItems.length > 0
+      ? Number(normalizedLineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2))
+      : Number((input.directCostTotal || 0).toFixed(2));
+  const totalAmount = Number((directCostTotal * (1 + (Number(input.markupPercent) || 0) / 100)).toFixed(2));
 
   const payload = {
     company_id: appUser.company_id,
@@ -760,9 +815,9 @@ export async function createChangeOrder(input: ChangeOrderInput) {
     title: input.title,
     description: input.description?.trim() || null,
     status: input.status,
-    direct_cost_total: input.directCostTotal,
+    direct_cost_total: directCostTotal,
     markup_percent: input.markupPercent,
-    total_amount: input.totalAmount,
+    total_amount: totalAmount,
     created_by_user_id: appUser.id,
   };
 
@@ -776,6 +831,14 @@ export async function createChangeOrder(input: ChangeOrderInput) {
     proofFileIds,
   });
   if (proofSync.error) return { error: proofSync.error };
+
+  const lineItemSync = await syncChangeOrderLineItems({
+    supabase,
+    companyId: appUser.company_id,
+    changeOrderId: changeOrder.id,
+    lineItems: normalizedLineItems,
+  });
+  if (lineItemSync.error) return { error: lineItemSync.error };
 
   const notification = await createAdminNotifications({
     supabase,
@@ -826,6 +889,12 @@ export async function updateChangeOrder(id: string, input: ChangeOrderInput) {
   }
 
   const { proofFileIds } = targetValidation.data;
+  const normalizedLineItems = normalizeChangeOrderLineItems(input.lineItems);
+  const directCostTotal =
+    normalizedLineItems.length > 0
+      ? Number(normalizedLineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2))
+      : Number((input.directCostTotal || 0).toFixed(2));
+  const totalAmount = Number((directCostTotal * (1 + (Number(input.markupPercent) || 0) / 100)).toFixed(2));
 
   const { data: changeOrder, error: changeOrderError } = await supabase
     .from("change_orders")
@@ -835,9 +904,9 @@ export async function updateChangeOrder(id: string, input: ChangeOrderInput) {
       title: input.title,
       description: input.description?.trim() || null,
       status: input.status,
-      direct_cost_total: input.directCostTotal,
+      direct_cost_total: directCostTotal,
       markup_percent: input.markupPercent,
-      total_amount: input.totalAmount,
+      total_amount: totalAmount,
     })
     .eq("company_id", appUser.company_id)
     .eq("id", id)
@@ -855,6 +924,14 @@ export async function updateChangeOrder(id: string, input: ChangeOrderInput) {
     proofFileIds,
   });
   if (proofSync.error) return { error: proofSync.error };
+
+  const lineItemSync = await syncChangeOrderLineItems({
+    supabase,
+    companyId: appUser.company_id,
+    changeOrderId: id,
+    lineItems: normalizedLineItems,
+  });
+  if (lineItemSync.error) return { error: lineItemSync.error };
 
   const actorEmployeeId = await getActorEmployeeId({
     supabase,
