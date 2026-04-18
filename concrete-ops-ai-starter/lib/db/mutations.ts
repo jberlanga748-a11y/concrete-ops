@@ -1636,6 +1636,44 @@ export async function createApproval(input: ApprovalInput) {
   const officeError = getOfficeAdminRoleError(appUser.role, "send approvals");
   if (officeError) return { error: officeError };
 
+  if (input.approvalType === "proposal") {
+    const { data: proposal, error: proposalError } = await supabase
+      .from("proposals")
+      .select("id")
+      .eq("company_id", appUser.company_id)
+      .eq("id", input.relatedId)
+      .maybeSingle();
+
+    if (proposalError) return { error: proposalError.message };
+    if (!proposal) return { error: "Proposal not found." };
+  } else {
+    const { data: changeOrder, error: changeOrderError } = await supabase
+      .from("change_orders")
+      .select("id")
+      .eq("company_id", appUser.company_id)
+      .eq("id", input.relatedId)
+      .maybeSingle();
+
+    if (changeOrderError) return { error: changeOrderError.message };
+    if (!changeOrder) return { error: "Change order not found." };
+  }
+
+  const openApprovalQuery = supabase
+    .from("approvals")
+    .select("id")
+    .eq("company_id", appUser.company_id)
+    .eq("approval_type", input.approvalType)
+    .in("status", ["sent", "viewed"])
+    .limit(1);
+
+  const { data: existingOpenApproval, error: existingOpenApprovalError } =
+    input.approvalType === "proposal"
+      ? await openApprovalQuery.eq("proposal_id", input.relatedId).maybeSingle()
+      : await openApprovalQuery.eq("change_order_id", input.relatedId).maybeSingle();
+
+  if (existingOpenApprovalError) return { error: existingOpenApprovalError.message };
+  if (existingOpenApproval) return { error: "An open approval already exists for this record." };
+
   const payload = {
     company_id: appUser.company_id,
     approval_type: input.approvalType,
@@ -1695,17 +1733,27 @@ export async function updateApprovalStatus(input: { approvalId: string; status: 
 
   const { data: approval, error: approvalError } = await supabase
     .from("approvals")
-    .select("id, approval_type, proposal_id, change_order_id")
+    .select("id, approval_type, proposal_id, change_order_id, status, viewed_at, decided_at")
     .eq("company_id", appUser.company_id)
     .eq("id", input.approvalId)
     .single();
 
   if (approvalError || !approval) return { error: approvalError?.message || "Approval not found." };
+  if (approval.status === "approved" || approval.status === "rejected") {
+    return { error: "Finalized approvals cannot be updated." };
+  }
+  if (input.status === "sent") {
+    return { error: "Approvals cannot be reset to sent." };
+  }
+
+  const timestamp = new Date().toISOString();
 
   const payload = {
     status: input.status,
-    viewed_at: input.status === "viewed" || input.status === "approved" || input.status === "rejected" ? new Date().toISOString() : null,
-    decided_at: input.status === "approved" || input.status === "rejected" ? new Date().toISOString() : null,
+    viewed_at:
+      approval.viewed_at ||
+      (input.status === "viewed" || input.status === "approved" || input.status === "rejected" ? timestamp : null),
+    decided_at: input.status === "approved" || input.status === "rejected" ? approval.decided_at || timestamp : null,
   };
 
   const { data, error } = await supabase
