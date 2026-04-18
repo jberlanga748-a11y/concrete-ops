@@ -107,7 +107,7 @@ function SurfaceCard({
   return (
     <article
       className={cn(
-        "rounded-[32px] border border-white/80 bg-white/80 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6",
+        "rounded-[34px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,249,250,0.9))] p-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-7",
         className
       )}
       {...props}
@@ -132,18 +132,18 @@ function MetricCard({ metric }: { metric: Metric }) {
 
   return (
     <SurfaceCard className="relative overflow-hidden p-5">
-      <div className={cn("absolute inset-x-5 top-0 h-1 rounded-full", metric.accentClass)} />
+      <div className={cn("absolute inset-x-6 top-0 h-1.5 rounded-full", metric.accentClass)} />
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{metric.label}</p>
-          <p className="mt-4 text-[2.1rem] font-semibold tracking-[-0.06em] text-[#101828]">{metric.value}</p>
+          <p className="mt-5 text-[2.35rem] font-semibold tracking-[-0.07em] text-[#101828]">{metric.value}</p>
         </div>
-        <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-zinc-200/80 bg-zinc-50 text-zinc-700">
+        <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200/80 bg-white text-zinc-700 shadow-[0_12px_26px_rgba(15,23,42,0.06)]">
           <Icon className="h-5 w-5" />
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-zinc-600">{metric.detail}</p>
-      <Link href={metric.href} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
+      <p className="mt-4 text-sm leading-7 text-zinc-600">{metric.detail}</p>
+      <Link href={metric.href} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
         {metric.cta}
         <ArrowRightIcon className="h-4 w-4" />
       </Link>
@@ -170,7 +170,7 @@ function ActionLaneCard({ lane }: { lane: ActionLane }) {
   const Icon = lane.icon;
 
   return (
-    <div className="rounded-[28px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,248,250,0.9))] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[30px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,248,250,0.9))] p-6 shadow-[0_20px_44px_rgba(15,23,42,0.06)]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">{lane.eyebrow}</p>
@@ -181,14 +181,14 @@ function ActionLaneCard({ lane }: { lane: ActionLane }) {
         </span>
       </div>
 
-      <p className="mt-3 text-sm leading-6 text-zinc-600">{lane.detail}</p>
+      <p className="mt-4 text-sm leading-7 text-zinc-600">{lane.detail}</p>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-6 space-y-3">
         {lane.items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="block rounded-[22px] border border-zinc-200 bg-white px-4 py-4 transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+            className="block rounded-[24px] border border-zinc-200 bg-white px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -222,7 +222,7 @@ function ActivityPanel<T>({
   renderItem: (item: T) => ReactNode;
 }) {
   return (
-    <div className="rounded-[28px] border border-zinc-200/80 bg-[rgba(246,247,248,0.86)] p-4">
+    <div className="rounded-[30px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(246,247,248,0.9),rgba(241,244,246,0.78))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-[18px] border border-white bg-white text-zinc-700 shadow-sm">
@@ -238,14 +238,14 @@ function ActivityPanel<T>({
         </Link>
       </div>
 
-      <ul className="mt-4 space-y-3 text-sm">
+      <ul className="mt-5 space-y-3 text-sm">
         {items.map((item, index) => (
-          <li key={index} className="rounded-[22px] border border-white bg-white/90 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+          <li key={index} className="rounded-[24px] border border-white bg-white/92 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
             {renderItem(item)}
           </li>
         ))}
         {items.length === 0 ? (
-          <li className="rounded-[22px] border border-dashed border-zinc-300 bg-white/90 p-4 text-zinc-600">{emptyLabel}</li>
+          <li className="rounded-[24px] border border-dashed border-zinc-300 bg-white/92 p-5 text-zinc-600">{emptyLabel}</li>
         ) : null}
       </ul>
     </div>
@@ -440,7 +440,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <SurfaceCard className="relative overflow-hidden p-6 sm:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.06),_transparent_26%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
 
         <div className="relative grid gap-6 xl:grid-cols-[1.3fr,0.92fr] xl:items-start">
           <div>
@@ -453,43 +453,43 @@ export default async function DashboardPage() {
             <h1 className="mt-4 max-w-3xl text-[clamp(2.25rem,4vw,4rem)] font-semibold tracking-[-0.07em] text-[#101828]">
               A steadier command view for field work, documentation, and office follow-up.
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+            <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-600">
               See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
             </p>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href="/dashboard/daily-reports"
-                className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+                className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
               >
                 Review today&apos;s reports
               </Link>
               <Link
                 href="/dashboard/jobs"
-                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
               >
                 Open job board
               </Link>
               <Link
                 href="#tools-and-ai"
-                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
               >
                 Browse Tools &amp; AI
               </Link>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[24px] border border-white bg-white/88 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                 <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Labor</p>
                 <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{activeClocks}</p>
                 <p className="mt-1 text-sm text-zinc-600">active crew clocks</p>
               </div>
-              <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+              <div className="rounded-[24px] border border-white bg-white/88 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                 <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Reports</p>
                 <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">{reportsToday}</p>
                 <p className="mt-1 text-sm text-zinc-600">filed today</p>
               </div>
-              <div className="rounded-[22px] border border-white bg-white/85 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+              <div className="rounded-[24px] border border-white bg-white/88 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                 <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Alerts</p>
                 <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-zinc-950">
                   {notificationsUnavailable ? "—" : allUnreadNotifications.length}
@@ -499,7 +499,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-[30px] border border-[#1b2833] bg-[#0f1820] p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.28)] sm:p-6">
+          <div className="rounded-[32px] border border-[#1b2833] bg-[linear-gradient(180deg,#0f1820_0%,#121e28_100%)] p-6 text-white shadow-[0_28px_70px_rgba(15,23,42,0.28)] sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Today&apos;s Briefing</p>
@@ -510,9 +510,9 @@ export default async function DashboardPage() {
               </span>
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-7 space-y-3">
               {briefingItems.map((item) => (
-                <div key={item.label} className="rounded-[22px] border border-white/10 bg-white/5 p-4">
+                <div key={item.label} className="rounded-[24px] border border-white/10 bg-white/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-white">{item.label}</p>
                     <ActivityIcon className="h-4 w-4 text-zinc-400" />
@@ -523,7 +523,7 @@ export default async function DashboardPage() {
               ))}
             </div>
 
-            <div className="mt-5 rounded-[24px] border border-[#cf6f33]/30 bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] p-4">
+            <div className="mt-6 rounded-[26px] border border-[#cf6f33]/30 bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] p-5">
               <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-orange-100">Recommended Focus</p>
               <p className="mt-2 text-sm leading-6 text-orange-50">{focusMessage}</p>
               <Link
@@ -538,13 +538,13 @@ export default async function DashboardPage() {
         </div>
       </SurfaceCard>
 
-      <section className="grid gap-4 xl:grid-cols-4">
+      <section className="grid gap-5 xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.25fr,0.95fr]">
+      <section className="grid gap-6 xl:grid-cols-[1.28fr,0.92fr]">
         <SurfaceCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-2xl">
@@ -560,7 +560,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="mt-6 grid gap-4 xl:grid-cols-3">
+          <div className="mt-7 grid gap-4 xl:grid-cols-3">
             {actionLanes.map((lane) => (
               <ActionLaneCard key={lane.title} lane={lane} />
             ))}
@@ -579,12 +579,12 @@ export default async function DashboardPage() {
               </span>
             </div>
 
-            <p className="mt-4 text-sm leading-6 text-zinc-600">
+            <p className="mt-4 text-sm leading-7 text-zinc-600">
               The concrete calculator stays accessible to both field and office roles, while Admin Ops Copilot remains constrained to owner and office admin access.
             </p>
 
-            <div className="mt-5 grid gap-4">
-              <div className="rounded-[26px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-5">
+            <div className="mt-6 grid gap-4">
+              <div className="rounded-[28px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Concrete Calculator</p>
@@ -594,18 +594,18 @@ export default async function DashboardPage() {
                     <CalculatorIcon className="h-5 w-5" />
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">
+                <p className="mt-4 text-sm leading-7 text-zinc-600">
                   This is the utility surface that belongs in the shell-level toolkit: useful, role-safe, and immediately actionable.
                 </p>
                 <Link
                   href="/dashboard/concrete-calculator"
-                  className="mt-5 inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
+                  className="mt-6 inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
                 >
                   Open Concrete Calculator
                 </Link>
               </div>
 
-              <div className="rounded-[26px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-5">
+              <div className="rounded-[28px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Copilot Access</p>
@@ -617,7 +617,7 @@ export default async function DashboardPage() {
                     <SparklesIcon className="h-5 w-5" />
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">
+                <p className="mt-4 text-sm leading-7 text-zinc-600">
                   {canUseAdminOpsCopilot
                     ? "Jump directly into the assistant without leaving the command center."
                     : "Role-based restraint keeps the dashboard cleaner for the field while still preserving the office workflow."}
@@ -625,7 +625,7 @@ export default async function DashboardPage() {
                 {canUseAdminOpsCopilot ? (
                   <Link
                     href="#admin-ops-copilot"
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
+                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
                   >
                     Jump to Admin Ops Copilot
                     <ArrowRightIcon className="h-4 w-4" />
@@ -639,12 +639,12 @@ export default async function DashboardPage() {
             {canUseAdminOpsCopilot ? (
               <AdminOpsCopilotCard />
             ) : (
-              <SurfaceCard className="bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(247,248,250,0.92))]">
+              <SurfaceCard className="bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(247,248,250,0.92))]">
                 <div className="flex items-start justify-between gap-4">
                   <div className="max-w-xl">
                     <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Admin Ops Copilot</p>
                     <h3 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-[#101828]">Reserved for owner and office admin follow-up.</h3>
-                    <p className="mt-3 text-sm leading-6 text-zinc-600">
+                    <p className="mt-4 text-sm leading-7 text-zinc-600">
                       This keeps the command surface focused on field-safe tools while reserving this workflow for owner and office admin roles.
                     </p>
                   </div>
@@ -673,7 +673,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mt-6 grid gap-4 xl:grid-cols-3">
+        <div className="mt-7 grid gap-4 xl:grid-cols-3">
           <ActivityPanel
             title="Time activity"
             eyebrow="Labor"

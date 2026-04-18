@@ -325,11 +325,11 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_22%),linear-gradient(180deg,#eef2f4_0%,#f7f8f6_55%,#fbfbfa_100%)] text-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-3 pb-28 pt-3 sm:px-4 lg:gap-6 lg:px-6 lg:pb-6 lg:pt-6">
-        <aside className="hidden w-[330px] shrink-0 lg:block">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1760px] gap-4 px-3 pb-28 pt-3 sm:px-4 lg:gap-7 lg:px-6 lg:pb-6 lg:pt-6">
+        <aside className="hidden w-[344px] shrink-0 lg:block">
           <div className="sticky top-6 overflow-hidden rounded-[32px] border border-[#18232d] bg-[#0c141c] text-zinc-100 shadow-[0_32px_70px_rgba(15,23,42,0.24)]">
             <div className="border-b border-white/10 p-5">
-              <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5">
+              <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Premium Operations Platform</p>
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
@@ -373,7 +373,7 @@ export function AppShell({
                           className={`group flex items-center gap-3 rounded-[22px] border px-4 py-3 transition ${
                             active
                               ? "border-[#cf6f33]/60 bg-[linear-gradient(135deg,rgba(201,106,44,0.24),rgba(201,106,44,0.08))] text-white shadow-[0_18px_35px_rgba(201,106,44,0.18)]"
-                              : "border-white/8 bg-white/[0.03] text-zinc-300 hover:border-white/14 hover:bg-white/[0.06] hover:text-white"
+                              : "border-white/8 bg-white/[0.03] text-zinc-300 hover:border-white/14 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04))] hover:text-white"
                           }`}
                         >
                           <span
@@ -498,16 +498,16 @@ export function AppShell({
             </details>
           </header>
 
-          <section className="hidden rounded-[32px] border border-white/80 bg-white/78 px-6 py-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur lg:block">
+          <section className="hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,249,250,0.78))] px-6 py-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:block">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0">
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{activeSection}</p>
                 <h2 className="mt-3 text-[2rem] font-semibold tracking-[-0.055em] text-[#101828]">{activeTitle}</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
               </div>
 
               <div className="flex shrink-0 items-center gap-3">
-                <div className="rounded-[22px] border border-zinc-200/80 bg-white/80 px-4 py-3">
+                <div className="rounded-[24px] border border-zinc-200/80 bg-white/90 px-4 py-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
                   <p className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
                   <p className="mt-1 text-sm font-semibold text-zinc-900">
                     <ViewerCurrentDateLabel monthStyle="short" />
@@ -515,14 +515,14 @@ export function AppShell({
                 </div>
                 <Link
                   href="/employee"
-                  className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+                  className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
                 >
                   Employee Portal
                 </Link>
                 {showSettingsShortcut ? (
                   <Link
                     href="/dashboard/settings"
-                    className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+                    className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
                   >
                     Settings
                   </Link>
