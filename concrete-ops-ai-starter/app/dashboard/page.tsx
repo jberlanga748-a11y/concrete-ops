@@ -20,6 +20,7 @@ import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
 import { DashboardActivityTime } from "@/components/dashboard/DashboardActivityTime";
 import { ViewerCurrentDateLabel } from "@/components/time/ViewerCurrentDateLabel";
 import { Badge } from "@/components/ui/badge";
+import { ErrorPanel } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
 import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
@@ -235,12 +236,30 @@ export default async function DashboardPage() {
     redirect(getRoleHomePath(appUser.role));
   }
 
-  const [{ data: timeEntries }, { data: reports }, { data: uploads }, { data: unreadNotifications }] = await Promise.all([
+  const [
+    { data: timeEntries, error: timeEntriesError },
+    { data: reports, error: reportsError },
+    { data: uploads, error: uploadsError },
+    { data: unreadNotifications, error: notificationsError },
+  ] = await Promise.all([
     getTimeEntries(),
     getDailyReports(),
     getJobFiles(),
     getNotifications({ unreadOnly: true }),
   ]);
+
+  if (timeEntriesError || reportsError || uploadsError || notificationsError) {
+    return (
+      <div className="space-y-6 lg:space-y-8">
+        <ErrorPanel
+          title="We couldn’t load the operations command view right now"
+          description="The dashboard command view is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/dashboard"
+          actionLabel="Try again"
+        />
+      </div>
+    );
+  }
 
   const allTimeEntries = timeEntries ?? [];
   const allReports = reports ?? [];

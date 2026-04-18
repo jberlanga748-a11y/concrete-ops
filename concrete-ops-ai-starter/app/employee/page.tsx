@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/lib/db/schema";
 import { formatTimestamp } from "@/lib/time/formatting";
@@ -15,6 +15,31 @@ function getJobLabel(jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_n
   return `${jobs.job_number} · ${jobs.name}`;
 }
 
+function EmployeePortalError({
+  description,
+}: {
+  description: string;
+}) {
+  return (
+    <div className="space-y-6">
+      <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Employee Portal</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Your portal is signed in, but we couldn&apos;t load the latest employee data.</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+          Core employee tools depend on your linked profile, time activity, and recent uploads. When one of those services is unavailable, the portal pauses here instead of showing misleading empty data.
+        </p>
+      </section>
+
+      <ErrorPanel
+        title="We couldn’t load your employee portal right now"
+        description={description}
+        actionHref="/employee"
+        actionLabel="Try again"
+      />
+    </div>
+  );
+}
+
 export default async function EmployeeHomePage() {
   const supabase = await createClient();
   const {
@@ -25,13 +50,25 @@ export default async function EmployeeHomePage() {
     redirect("/login?next=/employee");
   }
 
-  const { data: appUser } = await supabase.from("users").select("id").eq("auth_user_id", user.id).maybeSingle();
+  const { data: appUser, error: appUserError } = await supabase.from("users").select("id").eq("auth_user_id", user.id).maybeSingle();
+
+  if (appUserError) {
+    return (
+      <EmployeePortalError description="We couldn’t verify your app profile against the employee portal. Try refreshing the page or come back in a moment." />
+    );
+  }
 
   if (!appUser) {
     redirect("/login");
   }
 
-  const { data: employee } = await supabase.from("employees").select("id").eq("user_id", appUser.id).maybeSingle();
+  const { data: employee, error: employeeError } = await supabase.from("employees").select("id").eq("user_id", appUser.id).maybeSingle();
+
+  if (employeeError) {
+    return (
+      <EmployeePortalError description="We couldn’t load your linked employee profile right now. Try refreshing the page or ask the office to check your account setup." />
+    );
+  }
 
   if (!employee) {
     return (
@@ -55,7 +92,10 @@ export default async function EmployeeHomePage() {
     );
   }
 
-  const [{ data: openEntry }, { data: uploads }] = await Promise.all([
+  const [
+    { data: openEntry, error: openEntryError },
+    { data: uploads, error: uploadsError },
+  ] = await Promise.all([
     supabase
       .from("time_entries")
       .select("id, clock_in_at, status")
@@ -72,6 +112,12 @@ export default async function EmployeeHomePage() {
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
+
+  if (openEntryError || uploadsError) {
+    return (
+      <EmployeePortalError description="We couldn’t load your latest shift or upload activity. Try refreshing the page or come back in a moment." />
+    );
+  }
 
   const allUploads = uploads ?? [];
   const isClockedIn = Boolean(openEntry);

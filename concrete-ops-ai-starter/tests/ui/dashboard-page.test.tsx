@@ -103,4 +103,27 @@ describe("DashboardPage", () => {
     expect(mockGetJobFiles).not.toHaveBeenCalled();
     expect(mockGetNotifications).not.toHaveBeenCalled();
   });
+
+  it("shows an error panel when dashboard data queries fail", async () => {
+    mockGetCurrentAppUserContext.mockResolvedValue({
+      id: "user-1",
+      companyId: "company-1",
+      role: "owner",
+      email: "ops@example.com",
+      fullName: "Operations User",
+    });
+    mockGetTimeEntries.mockResolvedValue({ data: null, error: new Error("boom") });
+    mockGetDailyReports.mockResolvedValue({ data: [], error: null });
+    mockGetJobFiles.mockResolvedValue({ data: [], error: null });
+    mockGetNotifications.mockResolvedValue({ data: [], error: null });
+
+    render(
+      <ToastProvider>
+        {await DashboardPage()}
+      </ToastProvider>,
+    );
+
+    expect(screen.getByText("We couldn’t load the operations command view right now")).toBeInTheDocument();
+    expect(screen.getByText("The dashboard command view is temporarily unavailable. Try refreshing the page or come back in a moment.")).toBeInTheDocument();
+  });
 });
