@@ -1,8 +1,11 @@
 import { EmployeeUploadForm } from "@/components/uploads/EmployeeUploadForm";
-import { getDailyReportJobOptions, getDailyReportOptions } from "@/lib/db/queries";
+import { getEmployeeUploadDailyReportOptions, getEmployeeUploadJobOptions } from "@/lib/db/queries";
 
 export default async function EmployeeUploadsPage() {
-  const [jobOptions, dailyReportOptions] = await Promise.all([getDailyReportJobOptions(), getDailyReportOptions()]);
+  const [jobOptions, dailyReportOptions] = await Promise.all([
+    getEmployeeUploadJobOptions(),
+    getEmployeeUploadDailyReportOptions(),
+  ]);
 
   return (
     <div className="space-y-6">

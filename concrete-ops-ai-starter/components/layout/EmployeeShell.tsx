@@ -58,23 +58,35 @@ function isActive(pathname: string, href: string) {
 }
 
 function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: string }) {
+  const sharedProps = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    className,
+    width: 16,
+    height: 16,
+    "aria-hidden": true,
+    focusable: false,
+    style: { flexShrink: 0 },
+  } as const;
+
   switch (icon) {
     case "clock":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v6l4 2" />
         </svg>
       );
     case "shield":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
         </svg>
       );
     case "hardhat":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M2 16a10 10 0 0 1 20 0" />
           <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
           <path d="M12 6v4" />
@@ -84,7 +96,7 @@ function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: 
       );
     case "upload":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M12 16V4" />
           <path d="m7 9 5-5 5 5" />
           <path d="M20 16.5v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-2" />
@@ -93,7 +105,7 @@ function NavIcon({ icon, className = "h-4 w-4" }: { icon: IconName; className?: 
     case "home":
     default:
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M3 11.5 12 4l9 7.5" />
           <path d="M5 10.5V20h14v-9.5" />
           <path d="M9 20v-6h6v6" />

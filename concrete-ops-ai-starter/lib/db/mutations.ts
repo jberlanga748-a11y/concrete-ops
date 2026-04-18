@@ -28,6 +28,11 @@ function isOfficeAdminRole(role?: AppRole | null) {
   return role === "owner" || role === "office_admin";
 }
 
+function getOfficeAdminRoleError(role: AppRole, action: string) {
+  if (isOfficeAdminRole(role)) return null;
+  return `Only owner and office admin users can ${action}.`;
+}
+
 function canManageOwnerRole(currentRole: AppRole, targetRole: AppRole) {
   if (targetRole !== "owner") return true;
   return currentRole === "owner";
@@ -1148,6 +1153,8 @@ export async function createEstimate(input: EstimateInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage estimates");
+  if (officeError) return { error: officeError };
 
   const normalizedLineItems = normalizeEstimateLineItems(input.lineItems);
   const subtotal = Number(
@@ -1207,6 +1214,8 @@ export async function updateEstimate(id: string, input: EstimateInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage estimates");
+  if (officeError) return { error: officeError };
 
   const normalizedLineItems = normalizeEstimateLineItems(input.lineItems);
   const subtotal = Number(
@@ -1274,6 +1283,8 @@ export async function createProposal(input: ProposalInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage proposals");
+  if (officeError) return { error: officeError };
 
   const normalizedSections = normalizeProposalSections(input.sections);
 
@@ -1329,6 +1340,8 @@ export async function updateProposal(id: string, input: ProposalInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage proposals");
+  if (officeError) return { error: officeError };
 
   const normalizedSections = normalizeProposalSections(input.sections);
 
@@ -1392,6 +1405,8 @@ export async function createApproval(input: ApprovalInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "send approvals");
+  if (officeError) return { error: officeError };
 
   const payload = {
     company_id: appUser.company_id,
@@ -1447,6 +1462,8 @@ export async function updateApprovalStatus(input: { approvalId: string; status: 
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "update approvals");
+  if (officeError) return { error: officeError };
 
   const { data: approval, error: approvalError } = await supabase
     .from("approvals")
@@ -1620,6 +1637,8 @@ export async function createEmployee(input: EmployeeInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage employees");
+  if (officeError) return { error: officeError };
 
   const payload = {
     company_id: appUser.company_id,
@@ -1641,6 +1660,8 @@ export async function updateEmployee(id: string, input: EmployeeInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage employees");
+  if (officeError) return { error: officeError };
 
   const payload = {
     full_name: input.fullName.trim(),
@@ -1678,6 +1699,8 @@ export async function createCustomer(input: CustomerInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage customers");
+  if (officeError) return { error: officeError };
 
   const payload = {
     company_id: appUser.company_id,
@@ -1699,6 +1722,8 @@ export async function updateCustomer(id: string, input: CustomerInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+  const officeError = getOfficeAdminRoleError(appUser.role, "manage customers");
+  if (officeError) return { error: officeError };
 
   const payload = {
     name: input.name.trim(),
