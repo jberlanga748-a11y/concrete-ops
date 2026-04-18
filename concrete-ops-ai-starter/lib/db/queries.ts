@@ -33,8 +33,9 @@ import type {
 } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 
-export type JobListRow = Pick<Job, "id" | "job_number" | "name" | "status"> & {
+export type JobListRow = Pick<Job, "id" | "job_number" | "name" | "status" | "start_date" | "target_finish_date"> & {
   customers: Pick<Customer, "name">[] | Pick<Customer, "name"> | null;
+  foreman_employee: Pick<Employee, "full_name">[] | Pick<Employee, "full_name"> | null;
 };
 
 export type JobDetailRow = Pick<
@@ -298,7 +299,12 @@ export type EmployeeUserLinkOption = Pick<Employee, "id" | "user_id" | "is_activ
 
 export async function getJobs() {
   const supabase = await createClient();
-  const result = await supabase.from("jobs").select("id, job_number, name, status, customers(name)").order("created_at", { ascending: false });
+  const result = await supabase
+    .from("jobs")
+    .select(
+      "id, job_number, name, status, start_date, target_finish_date, customers(name), foreman_employee:employees!jobs_foreman_fk(full_name)",
+    )
+    .order("created_at", { ascending: false });
 
   return {
     ...result,
