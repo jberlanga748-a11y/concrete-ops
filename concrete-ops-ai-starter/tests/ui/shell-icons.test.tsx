@@ -25,7 +25,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { EmployeeShell } from "@/components/layout/EmployeeShell";
 
 function expectMenuIconsToStaySized(container: HTMLElement) {
-  const icons = Array.from(container.querySelectorAll('[data-slot="sidebar-menu-button"] svg'));
+  const icons = Array.from(container.querySelectorAll("svg"));
 
   expect(icons.length).toBeGreaterThan(0);
 
