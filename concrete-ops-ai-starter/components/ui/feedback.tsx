@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-type IconKind = "table" | "users" | "briefcase" | "file" | "clock" | "alert";
+type IconKind = "table" | "users" | "briefcase" | "file" | "clock" | "alert" | "shield" | "hardhat";
 type StatusTone = "neutral" | "success" | "warning" | "error" | "info";
 
 function FeedbackIcon({ kind }: { kind: IconKind }) {
@@ -38,6 +38,22 @@ function FeedbackIcon({ kind }: { kind: IconKind }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v6l4 2" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+        </svg>
+      );
+    case "hardhat":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+          <path d="M2 16a10 10 0 0 1 20 0" />
+          <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          <path d="M12 6v4" />
+          <path d="M8 8.5 6.5 12" />
+          <path d="M16 8.5 17.5 12" />
         </svg>
       );
     case "alert":

@@ -1,62 +1,67 @@
-import { redirect } from "next/navigation";
 import { EmployeeSelfClockCard } from "@/components/employee/EmployeeSelfClockCard";
-import { createClient } from "@/lib/supabase/server";
+import { EmployeeAssignmentsState, EmployeeSetupState } from "@/components/employee/EmployeePortalStates";
+import { ErrorPanel } from "@/components/ui/feedback";
+import { getEmployeePortalContext } from "@/lib/employee/portal";
 import type { Job, JobPhase } from "@/lib/db/schema";
 
+function getJobLabel(job: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null) {
+  if (!job) return null;
+  if (Array.isArray(job)) return job[0] ? `${job[0].job_number} · ${job[0].name}` : null;
+  return `${job.job_number} · ${job.name}`;
+}
+
 export default async function EmployeeTimePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?next=/employee/time");
-  }
-
-  const { data: appUser } = await supabase.from("users").select("id, company_id").eq("auth_user_id", user.id).maybeSingle();
-
-  if (!appUser) {
-    redirect("/login");
-  }
-
-  const { data: employee } = await supabase.from("employees").select("id").eq("user_id", appUser.id).maybeSingle();
+  const { supabase, appUser, employee, assignedJobIds, contextError } = await getEmployeePortalContext("/employee/time");
 
   if (!employee) {
     return (
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">No employee record is linked to your user yet.</p>
+        <p className="mt-3 text-zinc-600">Clock in, clock out, and keep your shift status current.</p>
+        <div className="mt-6">
+          {contextError ? (
+            <ErrorPanel
+              title="We couldn’t load your employee setup"
+              description="Your employee time workspace could not confirm your linked employee record right now. Try again, and if the issue keeps showing up, let the office know."
+              actionHref="/employee/time"
+              actionLabel="Try again"
+            />
+          ) : (
+            <EmployeeSetupState actionHref="/employee" actionLabel="Back to portal home" />
+          )}
+        </div>
       </div>
     );
   }
 
-  const [{ data: assignments }, { data: phases }] = await Promise.all([
+  const [{ data: openEntry, error: openEntryError }, { data: phases, error: phasesError }] = await Promise.all([
     supabase
-      .from("job_assignments")
-      .select("job_id")
-      .eq("company_id", appUser.company_id)
+      .from("time_entries")
+      .select("id, clock_in_at, status, jobs(job_number, name)")
+      .eq("company_id", appUser.companyId)
       .eq("employee_id", employee.id)
-      .eq("is_active", true),
+      .is("clock_out_at", null)
+      .in("status", ["clocked_in", "on_break"])
+      .order("clock_in_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from("job_phases")
       .select("id, name")
-      .eq("company_id", appUser.company_id)
+      .eq("company_id", appUser.companyId)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
   ]);
 
-  const assignedJobIds = Array.from(
-    new Set((assignments ?? []).map((assignment: { job_id: string }) => assignment.job_id)),
-  );
-  const { data: jobs } =
+  const { data: jobs, error: jobsError } =
     assignedJobIds.length > 0
       ? await supabase
           .from("jobs")
           .select("id, job_number, name")
-          .eq("company_id", appUser.company_id)
+          .eq("company_id", appUser.companyId)
           .in("id", assignedJobIds)
           .order("job_number", { ascending: true })
-      : { data: [] };
+      : { data: [], error: null };
 
   const jobOptions = (jobs ?? []).map((job: Pick<Job, "id" | "job_number" | "name">) => ({
     id: job.id,
@@ -68,14 +73,51 @@ export default async function EmployeeTimePage() {
     label: phase.name,
   }));
 
+  const pageError = contextError || openEntryError?.message || phasesError?.message || jobsError?.message || null;
+  const activeShift = openEntry
+    ? {
+        clockInAt: openEntry.clock_in_at,
+        status: openEntry.status,
+        jobLabel: getJobLabel(openEntry.jobs as Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null),
+      }
+    : null;
+
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <h1 className="text-3xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">Clock in/out for your shifts.</p>
+        <p className="mt-3 text-zinc-600">
+          Clock in, clock out, and keep your shift status current.
+          {assignedJobIds.length > 0 ? ` You currently have ${assignedJobIds.length} active job assignment${assignedJobIds.length === 1 ? "" : "s"} available here.` : ""}
+        </p>
       </div>
 
-      <EmployeeSelfClockCard employeeId={employee.id} jobOptions={jobOptions} phaseOptions={phaseOptions} />
+      {pageError ? (
+        <ErrorPanel
+          title="We couldn’t fully load your time workspace"
+          description="Some employee time details are unavailable right now. Try refreshing the page, and if this keeps happening, let the office know."
+          actionHref="/employee/time"
+          actionLabel="Try again"
+        />
+      ) : null}
+
+      {assignedJobIds.length === 0 && !activeShift ? (
+        <EmployeeAssignmentsState
+          title="No active job assignments are ready for time entry"
+          description="You do not have an active assignment on file yet, so new clock-ins are still locked. Once the office or foreman assigns you to a live job, time entry will open automatically."
+          actionHref="/employee"
+          actionLabel="Back to portal home"
+        />
+      ) : null}
+
+      {assignedJobIds.length > 0 || activeShift ? (
+        <EmployeeSelfClockCard
+          employeeId={employee.id}
+          jobOptions={jobOptions}
+          phaseOptions={phaseOptions}
+          activeShift={activeShift}
+        />
+      ) : null}
     </div>
   );
 }
