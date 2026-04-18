@@ -97,7 +97,7 @@ export default async function DailyReportsPage({
   return (
     <div className="space-y-6 lg:space-y-8">
       <section className="overflow-hidden rounded-[32px] border border-zinc-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(245,247,248,0.92))] p-6 shadow-[0_20px_48px_rgba(15,23,42,0.08)] sm:p-8">
-        <div className="max-w-4xl">
+        <div className="max-w-5xl">
           <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Daily Reports Workflow</p>
           <h1 className="mt-4 text-[clamp(2rem,3vw,3.45rem)] font-semibold tracking-[-0.06em] text-[#101828]">{heroTitle}</h1>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
@@ -123,7 +123,7 @@ export default async function DailyReportsPage({
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.82fr,0.82fr,0.95fr,1.25fr]">
+          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.78fr,0.78fr,0.9fr,1.54fr]">
             <BoardStat
               label="Reports in view"
               value={dailyReports.length}

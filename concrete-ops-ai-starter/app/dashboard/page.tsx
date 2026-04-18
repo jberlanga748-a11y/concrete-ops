@@ -449,10 +449,10 @@ export default async function DashboardPage() {
           <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
             <ViewerCurrentDateLabel />
           </p>
-          <h1 className="mt-4 max-w-4xl text-[clamp(2.35rem,4.2vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#101828]">
+          <h1 className="mt-4 max-w-5xl text-[clamp(2.35rem,4.2vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#101828]">
             A steadier command view for field work, documentation, and office follow-up.
           </h1>
-          <p className="mt-5 max-w-3xl text-base leading-8 text-zinc-600">
+          <p className="mt-5 max-w-4xl text-base leading-8 text-zinc-600">
             See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
           </p>
 
@@ -478,7 +478,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="mt-8 overflow-hidden rounded-[30px] border border-white/85 bg-white/90 shadow-[0_22px_44px_rgba(15,23,42,0.06)]">
-            <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.9fr,0.9fr,0.9fr,1.25fr]">
+            <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.84fr,0.84fr,0.84fr,1.48fr]">
               {briefingItems.map((item) => (
                 <div key={item.label} className="bg-white/94 px-5 py-5">
                   <div className="flex items-center justify-between gap-3">
@@ -522,7 +522,7 @@ export default async function DashboardPage() {
 
       <SurfaceCard>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-2xl">
+          <div className="max-w-3xl">
             <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Quick Actions</p>
             <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-[#101828]">Move the day forward from a smaller set of stronger decisions.</h2>
             <p className="mt-3 text-sm leading-6 text-zinc-600">
@@ -544,7 +544,7 @@ export default async function DashboardPage() {
 
       <SurfaceCard id="tools-and-ai" className="overflow-hidden">
         <div className="flex items-start justify-between gap-4">
-          <div className="max-w-2xl">
+          <div className="max-w-3xl">
             <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Tools &amp; AI</p>
             <h2 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.05em] text-[#101828]">Keep specialty tools visible without turning the desktop workspace into a right-side utility column.</h2>
           </div>
@@ -635,7 +635,7 @@ export default async function DashboardPage() {
           <div>
             <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Recent Activity</p>
             <h2 className="mt-3 text-[1.85rem] font-semibold tracking-[-0.05em] text-[#101828]">Latest movement across the operation.</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">
               Read the newest field, reporting, and upload signals without leaving the command surface.
             </p>
           </div>
@@ -645,7 +645,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 xl:grid-cols-3">
+        <div className="mt-8 grid gap-4 xl:grid-cols-[1fr,1fr,1.08fr]">
           <ActivityPanel
             title="Time activity"
             eyebrow="Labor"

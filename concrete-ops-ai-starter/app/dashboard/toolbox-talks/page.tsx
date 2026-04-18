@@ -48,7 +48,7 @@ export default async function ToolboxTalksPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <section className="overflow-hidden rounded-[32px] border border-zinc-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(245,247,248,0.92))] p-6 shadow-[0_20px_48px_rgba(15,23,42,0.08)] sm:p-8">
-        <div className="max-w-4xl">
+        <div className="max-w-5xl">
           <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Safety Workflow</p>
           <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
             Keep safety talks readable, current, and easy to follow up on.
@@ -76,7 +76,7 @@ export default async function ToolboxTalksPage() {
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.82fr,0.82fr,0.95fr,1.25fr]">
+          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.78fr,0.78fr,0.9fr,1.54fr]">
             <BoardStat
               label="Talks in view"
               value={talkRows.length}
