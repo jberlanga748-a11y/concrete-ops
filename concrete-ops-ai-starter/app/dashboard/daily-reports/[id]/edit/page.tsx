@@ -47,7 +47,7 @@ export default async function EditDailyReportPage({
               Tighten the report without disturbing the workflow around it.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-              Refresh the jobsite narrative, tune the crew details, and keep the record clear enough that the office can keep moving without a second call to the field.
+              Refresh the jobsite narrative, tune the crew details, and keep the record clear enough that the next reviewer can keep moving without a second call to the field.
             </p>
           </div>
 

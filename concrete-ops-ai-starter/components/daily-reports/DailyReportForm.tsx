@@ -165,8 +165,8 @@ export function DailyReportForm({
 
       pushToast({
         tone: "success",
-        title: "Notes cleaned for office review",
-        description: body.cleaned.officeSummary || "The report sections were tightened into concise, office-ready language.",
+        title: "Notes cleaned for clearer review",
+        description: body.cleaned.officeSummary || "The report sections were tightened into clearer handoff language.",
       });
     } catch {
       pushToast({
@@ -235,7 +235,7 @@ export function DailyReportForm({
       title: reportId ? "Daily report updated" : "Daily report submitted",
       description: reportId
         ? "Your field notes and crew entries are updated."
-        : "The new report is ready for office review.",
+        : "The new report is ready to review.",
     });
     setLoading(false);
 
@@ -294,7 +294,7 @@ export function DailyReportForm({
           <FormCard
             eyebrow="Context"
             title="Report basics that anchor the record"
-            description="Start with the project and date so the office can place this report correctly before reading the narrative."
+            description="Start with the project and date so the next reviewer can place this report correctly before reading the narrative."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -313,7 +313,7 @@ export function DailyReportForm({
               <div>
                 <FieldLabel required>Report date</FieldLabel>
                 <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className={fieldClassName} />
-                <FieldHint>Use the day the work happened so logs, uploads, and office follow-up stay aligned.</FieldHint>
+                <FieldHint>Use the day the work happened so logs, uploads, and follow-up stay aligned.</FieldHint>
               </div>
             </div>
           </FormCard>
@@ -321,7 +321,7 @@ export function DailyReportForm({
           <FormCard
             eyebrow="Production"
             title="Work completed"
-            description="Write the core field narrative the office should understand without needing a follow-up call."
+            description="Write the core field narrative the next reviewer should understand without a follow-up call."
           >
             <div>
               <FieldLabel required>Work completed</FieldLabel>
@@ -337,9 +337,9 @@ export function DailyReportForm({
             <div className="rounded-[22px] border border-orange-200 bg-orange-50/80 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-zinc-950">Office-ready cleanup</p>
+                  <p className="text-sm font-semibold text-zinc-950">Readable cleanup</p>
                   <p className="mt-1 text-sm leading-6 text-zinc-600">
-                    Tighten the narrative into cleaner office language without changing the facts captured in the field note.
+                    Tighten the narrative into clearer handoff language without changing the facts captured in the field note.
                   </p>
                 </div>
                 <button
@@ -357,7 +357,7 @@ export function DailyReportForm({
           <FormCard
             eyebrow="Crew"
             title="Crew rows and labor context"
-            description="Use crew rows when the office needs a clearer record of who was on site, how long they worked, and any notes worth keeping."
+            description="Use crew rows when the record needs a clearer view of who was on site, how long they worked, and any notes worth keeping."
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-zinc-600">
@@ -469,7 +469,7 @@ export function DailyReportForm({
           <FormCard
             eyebrow="Follow-up"
             title="Operations notes that tend to come up later"
-            description="Capture delays, deliveries, and safety details once so office follow-up does not rely on memory."
+            description="Capture delays, deliveries, and safety details once so later follow-up does not rely on memory."
           >
             <div className="grid gap-4 lg:grid-cols-3">
               <div className="rounded-[22px] border border-zinc-200 bg-white p-4">
@@ -515,7 +515,7 @@ export function DailyReportForm({
               {selectedJobLabel !== "No job selected yet" ? selectedJobLabel : "Daily report in progress"}
             </h3>
             <p className="mt-3 text-sm leading-6 text-zinc-300">
-              {workCompleted.trim() || "Add the work narrative and this panel becomes the quick summary office staff can scan before opening the full record."}
+              {workCompleted.trim() || "Add the work narrative and this panel becomes the quick summary anyone can scan before opening the full record."}
             </p>
 
             <div className="mt-5 space-y-3">
@@ -542,10 +542,10 @@ export function DailyReportForm({
             <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Before you save</p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">
               <li className="rounded-[20px] border border-zinc-200 bg-zinc-50/80 px-4 py-3">
-                Confirm the job and report date match the actual workday you want office staff to reference later.
+                Confirm the job and report date match the actual workday the team will reference later.
               </li>
               <li className="rounded-[20px] border border-zinc-200 bg-zinc-50/80 px-4 py-3">
-                Make the work narrative specific enough that a PM or payroll reviewer can understand the day without calling the field.
+                Make the work narrative specific enough that a PM, payroll reviewer, or field lead can understand the day without calling the field.
               </li>
               <li className="rounded-[20px] border border-zinc-200 bg-zinc-50/80 px-4 py-3">
                 Add crew rows only when they improve clarity, and keep hours accurate for any row you plan to save.
@@ -558,7 +558,7 @@ export function DailyReportForm({
       <div className="rounded-[28px] border border-zinc-200 bg-white px-5 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <p className="max-w-2xl text-sm leading-6 text-zinc-600">
-            Job, report date, and work completed are required. Save once the record is clear enough that the office can act on it without asking the field to restate the day.
+            Job, report date, and work completed are required. Save once the record is clear enough for the next person to act without asking the field to restate the day.
           </p>
           <button
             type="button"

@@ -21,10 +21,10 @@ export default async function NewDailyReportPage() {
             </Link>
             <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Daily reports workflow</p>
             <h1 className="mt-3 text-[clamp(2rem,3vw,3.4rem)] font-semibold tracking-[-0.06em] text-[#101828]">
-              Capture a daily record the office can trust without a cleanup pass later.
+              Capture a daily record the whole team can trust on the first pass.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-              Start with the job, date, and production notes that matter most. This pass keeps the reporting workflow focused on readable field records, cleaner crew context, and faster office review.
+              Start with the job, date, and production notes that matter most. This workflow keeps the reporting record focused on readable field context, clearer crew details, and faster shared follow-up.
             </p>
           </div>
 

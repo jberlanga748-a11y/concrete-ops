@@ -35,16 +35,16 @@ describe("NewUploadPage", () => {
     vi.clearAllMocks();
   });
 
-  it("renders office upload copy instead of employee-only wording", async () => {
+  it("renders shared upload copy instead of office-only wording", async () => {
     mockGetDailyReportJobOptions.mockResolvedValue([{ id: "job-1", label: "J-100 · Warehouse Slab" }]);
     mockGetDailyReportOptions.mockResolvedValue([{ id: "report-1", label: "2026-04-18 · J-100 · Warehouse Slab", jobId: "job-1" }]);
 
     render(await NewUploadPage());
 
     expect(screen.getByText("New Upload")).toBeInTheDocument();
-    expect(screen.getByText("Office Upload")).toBeInTheDocument();
-    expect(screen.getByText("Office-managed photo/document upload tied to job records.")).toBeInTheDocument();
-    expect(screen.getByText("Attach office-managed files to jobs and optional daily reports.")).toBeInTheDocument();
+    expect(screen.getByText("Job Upload")).toBeInTheDocument();
+    expect(screen.getByText("Photo and document upload tied to job records.")).toBeInTheDocument();
+    expect(screen.getByText("Attach job photos or files to jobs and optional daily reports.")).toBeInTheDocument();
     expect(screen.queryByText("Employee Photo Upload")).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "J-100 · Warehouse Slab" })).toBeInTheDocument();
   });

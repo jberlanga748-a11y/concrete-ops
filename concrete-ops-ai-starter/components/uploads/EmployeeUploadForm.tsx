@@ -19,6 +19,7 @@ type EmployeeUploadFormProps = {
   title?: string;
   description?: string;
   successMessage?: string;
+  jobRequirementHint?: string;
   tipMessage?: string;
 };
 
@@ -28,6 +29,7 @@ export function EmployeeUploadForm({
   title = "Employee Photo Upload",
   description = "Attach field photos or docs to jobs and optional daily reports.",
   successMessage = "Upload saved and linked to the selected job.",
+  jobRequirementHint = "Uploads need an assigned job so the office can trace field proof back to the right project.",
   tipMessage = "Tip: choose a clear note so admins can quickly use this as field proof later.",
 }: EmployeeUploadFormProps) {
   const router = useRouter();
@@ -107,9 +109,7 @@ export function EmployeeUploadForm({
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
-          {!hasJobs ? (
-            <p className="mt-2 text-xs text-amber-700">Uploads need an assigned job so the office can trace field proof back to the right project.</p>
-          ) : null}
+          {!hasJobs ? <p className="mt-2 text-xs text-amber-700">{jobRequirementHint}</p> : null}
         </div>
 
         <div>

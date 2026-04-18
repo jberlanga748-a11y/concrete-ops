@@ -93,7 +93,7 @@ export default async function DailyReportDetailPage({
               {formatDateOnly(report.report_date)}
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
-              {jobLabel}. Filed by {submitter} and kept here as the office-ready record for production notes, crew context, and downstream follow-up.
+              {jobLabel}. Filed by {submitter} and kept here as the shared record for production notes, crew context, and downstream follow-up.
             </p>
           </div>
 
@@ -139,7 +139,7 @@ export default async function DailyReportDetailPage({
             <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Work narrative</p>
             <h2 className="mt-3 text-[1.35rem] font-semibold tracking-[-0.04em] text-[#101828]">What moved on site</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-600">
-              The core production summary this record carries into office review, coordination, and reporting.
+              The core production summary this record carries into handoff, coordination, and reporting.
             </p>
           </div>
 
@@ -241,7 +241,7 @@ export default async function DailyReportDetailPage({
                 <EmptyState
                   icon="users"
                   title="No crew rows on this report"
-                  description="Crew rows are optional, but they make the report more useful for payroll, staffing questions, and office follow-up."
+                  description="Crew rows are optional, but they make the report more useful for payroll, staffing questions, and field follow-up."
                   actionHref={`/dashboard/daily-reports/${report.id}/edit`}
                   actionLabel="Add crew rows"
                 />
@@ -255,7 +255,7 @@ export default async function DailyReportDetailPage({
             <div>
               <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Documents</p>
               <h2 className="mt-2 text-[1.35rem] font-semibold tracking-[-0.04em] text-[#101828]">Photos and supporting files</h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">Keep uploads and report context tied together for easier office review.</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">Keep uploads and report context tied together for easier team follow-up.</p>
             </div>
             <Link
               href={`/dashboard/uploads?dailyReportId=${report.id}`}
