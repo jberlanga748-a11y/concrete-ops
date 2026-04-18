@@ -2,26 +2,37 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createIncident } from "@/lib/db/mutations";
-import type { EmployeeOption, TimeOption } from "@/lib/db/queries";
+import { createIncident, updateIncident } from "@/lib/db/mutations";
+import type { IncidentDetailRow, EmployeeOption, TimeOption } from "@/lib/db/queries";
+
+type IncidentFormInitialValues = Pick<
+  IncidentDetailRow,
+  "job_id" | "employee_id" | "incident_type" | "incident_date" | "description" | "corrective_action" | "status"
+>;
 
 export function IncidentForm({
+  incidentId,
   jobOptions,
   employeeOptions,
   initialJobId = "",
+  initialValues,
 }: {
+  incidentId?: string;
   jobOptions: TimeOption[];
   employeeOptions: EmployeeOption[];
   initialJobId?: string;
+  initialValues?: IncidentFormInitialValues | null;
 }) {
   const router = useRouter();
-  const [jobId, setJobId] = useState(initialJobId);
-  const [employeeId, setEmployeeId] = useState("");
-  const [incidentType, setIncidentType] = useState("near_miss");
-  const [incidentDate, setIncidentDate] = useState(new Date().toISOString().slice(0, 10));
-  const [description, setDescription] = useState("");
-  const [correctiveAction, setCorrectiveAction] = useState("");
-  const [status, setStatus] = useState("open");
+  const [jobId, setJobId] = useState(initialValues?.job_id ?? initialJobId);
+  const [employeeId, setEmployeeId] = useState(initialValues?.employee_id ?? "");
+  const [incidentType, setIncidentType] = useState<IncidentDetailRow["incident_type"]>(
+    initialValues?.incident_type ?? "near_miss",
+  );
+  const [incidentDate, setIncidentDate] = useState(initialValues?.incident_date ?? new Date().toISOString().slice(0, 10));
+  const [description, setDescription] = useState(initialValues?.description ?? "");
+  const [correctiveAction, setCorrectiveAction] = useState(initialValues?.corrective_action ?? "");
+  const [status, setStatus] = useState<IncidentDetailRow["status"]>(initialValues?.status ?? "open");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
@@ -36,7 +47,7 @@ export function IncidentForm({
     setLoading(true);
     setMessage(null);
 
-    const result = await createIncident({
+    const payload = {
       jobId: jobId || undefined,
       employeeId: employeeId || undefined,
       incidentType: incidentType as "near_miss" | "injury" | "property_damage" | "observation",
@@ -44,19 +55,22 @@ export function IncidentForm({
       description,
       correctiveAction,
       status: status as "open" | "under_review" | "closed",
-    });
+    };
+
+    const result = incidentId ? await updateIncident(incidentId, payload) : await createIncident(payload);
 
     if (result.error || !result.data) {
       setMessageType("error");
-      setMessage(result.error || "Failed to create incident.");
+      setMessage(result.error || `Failed to ${incidentId ? "update" : "create"} incident.`);
       setLoading(false);
       return;
     }
 
     setMessageType("success");
-    setMessage("Incident created.");
+    setMessage(incidentId ? "Incident updated." : "Incident created.");
     setLoading(false);
     router.push(`/dashboard/incidents/${result.data.id}`);
+    router.refresh();
   }
 
   return (
@@ -90,7 +104,7 @@ export function IncidentForm({
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <p className="mb-2 text-sm text-zinc-600">Incident type *</p>
-            <select value={incidentType} onChange={(e) => setIncidentType(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+            <select value={incidentType} onChange={(e) => setIncidentType(e.target.value as IncidentDetailRow["incident_type"])} className="w-full rounded-2xl border px-4 py-3">
               <option value="near_miss">Near Miss</option>
               <option value="injury">Injury</option>
               <option value="property_damage">Property Damage</option>
@@ -103,7 +117,7 @@ export function IncidentForm({
           </div>
           <div>
             <p className="mb-2 text-sm text-zinc-600">Status *</p>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+            <select value={status} onChange={(e) => setStatus(e.target.value as IncidentDetailRow["status"])} className="w-full rounded-2xl border px-4 py-3">
               <option value="open">Open</option>
               <option value="under_review">Under Review</option>
               <option value="closed">Closed</option>
@@ -132,7 +146,7 @@ export function IncidentForm({
         </div>
 
         <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
-          {loading ? "Saving..." : "Create Incident"}
+          {loading ? "Saving..." : incidentId ? "Save Incident" : "Create Incident"}
         </button>
 
         {message ? (

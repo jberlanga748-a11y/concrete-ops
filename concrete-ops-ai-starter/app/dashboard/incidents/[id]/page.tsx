@@ -59,6 +59,9 @@ export default async function IncidentDetailPage({
             <p className="mt-2 text-zinc-600">{formatDateOnly(incident.incident_date)}</p>
           </div>
           <div className="flex gap-3">
+            <Link href={`/dashboard/incidents/${incident.id}/edit`} className="rounded-xl border px-4 py-2 text-sm">
+              Edit Incident
+            </Link>
             {job ? (
               <Link href={`/dashboard/jobs/${job.id}`} className="rounded-xl border px-4 py-2 text-sm">
                 Open Job

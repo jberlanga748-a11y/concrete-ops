@@ -728,10 +728,53 @@ type IncidentInput = {
   status: IncidentStatus;
 };
 
+async function validateIncidentTargets(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  jobId?: string;
+  employeeId?: string;
+}) {
+  const { supabase, companyId, jobId, employeeId } = args;
+
+  if (jobId) {
+    const { data: job, error: jobError } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("id", jobId)
+      .maybeSingle();
+
+    if (jobError) return { error: jobError.message };
+    if (!job) return { error: "Selected job was not found." };
+  }
+
+  if (employeeId) {
+    const { data: employee, error: employeeError } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("id", employeeId)
+      .maybeSingle();
+
+    if (employeeError) return { error: employeeError.message };
+    if (!employee) return { error: "Selected employee was not found." };
+  }
+
+  return { data: true };
+}
+
 export async function createIncident(input: IncidentInput) {
   const auth = await getCurrentAppUser();
   if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
   const { supabase, appUser } = auth;
+
+  const targetValidation = await validateIncidentTargets({
+    supabase,
+    companyId: appUser.company_id,
+    jobId: input.jobId,
+    employeeId: input.employeeId,
+  });
+  if (targetValidation.error) return { error: targetValidation.error };
 
   const { data: reportingEmployee } = await supabase
     .from("employees")
@@ -777,6 +820,57 @@ export async function createIncident(input: IncidentInput) {
     targetTable: "incidents",
     targetId: data.id,
     summary: `Created ${input.incidentType.replace(/_/g, " ")} incident for ${input.incidentDate}.`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data };
+}
+
+export async function updateIncident(id: string, input: IncidentInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const targetValidation = await validateIncidentTargets({
+    supabase,
+    companyId: appUser.company_id,
+    jobId: input.jobId,
+    employeeId: input.employeeId,
+  });
+  if (targetValidation.error) return { error: targetValidation.error };
+
+  const { data, error } = await supabase
+    .from("incidents")
+    .update({
+      job_id: input.jobId || null,
+      employee_id: input.employeeId || null,
+      incident_type: input.incidentType,
+      incident_date: input.incidentDate,
+      description: input.description.trim(),
+      corrective_action: input.correctiveAction?.trim() || null,
+      status: input.status,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: error?.message || "Failed to update incident." };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "incident.updated",
+    targetTable: "incidents",
+    targetId: id,
+    summary: `Updated ${input.incidentType.replace(/_/g, " ")} incident for ${input.incidentDate}.`,
   });
   if (audit.error) return { error: audit.error };
 
