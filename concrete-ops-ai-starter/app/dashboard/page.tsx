@@ -16,6 +16,7 @@ import {
   UploadIcon,
 } from "lucide-react";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
+import { DashboardActivityTime } from "@/components/dashboard/DashboardActivityTime";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
@@ -64,18 +65,6 @@ function formatDate(value: string | null | undefined) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 function formatRelativeCount(value: number, singular: string, plural = `${singular}s`) {
@@ -624,7 +613,10 @@ export default async function DashboardPage() {
                   <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
                     {entry.status.replaceAll("_", " ")}
                   </Badge>
-                  <span className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{formatDateTime(entry.clock_in_at)}</span>
+                  <DashboardActivityTime
+                    value={entry.clock_in_at}
+                    className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500"
+                  />
                 </div>
               </>
             )}
@@ -667,7 +659,10 @@ export default async function DashboardPage() {
                   <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
                     Upload
                   </Badge>
-                  <span className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{formatDateTime(upload.created_at)}</span>
+                  <DashboardActivityTime
+                    value={upload.created_at}
+                    className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500"
+                  />
                 </div>
               </>
             )}
