@@ -976,6 +976,76 @@ type ApprovalInput = {
   relatedId: string;
 };
 
+async function getOpenApprovalForEntity(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  approvalType: ApprovalType;
+  relatedId: string;
+}) {
+  const { supabase, companyId, approvalType, relatedId } = args;
+
+  let query = supabase
+    .from("approvals")
+    .select("id")
+    .eq("company_id", companyId)
+    .in("status", ["sent", "viewed"]);
+
+  query = approvalType === "proposal" ? query.eq("proposal_id", relatedId) : query.eq("change_order_id", relatedId);
+
+  const { data, error } = await query.limit(1).maybeSingle();
+  if (error) return { error: error.message };
+  return { data };
+}
+
+async function getApprovalTargetExists(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  approvalType: ApprovalType;
+  relatedId: string;
+}) {
+  const { supabase, companyId, approvalType, relatedId } = args;
+
+  if (approvalType === "proposal") {
+    const { data, error } = await supabase
+      .from("proposals")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("id", relatedId)
+      .maybeSingle();
+
+    if (error) return { error: error.message };
+    if (!data) return { error: "Proposal not found." };
+    return { data };
+  }
+
+  const { data, error } = await supabase
+    .from("change_orders")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", relatedId)
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { error: "Change order not found." };
+  return { data };
+}
+
+function getApprovalStatusChangeError(currentStatus: ApprovalStatus, nextStatus: ApprovalStatus) {
+  if (nextStatus === "sent") {
+    return "Approvals cannot be reset to sent.";
+  }
+
+  if (currentStatus === "approved" || currentStatus === "rejected") {
+    return "Approval is already finalized.";
+  }
+
+  if (nextStatus === "viewed" && currentStatus !== "sent") {
+    return "Only sent approvals can be marked viewed.";
+  }
+
+  return null;
+}
+
 function normalizeEstimateLineItems(lineItems: EstimateLineItemInput[]) {
   return lineItems
     .filter((item) => item.description.trim())
@@ -1408,6 +1478,25 @@ export async function createApproval(input: ApprovalInput) {
   const officeError = getOfficeAdminRoleError(appUser.role, "send approvals");
   if (officeError) return { error: officeError };
 
+  const targetResult = await getApprovalTargetExists({
+    supabase,
+    companyId: appUser.company_id,
+    approvalType: input.approvalType,
+    relatedId: input.relatedId,
+  });
+  if (targetResult.error) return { error: targetResult.error };
+
+  const openApprovalResult = await getOpenApprovalForEntity({
+    supabase,
+    companyId: appUser.company_id,
+    approvalType: input.approvalType,
+    relatedId: input.relatedId,
+  });
+  if (openApprovalResult.error) return { error: openApprovalResult.error };
+  if (openApprovalResult.data) {
+    return { error: "An approval is already open for this record." };
+  }
+
   const payload = {
     company_id: appUser.company_id,
     approval_type: input.approvalType,
@@ -1467,17 +1556,25 @@ export async function updateApprovalStatus(input: { approvalId: string; status: 
 
   const { data: approval, error: approvalError } = await supabase
     .from("approvals")
-    .select("id, approval_type, proposal_id, change_order_id")
+    .select("id, approval_type, proposal_id, change_order_id, status, viewed_at, decided_at")
     .eq("company_id", appUser.company_id)
     .eq("id", input.approvalId)
     .single();
 
   if (approvalError || !approval) return { error: approvalError?.message || "Approval not found." };
 
+  const statusError = getApprovalStatusChangeError(approval.status, input.status);
+  if (statusError) return { error: statusError };
+
+  const nowIso = new Date().toISOString();
+
   const payload = {
     status: input.status,
-    viewed_at: input.status === "viewed" || input.status === "approved" || input.status === "rejected" ? new Date().toISOString() : null,
-    decided_at: input.status === "approved" || input.status === "rejected" ? new Date().toISOString() : null,
+    viewed_at:
+      input.status === "viewed" || input.status === "approved" || input.status === "rejected"
+        ? approval.viewed_at || nowIso
+        : approval.viewed_at,
+    decided_at: input.status === "approved" || input.status === "rejected" ? nowIso : approval.decided_at,
   };
 
   const { data, error } = await supabase
