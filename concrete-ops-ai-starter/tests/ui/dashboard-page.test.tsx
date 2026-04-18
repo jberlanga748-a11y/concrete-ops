@@ -9,13 +9,13 @@ const {
   mockGetCurrentAppUserContext,
   mockGetTimeEntries,
   mockGetDailyReports,
-  mockGetJobFiles,
+  mockGetDocuments,
   mockGetNotifications,
 } = vi.hoisted(() => ({
   mockGetCurrentAppUserContext: vi.fn(),
   mockGetTimeEntries: vi.fn(),
   mockGetDailyReports: vi.fn(),
-  mockGetJobFiles: vi.fn(),
+  mockGetDocuments: vi.fn(),
   mockGetNotifications: vi.fn(),
 }));
 
@@ -36,7 +36,7 @@ vi.mock("@/lib/auth/server", () => ({
 vi.mock("@/lib/db/queries", () => ({
   getTimeEntries: mockGetTimeEntries,
   getDailyReports: mockGetDailyReports,
-  getJobFiles: mockGetJobFiles,
+  getDocuments: mockGetDocuments,
   getNotifications: mockGetNotifications,
 }));
 
@@ -50,7 +50,7 @@ async function renderDashboardPage(role: AppRole = "owner") {
   });
   mockGetTimeEntries.mockResolvedValue({ data: [] });
   mockGetDailyReports.mockResolvedValue({ data: [] });
-  mockGetJobFiles.mockResolvedValue({ data: [] });
+  mockGetDocuments.mockResolvedValue({ data: [] });
   mockGetNotifications.mockResolvedValue({ data: [] });
 
   render(
@@ -100,7 +100,7 @@ describe("DashboardPage", () => {
     expect(redirectMock).toHaveBeenCalledWith("/dashboard/foreman");
     expect(mockGetTimeEntries).not.toHaveBeenCalled();
     expect(mockGetDailyReports).not.toHaveBeenCalled();
-    expect(mockGetJobFiles).not.toHaveBeenCalled();
+    expect(mockGetDocuments).not.toHaveBeenCalled();
     expect(mockGetNotifications).not.toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe("DashboardPage", () => {
     });
     mockGetTimeEntries.mockResolvedValue({ data: null, error: new Error("boom") });
     mockGetDailyReports.mockResolvedValue({ data: [], error: null });
-    mockGetJobFiles.mockResolvedValue({ data: [], error: null });
+    mockGetDocuments.mockResolvedValue({ data: [], error: null });
     mockGetNotifications.mockResolvedValue({ data: [], error: null });
 
     render(
@@ -125,5 +125,11 @@ describe("DashboardPage", () => {
 
     expect(screen.getByText("We couldn’t load the operations command view right now")).toBeInTheDocument();
     expect(screen.getByText("The dashboard command view is temporarily unavailable. Try refreshing the page or come back in a moment.")).toBeInTheDocument();
+  });
+
+  it("loads recent uploads through the shared documents record path", async () => {
+    await renderDashboardPage("owner");
+
+    expect(mockGetDocuments).toHaveBeenCalledTimes(1);
   });
 });
