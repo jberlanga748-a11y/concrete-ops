@@ -32,6 +32,7 @@ import type {
   User,
 } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
+import { getEmployeeUploadAccess } from "@/lib/uploads/employeeAccess";
 
 export type JobListRow = Pick<Job, "id" | "job_number" | "name" | "status" | "start_date" | "target_finish_date"> & {
   customers: Pick<Customer, "name">[] | Pick<Customer, "name"> | null;
@@ -607,6 +608,55 @@ export async function getDailyReportOptions(jobId?: string) {
   const supabase = await createClient();
 
   let query = supabase.from("daily_reports").select("id, job_id, report_date, jobs(job_number, name)").order("report_date", { ascending: false }).limit(100);
+  if (jobId) query = query.eq("job_id", jobId);
+
+  const { data } = await query;
+
+  return (data ?? []).map((report: { id: string; job_id?: string; report_date: string; jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null }) => {
+    const job = Array.isArray(report.jobs) ? report.jobs[0] : report.jobs;
+    const jobLabel = job ? `${job.job_number} · ${job.name}` : "Job";
+    return { id: report.id, label: `${report.report_date} · ${jobLabel}`, jobId: report.job_id || "" };
+  }) as DailyReportOption[];
+}
+
+export async function getEmployeeUploadJobOptions() {
+  const accessResult = await getEmployeeUploadAccess();
+  const assignedJobIds = accessResult.data?.assignedJobIds ?? [];
+
+  if (assignedJobIds.length === 0) {
+    return [] as TimeOption[];
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("jobs")
+    .select("id, job_number, name")
+    .in("id", assignedJobIds)
+    .order("job_number", { ascending: true });
+
+  return (data ?? []).map((job: Pick<Job, "id" | "job_number" | "name">) => ({
+    id: job.id,
+    label: `${job.job_number} · ${job.name}`,
+  }));
+}
+
+export async function getEmployeeUploadDailyReportOptions(jobId?: string) {
+  const accessResult = await getEmployeeUploadAccess();
+  const assignedJobIds = accessResult.data?.assignedJobIds ?? [];
+  const scopedJobIds = jobId ? assignedJobIds.filter((assignedJobId) => assignedJobId === jobId) : assignedJobIds;
+
+  if (scopedJobIds.length === 0) {
+    return [] as DailyReportOption[];
+  }
+
+  const supabase = await createClient();
+  let query = supabase
+    .from("daily_reports")
+    .select("id, job_id, report_date, jobs(job_number, name)")
+    .in("job_id", scopedJobIds)
+    .order("report_date", { ascending: false })
+    .limit(100);
+
   if (jobId) query = query.eq("job_id", jobId);
 
   const { data } = await query;

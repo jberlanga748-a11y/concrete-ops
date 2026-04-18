@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getEmployeeUploadAccessFromClient } from "@/lib/uploads/employeeAccess";
 
 const BUCKET = "job-uploads";
 
@@ -9,11 +10,6 @@ function sanitizeFileName(fileName: string) {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !authData.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const form = await request.formData();
   const jobId = String(form.get("jobId") || "").trim();
@@ -26,25 +22,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Job, tag, and file are required." }, { status: 400 });
   }
 
-  const { data: appUser, error: appUserError } = await supabase
-    .from("users")
-    .select("id, company_id")
-    .eq("auth_user_id", authData.user.id)
-    .single();
-
-  if (appUserError || !appUser) {
-    return NextResponse.json({ error: "Could not resolve app user." }, { status: 400 });
+  const accessResult = await getEmployeeUploadAccessFromClient(supabase);
+  if (accessResult.error || !accessResult.data) {
+    return NextResponse.json(
+      { error: accessResult.error || "Unauthorized" },
+      { status: accessResult.error === "Unauthorized" ? 401 : 403 },
+    );
   }
 
-  const { data: employee } = await supabase
-    .from("employees")
-    .select("id")
-    .eq("company_id", appUser.company_id)
-    .eq("user_id", appUser.id)
-    .maybeSingle();
+  const { appUserId, companyId, employeeId, assignedJobIds } = accessResult.data;
+
+  if (!assignedJobIds.includes(jobId)) {
+    return NextResponse.json({ error: "You can only upload to jobs assigned to you." }, { status: 403 });
+  }
+
+  if (dailyReportIdRaw) {
+    const { data: dailyReport, error: dailyReportError } = await supabase
+      .from("daily_reports")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("job_id", jobId)
+      .eq("id", dailyReportIdRaw)
+      .maybeSingle();
+
+    if (dailyReportError || !dailyReport) {
+      return NextResponse.json(
+        { error: dailyReportError?.message || "The selected daily report is not available for this upload." },
+        { status: 403 },
+      );
+    }
+  }
 
   const safeName = sanitizeFileName(file.name);
-  const storagePath = `${appUser.company_id}/${jobId}/${Date.now()}-${safeName}`;
+  const storagePath = `${companyId}/${jobId}/${Date.now()}-${safeName}`;
   const bytes = Buffer.from(await file.arrayBuffer());
 
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(storagePath, bytes, {
@@ -57,11 +67,11 @@ export async function POST(request: Request) {
   }
 
   const { error: insertError } = await supabase.from("job_files").insert({
-    company_id: appUser.company_id,
+    company_id: companyId,
     job_id: jobId,
     daily_report_id: dailyReportIdRaw || null,
-    uploaded_by_user_id: appUser.id,
-    uploaded_by_employee_id: employee?.id ?? null,
+    uploaded_by_user_id: appUserId,
+    uploaded_by_employee_id: employeeId,
     file_name: file.name,
     file_type: file.type || "application/octet-stream",
     storage_path: storagePath,
@@ -77,7 +87,7 @@ export async function POST(request: Request) {
   const { data: jobFile, error: jobFileError } = await supabase
     .from("job_files")
     .select("id")
-    .eq("company_id", appUser.company_id)
+    .eq("company_id", companyId)
     .eq("storage_path", storagePath)
     .single();
 
@@ -89,12 +99,12 @@ export async function POST(request: Request) {
   const { data: document, error: documentError } = await supabase
     .from("documents")
     .insert({
-      company_id: appUser.company_id,
+      company_id: companyId,
       source_job_file_id: jobFile.id,
       job_id: jobId,
       daily_report_id: dailyReportIdRaw || null,
-      uploaded_by_user_id: appUser.id,
-      uploaded_by_employee_id: employee?.id ?? null,
+      uploaded_by_user_id: appUserId,
+      uploaded_by_employee_id: employeeId,
       file_name: file.name,
       file_type: file.type || "application/octet-stream",
       storage_bucket: BUCKET,
@@ -107,23 +117,23 @@ export async function POST(request: Request) {
     .single();
 
   if (documentError || !document) {
-    await supabase.from("job_files").delete().eq("company_id", appUser.company_id).eq("id", jobFile.id);
+    await supabase.from("job_files").delete().eq("company_id", companyId).eq("id", jobFile.id);
     await supabase.storage.from(BUCKET).remove([storagePath]);
     return NextResponse.json({ error: documentError?.message || "Document record was not created." }, { status: 400 });
   }
 
   const documentLinks = [
-    { company_id: appUser.company_id, document_id: document.id, link_type: "job", linked_record_id: jobId },
+    { company_id: companyId, document_id: document.id, link_type: "job", linked_record_id: jobId },
     ...(dailyReportIdRaw
-      ? [{ company_id: appUser.company_id, document_id: document.id, link_type: "daily_report", linked_record_id: dailyReportIdRaw }]
+      ? [{ company_id: companyId, document_id: document.id, link_type: "daily_report", linked_record_id: dailyReportIdRaw }]
       : []),
   ];
 
   const { error: linkError } = await supabase.from("document_links").insert(documentLinks);
 
   if (linkError) {
-    await supabase.from("documents").delete().eq("company_id", appUser.company_id).eq("id", document.id);
-    await supabase.from("job_files").delete().eq("company_id", appUser.company_id).eq("id", jobFile.id);
+    await supabase.from("documents").delete().eq("company_id", companyId).eq("id", document.id);
+    await supabase.from("job_files").delete().eq("company_id", companyId).eq("id", jobFile.id);
     await supabase.storage.from(BUCKET).remove([storagePath]);
     return NextResponse.json({ error: linkError.message }, { status: 400 });
   }

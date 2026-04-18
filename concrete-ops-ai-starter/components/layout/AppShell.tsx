@@ -109,10 +109,22 @@ const foremanSections: NavSection[] = [
 ];
 
 function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; className?: string }) {
+  const sharedProps = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    className,
+    width: 18,
+    height: 18,
+    "aria-hidden": true,
+    focusable: false,
+    style: { flexShrink: 0 },
+  } as const;
+
   switch (icon) {
     case "users":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M22 21v-2a4 4 0 0 0-3-3.9" />
@@ -121,14 +133,14 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "customers":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
           <path d="M8 13h8" />
         </svg>
       );
     case "jobs":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <rect x="2" y="7" width="20" height="14" rx="2" />
           <path d="M16 7V5a2 2 0 0 0-2-2H10a2 2 0 0 0-2 2v2" />
           <path d="M2 12h20" />
@@ -136,14 +148,14 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "clock":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v6l4 2" />
         </svg>
       );
     case "clipboard":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <rect x="9" y="2" width="6" height="4" rx="1" />
           <path d="M9 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
           <path d="M9 12h6" />
@@ -152,7 +164,7 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "alert":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M12 9v4" />
           <path d="M12 17h.01" />
           <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h16.9a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
@@ -160,13 +172,13 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "shield":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
         </svg>
       );
     case "hardhat":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M2 16a10 10 0 0 1 20 0" />
           <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
           <path d="M12 6v4" />
@@ -176,7 +188,7 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "bell":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M10.3 3.9A2 2 0 0 1 12 3a2 2 0 0 1 1.7.9" />
           <path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" />
           <path d="M10 20a2 2 0 0 0 4 0" />
@@ -184,26 +196,26 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "settings":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 .6 1.7 1.7 0 0 1-2 0 1.6 1.6 0 0 0-1-.6 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-.6-1 1.7 1.7 0 0 1 0-2 1.6 1.6 0 0 0 .6-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9 4.6a1.6 1.6 0 0 0 1-.6 1.7 1.7 0 0 1 2 0 1.6 1.6 0 0 0 1 .6 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8c.2.3.4.7.5 1.1.2 1 .2 1.9 0 2.9-.1.4-.3.8-.5 1.1Z" />
         </svg>
       );
     case "check":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M20 6 9 17l-5-5" />
         </svg>
       );
     case "chat":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       );
     case "file":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <path d="M14 2v6h6" />
           <path d="M8 13h8" />
@@ -213,7 +225,7 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
       );
     case "upload":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M12 16V4" />
           <path d="m7 9 5-5 5 5" />
           <path d="M20 16.5v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-2" />
@@ -222,7 +234,7 @@ function NavIcon({ icon, className = "h-[18px] w-[18px]" }: { icon: IconName; cl
     case "dashboard":
     default:
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+        <svg viewBox="0 0 24 24" {...sharedProps}>
           <path d="M3 11.5 12 4l9 7.5" />
           <path d="M5 10.5V20h14v-9.5" />
           <path d="M9 20v-6h6v6" />
