@@ -1,4 +1,4 @@
-import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
 import { getMyPPEItems, type PPEItemRow } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
 
@@ -13,7 +13,7 @@ function formatLabel(value: string) {
 }
 
 export default async function EmployeePPEPage() {
-  const { data: items } = await getMyPPEItems();
+  const { data: items, error } = await getMyPPEItems();
   const replacementCount = (items ?? []).filter((item) => item.status === "needs_replacement").length;
   const fitCheckCount = (items ?? []).filter((item) => item.status === "pending_fit_check").length;
 
@@ -24,7 +24,14 @@ export default async function EmployeePPEPage() {
         <p className="mt-3 text-zinc-600">See what has been issued to you and what needs a fit check or replacement.</p>
       </div>
 
-      {(items ?? []).length > 0 ? (
+      {error ? (
+        <ErrorPanel
+          title="We couldn’t load your PPE records right now"
+          description="The employee PPE workspace is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/employee/ppe"
+          actionLabel="Try again"
+        />
+      ) : (items ?? []).length > 0 ? (
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Issued Items</p>

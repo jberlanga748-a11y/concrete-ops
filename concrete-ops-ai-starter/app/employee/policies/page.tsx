@@ -1,5 +1,5 @@
 import { PolicyAcknowledgmentButton } from "@/components/policies/PolicyAcknowledgmentButton";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { getMyPolicyAcknowledgments, type PolicyDetailRow } from "@/lib/db/queries";
 import { formatTimestamp } from "@/lib/time/formatting";
 
@@ -10,7 +10,7 @@ function getPolicy(policy: PolicyDetailRow[] | PolicyDetailRow | null) {
 }
 
 export default async function EmployeePoliciesPage() {
-  const { data: acknowledgments } = await getMyPolicyAcknowledgments();
+  const { data: acknowledgments, error } = await getMyPolicyAcknowledgments();
   const activeAcknowledgments = (acknowledgments ?? []).filter((ack) => {
     const policy = getPolicy(ack.policies);
     return policy?.is_active;
@@ -23,6 +23,14 @@ export default async function EmployeePoliciesPage() {
         <p className="mt-3 text-zinc-600">Read active company policies and acknowledge anything still waiting on your signature.</p>
       </div>
 
+      {error ? (
+        <ErrorPanel
+          title="We couldn’t load your policies right now"
+          description="The employee policy workspace is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/employee/policies"
+          actionLabel="Try again"
+        />
+      ) : (
       <div className="space-y-4">
         {activeAcknowledgments.map((ack) => {
           const policy = getPolicy(ack.policies);
@@ -54,6 +62,7 @@ export default async function EmployeePoliciesPage() {
           />
         ) : null}
       </div>
+      )}
     </div>
   );
 }

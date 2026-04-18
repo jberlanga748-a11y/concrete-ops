@@ -1,5 +1,7 @@
 # Launch Review Checklist
 
+Validated against the current app routes and launch-critical surfaces on April 18, 2026.
+
 ## Release Gate
 
 Run the same verification chain before every launch candidate or merge checkpoint:
@@ -21,6 +23,7 @@ npm run build
 - `/dashboard/change-orders`
 - `/dashboard/uploads`
 - `/dashboard/approvals`
+- `/dashboard/jobs`
 - `/dashboard/settings`
 
 ### Foreman
@@ -53,6 +56,7 @@ npm run build
 
 - Office command view: dashboard metrics should fail visibly instead of silently showing zeroed activity.
 - Employee portal: missing employee linkage should show setup guidance, while data-service failures should show an explicit error state.
+- Employee time, uploads, policies, and PPE should fail visibly when their data layer is unavailable instead of looking like clean empty states.
 - Shared uploads, daily reports, change orders, and approvals are the main regression hotspots when role or access hardening changes land.
 - Settings, audit logs, and approvals should render clear empty and error states rather than blank tables.
 
@@ -62,6 +66,7 @@ npm run build
 - `tests/ui/dashboard-page.test.tsx`
 - `tests/ui/dashboard-route-access.test.tsx`
 - `tests/ui/employee-home-page.test.tsx`
+- `tests/ui/employee-self-service-launch-readiness.test.tsx`
 - `tests/ui/launch-role-access.test.tsx`
 - `tests/ui/shared-dashboard-release-readiness.test.tsx`
 - `tests/ui/shared-dashboard-role-visibility.test.tsx`
