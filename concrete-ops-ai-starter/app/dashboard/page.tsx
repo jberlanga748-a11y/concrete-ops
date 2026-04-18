@@ -29,7 +29,7 @@ import {
   type JobFileRow,
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
-import { formatDateOnly } from "@/lib/time/formatting";
+import { formatCurrentDateLabel, formatDateOnly } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -251,11 +251,7 @@ export default async function DashboardPage() {
   ).size;
   const canUseAdminOpsCopilot = appUser ? ["owner", "office_admin"].includes(appUser.role) : false;
 
-  const todayLabel = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  }).format(new Date());
+  const todayLabel = formatCurrentDateLabel();
 
   const focusMessage =
     allUnreadNotifications.length > 0

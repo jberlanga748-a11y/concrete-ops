@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { DocumentRow } from "@/lib/db/queries";
+import { formatDateOnly, formatTimestamp } from "@/lib/time/formatting";
 
 function getJobLabel(jobs: DocumentRow["jobs"]) {
   if (!jobs) return "—";
@@ -13,8 +14,8 @@ function getJobLabel(jobs: DocumentRow["jobs"]) {
 
 function getReportLabel(dailyReports: DocumentRow["daily_reports"]) {
   if (!dailyReports) return "—";
-  if (Array.isArray(dailyReports)) return dailyReports[0]?.report_date ?? "—";
-  return dailyReports.report_date;
+  if (Array.isArray(dailyReports)) return formatDateOnly(dailyReports[0]?.report_date);
+  return formatDateOnly(dailyReports.report_date);
 }
 
 function getUploader(users: DocumentRow["users"], employees: DocumentRow["employees"]) {
@@ -29,19 +30,6 @@ function getUploader(users: DocumentRow["users"], employees: DocumentRow["employ
   }
 
   return "—";
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 function formatFileSize(bytes: number | null | undefined) {
@@ -86,7 +74,7 @@ export function DocumentList({
                 {[getJobLabel(document.jobs), getReportLabel(document.daily_reports)].filter((value) => value !== "—").join(" · ") || "No linked job context"}
               </p>
               <p className="mt-1 text-zinc-500">
-                {[`Uploaded by ${getUploader(document.users, document.employees)}`, formatDateTime(document.created_at)].join(" · ")}
+                {[`Uploaded by ${getUploader(document.users, document.employees)}`, formatTimestamp(document.created_at)].join(" · ")}
               </p>
               <p className="mt-2 text-zinc-700">{document.note || "—"}</p>
               <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">

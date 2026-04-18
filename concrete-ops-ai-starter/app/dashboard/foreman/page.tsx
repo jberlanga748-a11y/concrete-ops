@@ -6,6 +6,7 @@ import {
   type DailyReportListRow,
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
+import { formatDateOnly, formatTimestamp } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -21,25 +22,6 @@ function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"])
   }
 
   return `${jobs.job_number} · ${jobs.name}`;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function ForemanHomePage() {
@@ -231,7 +213,7 @@ export default async function ForemanHomePage() {
               {recentReports.map((report) => (
                 <li key={report.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
                   <p className="font-medium text-zinc-950">{getJobLabel(report.jobs)}</p>
-                  <p className="mt-1 text-zinc-600">{formatDate(report.report_date)}</p>
+                  <p className="mt-1 text-zinc-600">{formatDateOnly(report.report_date)}</p>
                 </li>
               ))}
               {recentReports.length === 0 ? (
@@ -253,7 +235,7 @@ export default async function ForemanHomePage() {
                   <p className="font-medium text-zinc-950">{getEmployeeName(entry.employees)}</p>
                   <p className="mt-1 text-zinc-600">{getJobLabel(entry.jobs)}</p>
                   <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">
-                    {entry.status.replaceAll("_", " ")} · {formatDateTime(entry.clock_in_at)}
+                    {entry.status.replaceAll("_", " ")} · {formatTimestamp(entry.clock_in_at, { includeYear: false })}
                   </p>
                 </li>
               ))}

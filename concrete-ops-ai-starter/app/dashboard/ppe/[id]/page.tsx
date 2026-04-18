@@ -2,18 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PPEItemForm } from "@/components/ppe/PPEItemForm";
 import { getEmployeeOptions, getPPEItemById, type PPEDetailRow } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getEmployee(employee: PPEDetailRow["employees"]) {
   if (!employee) return null;
   if (Array.isArray(employee)) return employee[0] ?? null;
   return employee;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 function formatLabel(value: string) {
@@ -59,11 +53,11 @@ export default async function PPEDetailPage({
         </section>
         <section className="rounded-2xl border bg-white p-4 shadow-sm">
           <h2 className="font-semibold">Issued</h2>
-          <p className="mt-2 text-sm text-zinc-700">{formatDate(item.issued_at)}</p>
+          <p className="mt-2 text-sm text-zinc-700">{formatDateOnly(item.issued_at)}</p>
         </section>
         <section className="rounded-2xl border bg-white p-4 shadow-sm">
           <h2 className="font-semibold">Replacement Due</h2>
-          <p className="mt-2 text-sm text-zinc-700">{formatDate(item.replacement_due_at)}</p>
+          <p className="mt-2 text-sm text-zinc-700">{formatDateOnly(item.replacement_due_at)}</p>
         </section>
       </div>
 

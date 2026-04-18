@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/lib/db/schema";
+import { formatTimestamp } from "@/lib/time/formatting";
 
 function getJobLabel(jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_number" | "name"> | null) {
   if (!jobs) return "—";
@@ -11,18 +12,6 @@ function getJobLabel(jobs: Pick<Job, "job_number" | "name">[] | Pick<Job, "job_n
   }
 
   return `${jobs.job_number} · ${jobs.name}`;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function EmployeeHomePage() {
@@ -79,13 +68,13 @@ export default async function EmployeeHomePage() {
     },
     {
       label: "Active Since",
-      value: openEntry ? formatDateTime(openEntry.clock_in_at) : "—",
+      value: openEntry ? formatTimestamp(openEntry.clock_in_at, { includeYear: false }) : "—",
       detail: openEntry ? `Current state: ${openEntry.status.replaceAll("_", " ")}` : "No active shift on file.",
     },
     {
       label: "Recent Uploads",
       value: allUploads.length.toString(),
-      detail: allUploads[0]?.created_at ? `Latest: ${formatDateTime(allUploads[0].created_at)}` : "No uploads yet",
+      detail: allUploads[0]?.created_at ? `Latest: ${formatTimestamp(allUploads[0].created_at, { includeYear: false })}` : "No uploads yet",
     },
     {
       label: "Jobs Documented",
@@ -152,7 +141,7 @@ export default async function EmployeeHomePage() {
               <p className="text-sm font-medium text-zinc-900">Clock status</p>
               <p className="mt-2 text-sm leading-6 text-zinc-600">
                 {isClockedIn
-                  ? `You are currently ${openEntry?.status.replaceAll("_", " ")} and your shift started at ${formatDateTime(openEntry?.clock_in_at)}.`
+                  ? `You are currently ${openEntry?.status.replaceAll("_", " ")} and your shift started at ${formatTimestamp(openEntry?.clock_in_at, { includeYear: false })}.`
                   : "You do not have an active shift right now. Start with the time board when you are ready to work."}
               </p>
             </div>
@@ -246,7 +235,9 @@ export default async function EmployeeHomePage() {
                   <p className="mt-1 text-zinc-600">Tag: {upload.tag}</p>
                   <p className="mt-1 text-zinc-600">{upload.note || "No note added."}</p>
                 </div>
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{formatDateTime(upload.created_at)}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {formatTimestamp(upload.created_at, { includeYear: false })}
+                </p>
               </div>
             </li>
           ))}

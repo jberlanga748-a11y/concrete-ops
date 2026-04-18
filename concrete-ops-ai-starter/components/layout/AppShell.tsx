@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { Badge } from "@/components/ui/badge";
 import type { AppRole } from "@/lib/auth/roles";
+import { formatCurrentDateLabel } from "@/lib/time/formatting";
 
 type IconName =
   | "dashboard"
@@ -275,14 +276,6 @@ function getSectionSummary(sectionTitle?: string) {
   }
 }
 
-function formatToday() {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  }).format(new Date());
-}
-
 export function AppShell({
   children,
   role,
@@ -316,7 +309,7 @@ export function AppShell({
   const portalTitle = role === "foreman" ? "Foreman Workspace" : "Operations Command";
   const activeTitle = activeEntry?.label ?? portalTitle;
   const activeSection = activeEntry?.sectionTitle ?? "Overview";
-  const todayLabel = formatToday();
+  const todayLabel = formatCurrentDateLabel({ monthStyle: "short" });
   const totalModules = navEntries.filter((entry) => !entry.href.includes("#")).length;
 
   return (

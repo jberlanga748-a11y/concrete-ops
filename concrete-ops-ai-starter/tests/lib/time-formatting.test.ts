@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDateOnly, formatTimestampInTimeZone } from "@/lib/time/formatting";
+import {
+  formatCurrentDateLabel,
+  formatDateOnly,
+  formatTimestamp,
+  formatTimestampDateOnly,
+  formatTimestampInTimeZone,
+} from "@/lib/time/formatting";
 
 describe("time formatting", () => {
   it("keeps date-only values pinned to the intended UTC calendar day", () => {
@@ -18,8 +24,26 @@ describe("time formatting", () => {
     expect(formatTimestampInTimeZone(timestamp, { timeZone: "America/New_York" })).toBe("Nov 1, 3:30 AM EST");
   });
 
+  it("formats shared timestamp helpers without repeating ad hoc Intl logic", () => {
+    const timestamp = "2026-11-01T08:30:00.000Z";
+
+    expect(formatTimestamp(timestamp)).toBe("Nov 1, 2026, 8:30 AM");
+    expect(formatTimestamp(timestamp, { includeYear: false })).toBe("Nov 1, 8:30 AM");
+    expect(formatTimestampDateOnly(timestamp)).toBe("Nov 1, 2026");
+  });
+
+  it("formats current date labels through the shared helper", () => {
+    const date = new Date("2026-04-18T12:00:00.000Z");
+
+    expect(formatCurrentDateLabel({ date })).toBe("Saturday, April 18");
+    expect(formatCurrentDateLabel({ date, monthStyle: "short" })).toBe("Saturday, Apr 18");
+    expect(formatCurrentDateLabel({ date, includeWeekday: false })).toBe("April 18");
+  });
+
   it("handles empty and invalid timestamp values safely", () => {
     expect(formatTimestampInTimeZone(null, { timeZone: "UTC" })).toBe("—");
     expect(formatTimestampInTimeZone("not-a-real-date", { timeZone: "UTC" })).toBe("not-a-real-date");
+    expect(formatTimestamp(null)).toBe("—");
+    expect(formatTimestampDateOnly("still-not-a-date")).toBe("still-not-a-date");
   });
 });

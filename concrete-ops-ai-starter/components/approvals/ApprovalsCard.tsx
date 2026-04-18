@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { createApproval, updateApprovalStatus } from "@/lib/db/mutations";
 import type { ApprovalRow } from "@/lib/db/queries";
 
@@ -17,20 +18,6 @@ function getTitle(approval: ApprovalRow) {
 
   return "Approval";
 }
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
-}
-
 export function ApprovalsCard({
   approvalType,
   relatedId,
@@ -73,10 +60,12 @@ export function ApprovalsCard({
               <div>
                 <p className="font-medium">{getTitle(approval)}</p>
                 <p className="mt-1 text-zinc-600">
-                  {[approval.approval_type, approval.status, `Sent ${formatDateTime(approval.sent_at)}`].join(" · ")}
+                  <span className="capitalize">{approval.approval_type}</span> · {approval.status} · Sent{" "}
+                  <ViewerDateTime value={approval.sent_at} includeYear includeTimeZoneName={false} />
                 </p>
                 <p className="mt-1 text-zinc-500">
-                  Viewed: {formatDateTime(approval.viewed_at)} · Decided: {formatDateTime(approval.decided_at)}
+                  Viewed: <ViewerDateTime value={approval.viewed_at} includeYear includeTimeZoneName={false} /> · Decided:{" "}
+                  <ViewerDateTime value={approval.decided_at} includeYear includeTimeZoneName={false} />
                 </p>
               </div>
               {["sent", "viewed"].includes(approval.status) ? (

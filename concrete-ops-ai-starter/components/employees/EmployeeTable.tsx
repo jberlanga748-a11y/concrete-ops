@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { EmployeeListRow } from "@/lib/db/queries";
 import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import { formatDateOnly } from "@/lib/time/formatting";
 import {
   DataTable,
   TableActionLink,
@@ -12,13 +13,6 @@ import {
   TableRow,
   TableShell,
 } from "@/components/ui/table";
-
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
-}
 
 export function EmployeeTable({
   employees,
@@ -54,7 +48,7 @@ export function EmployeeTable({
                   {employee.is_active ? "Active" : "Inactive"}
                 </StatusChip>
               </TableCell>
-              <TableCell>{formatDate(employee.hire_date)}</TableCell>
+              <TableCell>{formatDateOnly(employee.hire_date)}</TableCell>
               <TableCell>
                 <TableActionLink href={`/dashboard/employees/${employee.id}`} label="Edit" />
               </TableCell>

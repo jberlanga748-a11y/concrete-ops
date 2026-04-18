@@ -2,17 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ToolboxTalkAttendeesCard } from "@/components/toolbox-talks/ToolboxTalkAttendeesCard";
 import { getToolboxTalkAttendeeOptions, getToolboxTalkAttendees, getToolboxTalkById, type ToolboxTalkDetailRow } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getForeman(foreman: ToolboxTalkDetailRow["foreman_employee"]) {
   if (!foreman) return null;
   if (Array.isArray(foreman)) return foreman[0] ?? null;
   return foreman;
-}
-
-function formatDate(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 export default async function ToolboxTalkDetailPage({
@@ -37,7 +32,7 @@ export default async function ToolboxTalkDetailPage({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold">{talk.topic}</h1>
-            <p className="mt-2 text-zinc-600">{formatDate(talk.talk_date)}</p>
+            <p className="mt-2 text-zinc-600">{formatDateOnly(talk.talk_date)}</p>
           </div>
           <Link href="/dashboard/toolbox-talks" className="rounded-xl border px-4 py-2 text-sm">
             Back to Toolbox Talks

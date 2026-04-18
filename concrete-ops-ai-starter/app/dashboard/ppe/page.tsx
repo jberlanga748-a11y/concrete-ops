@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { getPPEItems, type PPEItemRow } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getEmployee(employee: PPEItemRow["employees"]) {
   if (!employee) return null;
   if (Array.isArray(employee)) return employee[0] ?? null;
   return employee;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 function formatLabel(value: string) {
@@ -60,8 +54,8 @@ export default async function PPEPage() {
                   </td>
                   <td className="px-4 py-4">{item.item_name}</td>
                   <td className="px-4 py-4 capitalize">{formatLabel(item.status)}</td>
-                  <td className="px-4 py-4">{formatDate(item.issued_at)}</td>
-                  <td className="px-4 py-4">{formatDate(item.replacement_due_at)}</td>
+                  <td className="px-4 py-4">{formatDateOnly(item.issued_at)}</td>
+                  <td className="px-4 py-4">{formatDateOnly(item.replacement_due_at)}</td>
                   <td className="px-4 py-4">
                     <Link href={`/dashboard/ppe/${item.id}`} className="underline">
                       Open
