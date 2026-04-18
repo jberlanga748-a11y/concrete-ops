@@ -119,26 +119,26 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="min-h-screen bg-zinc-100">
-        <header className="sticky top-0 z-30 border-b bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_22%),linear-gradient(180deg,#eef1f3_0%,#f6f5f2_52%,#faf9f7_100%)]">
+        <header className="sticky top-0 z-30 border-b border-white/70 bg-[rgba(248,248,247,0.94)] px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Concrete Ops</p>
-              <p className="mt-1 text-xl font-semibold text-zinc-900">Employee Portal</p>
+              <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
+              <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-zinc-900">Employee Portal</p>
             </div>
-            <SignOutButton className="rounded-xl border px-4 py-3 text-sm font-medium disabled:opacity-50" />
+            <SignOutButton className="rounded-[18px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium shadow-[0_10px_20px_rgba(15,23,42,0.06)] disabled:opacity-50" />
           </div>
         </header>
 
         <div className="mx-auto flex min-h-screen w-full max-w-[1680px]">
           <div className="hidden lg:block">
-            <Sidebar collapsible="none" className="w-[308px] border-r border-zinc-800 bg-zinc-950 text-zinc-100">
-            <SidebarHeader className="border-b border-zinc-800 p-5">
-              <Card className="border-zinc-800 bg-zinc-900 text-zinc-100 ring-zinc-800">
+            <Sidebar collapsible="none" className="w-[316px] border-r border-[#16212b] bg-[linear-gradient(180deg,#0b131a_0%,#101b24_100%)] text-zinc-100">
+            <SidebarHeader className="border-b border-white/10 p-5">
+              <Card className="border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(201,106,44,0.16),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] text-zinc-100 ring-white/10">
                 <CardHeader>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Construction Operations</p>
-                  <CardTitle className="text-xl text-white">Concrete Ops</CardTitle>
-                  <Badge variant="secondary" className="mt-1 w-fit bg-zinc-800 text-zinc-100">Employee Portal</Badge>
+                  <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-400">Construction Operations</p>
+                  <CardTitle className="text-[1.4rem] tracking-[-0.04em] text-white">Concrete Ops</CardTitle>
+                  <Badge variant="secondary" className="mt-1 w-fit border border-white/10 bg-white/10 text-zinc-100">Employee Portal</Badge>
                 </CardHeader>
                 <CardContent className="text-sm leading-6 text-zinc-300">
                   Stay on top of time, uploads, and compliance tasks from one clean workspace.
@@ -161,7 +161,11 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
                             <SidebarMenuButton
                               render={<Link href={item.href} />}
                               isActive={active}
-                              className={active ? "bg-orange-500 text-white hover:bg-orange-500 hover:text-white" : "text-zinc-300 hover:bg-zinc-900 hover:text-white"}
+                              className={
+                                active
+                                  ? "bg-[linear-gradient(135deg,rgba(201,106,44,0.95),rgba(215,132,72,0.9))] text-white shadow-[0_16px_30px_rgba(201,106,44,0.24)] hover:bg-[linear-gradient(135deg,rgba(201,106,44,0.95),rgba(215,132,72,0.9))] hover:text-white"
+                                  : "text-zinc-300 hover:bg-white/8 hover:text-white"
+                              }
                             >
                               <NavIcon icon={item.icon} className="h-4 w-4" />
                               <span>{item.label}</span>
@@ -175,8 +179,8 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
               ))}
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-zinc-800 p-4">
-              <Card className="border-zinc-800 bg-zinc-900/80 text-zinc-100 ring-zinc-800">
+            <SidebarFooter className="border-t border-white/10 p-4">
+              <Card className="border-white/10 bg-white/[0.04] text-zinc-100 ring-white/10">
                 <CardHeader>
                   <CardTitle className="text-sm">Shift-ready workspace</CardTitle>
                 </CardHeader>
@@ -184,17 +188,17 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
                   Keep your day moving with quick access to time entry, uploads, and required safety items.
                 </CardContent>
               </Card>
-              <SignOutButton className="mt-3 w-full rounded-xl border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-zinc-800 disabled:opacity-50" />
+              <SignOutButton className="mt-3 w-full rounded-[20px] border border-white/12 bg-white/[0.02] px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/[0.08] disabled:opacity-50" />
             </SidebarFooter>
             </Sidebar>
           </div>
 
-          <main className="flex-1 px-4 pb-28 pt-6 md:px-6 lg:bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.08),_transparent_20%),linear-gradient(180deg,#f4f4f5_0%,#fafafa_100%)] lg:p-8">
+          <main className="flex-1 px-4 pb-28 pt-6 md:px-6 lg:bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.08),_transparent_20%),linear-gradient(180deg,#f2f3f2_0%,#faf9f7_100%)] lg:p-8">
             {children}
           </main>
         </div>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-white p-3 shadow-[0_-10px_24px_rgba(0,0,0,0.08)] lg:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/70 bg-[rgba(248,248,247,0.94)] p-3 shadow-[0_-16px_32px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
           <div className="grid grid-cols-5 gap-2">
             {mobileNav.map((item) => {
               const active = isActive(pathname, item.href);
@@ -202,11 +206,16 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-xl border px-3 py-3 text-center text-xs font-medium transition ${
-                    active ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-zinc-50 text-zinc-800"
+                  className={`rounded-[18px] border px-3 py-3 text-center text-xs font-medium transition ${
+                    active
+                      ? "border-[#cf6f33]/60 bg-[rgba(201,106,44,0.14)] text-zinc-950 shadow-[0_12px_24px_rgba(201,106,44,0.16)]"
+                      : "border-white/80 bg-white/80 text-zinc-800 shadow-[0_10px_20px_rgba(15,23,42,0.05)]"
                   }`}
                 >
-                  {item.label}
+                  <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-2xl ${active ? "bg-white/80" : "bg-white/70"}`}>
+                    <NavIcon icon={item.icon} className="h-4 w-4" />
+                  </span>
+                  <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.12em]">{item.label}</span>
                 </Link>
               );
             })}

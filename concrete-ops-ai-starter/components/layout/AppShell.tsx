@@ -324,29 +324,29 @@ export function AppShell({
   const totalModules = navEntries.filter((entry) => !entry.href.includes("#")).length;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_22%),linear-gradient(180deg,#eef2f4_0%,#f7f8f6_55%,#fbfbfa_100%)] text-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-3 pb-28 pt-3 sm:px-4 lg:gap-6 lg:px-6 lg:pb-6 lg:pt-6">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.14),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.09),_transparent_22%),linear-gradient(180deg,#e9eeef_0%,#f5f5f1_52%,#fafaf8_100%)] text-zinc-950">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1760px] gap-4 px-3 pb-28 pt-3 sm:px-4 lg:gap-7 lg:px-6 lg:pb-8 lg:pt-7">
         <aside className="hidden w-[330px] shrink-0 lg:block">
-          <div className="sticky top-6 overflow-hidden rounded-[32px] border border-[#18232d] bg-[#0c141c] text-zinc-100 shadow-[0_32px_70px_rgba(15,23,42,0.24)]">
-            <div className="border-b border-white/10 p-5">
-              <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5">
+          <div className="sticky top-6 overflow-hidden rounded-[36px] border border-[#16212b] bg-[linear-gradient(180deg,#0b131a_0%,#101b24_100%)] text-zinc-100 shadow-[0_34px_80px_rgba(15,23,42,0.24)]">
+            <div className="border-b border-white/10 p-6">
+              <div className="rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(201,106,44,0.18),transparent_32%),linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-6">
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Premium Operations Platform</p>
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
-                    <h1 className="text-[1.7rem] font-semibold tracking-[-0.05em] text-white">Concrete Ops</h1>
-                    <p className="mt-2 max-w-[18rem] text-sm leading-6 text-zinc-300">
+                    <h1 className="text-[1.78rem] font-semibold tracking-[-0.055em] text-white">Concrete Ops</h1>
+                    <p className="mt-3 max-w-[18rem] text-sm leading-6 text-zinc-300">
                       A sharper control layer for field execution, office coordination, and documentation.
                     </p>
                   </div>
-                  <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">{portalTitle}</Badge>
+                  <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">{portalTitle}</Badge>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-[22px] border border-white/10 bg-black/10 p-3">
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="rounded-[24px] border border-white/10 bg-black/10 p-3.5">
                     <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">Workstreams</p>
                     <p className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-white">{sections.length}</p>
                   </div>
-                  <div className="rounded-[22px] border border-white/10 bg-black/10 p-3">
+                  <div className="rounded-[24px] border border-white/10 bg-black/10 p-3.5">
                     <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">Modules</p>
                     <p className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-white">{totalModules}</p>
                   </div>
@@ -354,7 +354,7 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="max-h-[calc(100vh-22rem)] overflow-y-auto px-5 py-5">
+            <div className="max-h-[calc(100vh-22rem)] overflow-y-auto px-5 py-6">
               {sections.map((section) => (
                 <section key={section.title} className="mb-6 last:mb-0">
                   <div className="mb-3 px-1">
@@ -372,8 +372,8 @@ export function AppShell({
                           href={item.href}
                           className={`group flex items-center gap-3 rounded-[22px] border px-4 py-3 transition ${
                             active
-                              ? "border-[#cf6f33]/60 bg-[linear-gradient(135deg,rgba(201,106,44,0.24),rgba(201,106,44,0.08))] text-white shadow-[0_18px_35px_rgba(201,106,44,0.18)]"
-                              : "border-white/8 bg-white/[0.03] text-zinc-300 hover:border-white/14 hover:bg-white/[0.06] hover:text-white"
+                              ? "border-[#cf6f33]/60 bg-[linear-gradient(135deg,rgba(201,106,44,0.28),rgba(201,106,44,0.08))] text-white shadow-[0_18px_35px_rgba(201,106,44,0.18)]"
+                              : "border-white/8 bg-white/[0.035] text-zinc-300 hover:border-white/14 hover:bg-white/[0.07] hover:text-white"
                           }`}
                         >
                           <span
@@ -400,7 +400,7 @@ export function AppShell({
             </div>
 
             <div className="border-t border-white/10 p-5">
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
+              <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.03))] p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Workspace Status</p>
@@ -413,7 +413,7 @@ export function AppShell({
 
                 <p className="mt-3 text-sm leading-6 text-zinc-300">{getRoleSummary(role)}</p>
 
-                <div className={`mt-4 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
+                <div className={`mt-5 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
                   <Link
                     href="/employee"
                     className="rounded-[20px] border border-white/10 bg-black/10 px-4 py-3 text-center text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/8"
@@ -437,7 +437,7 @@ export function AppShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4 lg:gap-6">
-          <header className="rounded-[30px] border border-[#18232d] bg-[#0c141c] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
+          <header className="rounded-[32px] border border-[#18232d] bg-[radial-gradient(circle_at_top_left,rgba(201,106,44,0.16),transparent_28%),linear-gradient(180deg,#0c141c_0%,#121d26_100%)] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
@@ -453,14 +453,14 @@ export function AppShell({
             <div className={`mt-4 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
               <Link
                 href="/employee"
-                className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100"
+                className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100 shadow-[0_12px_26px_rgba(15,23,42,0.12)]"
               >
                 Employee Portal
               </Link>
               {showSettingsShortcut ? (
                 <Link
                   href="/dashboard/settings"
-                  className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100"
+                  className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100 shadow-[0_12px_26px_rgba(15,23,42,0.12)]"
                 >
                   Settings
                 </Link>
@@ -498,16 +498,16 @@ export function AppShell({
             </details>
           </header>
 
-          <section className="hidden rounded-[32px] border border-white/80 bg-white/78 px-6 py-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur lg:block">
+          <section className="hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(249,249,247,0.86))] px-6 py-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:block">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0">
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{activeSection}</p>
                 <h2 className="mt-3 text-[2rem] font-semibold tracking-[-0.055em] text-[#101828]">{activeTitle}</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
               </div>
 
               <div className="flex shrink-0 items-center gap-3">
-                <div className="rounded-[22px] border border-zinc-200/80 bg-white/80 px-4 py-3">
+                <div className="rounded-[24px] border border-zinc-200/80 bg-white/80 px-4 py-3.5 shadow-[0_16px_28px_rgba(15,23,42,0.05)]">
                   <p className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
                   <p className="mt-1 text-sm font-semibold text-zinc-900">
                     <ViewerCurrentDateLabel monthStyle="short" />
@@ -515,14 +515,14 @@ export function AppShell({
                 </div>
                 <Link
                   href="/employee"
-                  className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+                  className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 shadow-[0_16px_28px_rgba(15,23,42,0.05)] transition hover:bg-zinc-50"
                 >
                   Employee Portal
                 </Link>
                 {showSettingsShortcut ? (
                   <Link
                     href="/dashboard/settings"
-                    className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+                    className="rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 shadow-[0_16px_28px_rgba(15,23,42,0.05)] transition hover:bg-zinc-50"
                   >
                     Settings
                   </Link>
@@ -547,10 +547,10 @@ export function AppShell({
                 className={`rounded-[20px] border px-3 py-3 text-center transition ${
                   active
                     ? "border-[#cf6f33]/60 bg-[rgba(201,106,44,0.14)] text-zinc-950 shadow-[0_12px_24px_rgba(201,106,44,0.16)]"
-                    : "border-white/80 bg-white/75 text-zinc-700"
+                    : "border-white/80 bg-white/75 text-zinc-700 shadow-[0_12px_24px_rgba(15,23,42,0.05)]"
                 }`}
               >
-                <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-2xl bg-white/70">
+                <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-2xl ${active ? "bg-white/80" : "bg-white/70"}`}>
                   <NavIcon icon={item.icon} className="h-4 w-4" />
                 </span>
                 <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.12em]">{item.label}</span>

@@ -99,19 +99,20 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-zinc-500 shadow-sm">
+    <div className="rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,247,248,0.92))] p-6 text-center shadow-[0_24px_50px_rgba(15,23,42,0.06)] sm:p-7">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[22px] border border-white bg-[linear-gradient(180deg,#ffffff_0%,#f5f6f7_100%)] text-[#b95f26] shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
         <FeedbackIcon kind={icon} />
       </div>
-      <h3 className="mt-4 text-base font-semibold text-zinc-950">{title}</h3>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-600">{description}</p>
+      <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Nothing waiting here</p>
+      <h3 className="mt-3 text-[1.15rem] font-semibold tracking-[-0.03em] text-zinc-950">{title}</h3>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-600">{description}</p>
       {action ? (
-        <div className="mt-5 flex justify-center">{action}</div>
+        <div className="mt-6 flex justify-center">{action}</div>
       ) : actionHref && actionLabel ? (
-        <div className="mt-5 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <Link
             href={actionHref}
-            className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(249,115,22,0.28)] transition hover:bg-orange-400"
+            className="inline-flex items-center justify-center rounded-[20px] bg-[#101828] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_38px_rgba(15,23,42,0.16)] transition hover:bg-[#1b2432]"
           >
             {actionLabel}
           </Link>
@@ -135,21 +136,22 @@ export function ErrorPanel({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-5 shadow-[0_12px_30px_rgba(190,24,93,0.08)]">
+    <div className="rounded-[30px] border border-rose-200/80 bg-[linear-gradient(180deg,rgba(255,248,248,0.98),rgba(255,240,242,0.92))] p-5 shadow-[0_18px_40px_rgba(190,24,93,0.08)] sm:p-6">
       <div className="flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-rose-600 shadow-sm">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] border border-white bg-white text-rose-600 shadow-[0_14px_30px_rgba(15,23,42,0.06)]">
           <FeedbackIcon kind="alert" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-950">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-700">{description}</p>
+          <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-rose-500">Needs attention</p>
+          <h2 className="mt-3 text-[1.2rem] font-semibold tracking-[-0.03em] text-zinc-950">{title}</h2>
+          <p className="mt-3 text-sm leading-7 text-zinc-700">{description}</p>
           {action ? (
-            <div className="mt-4">{action}</div>
+            <div className="mt-5">{action}</div>
           ) : actionHref && actionLabel ? (
-            <div className="mt-4">
+            <div className="mt-5">
               <Link
                 href={actionHref}
-                className="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-rose-100"
+                className="inline-flex items-center justify-center rounded-[20px] border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(255,255,255,0.4)] transition hover:bg-rose-100"
               >
                 {actionLabel}
               </Link>
