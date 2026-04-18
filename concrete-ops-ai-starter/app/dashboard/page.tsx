@@ -29,6 +29,7 @@ import {
   type JobFileRow,
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -58,13 +59,6 @@ function getSubmitter(users: DailyReportListRow["users"] | JobFileRow["users"], 
   }
 
   return "—";
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 function formatRelativeCount(value: number, singular: string, plural = `${singular}s`) {
@@ -637,7 +631,9 @@ export default async function DashboardPage() {
                   <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
                     Filed
                   </Badge>
-                  <span className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{formatDate(report.report_date)}</span>
+                  <span className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                    {formatDateOnly(report.report_date)}
+                  </span>
                 </div>
               </>
             )}

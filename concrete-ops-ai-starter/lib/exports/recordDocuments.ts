@@ -1,6 +1,7 @@
 import { getChangeOrderById, getChangeOrderLineItems, getDailyReportById, getDailyReportCrewEntries, getProposalById, getProposalSections, type ChangeOrderDetailRow, type DailyReportCrewEntryRow, type DailyReportDetailRow, type ProposalDetailRow } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
 import { createSimplePdf } from "@/lib/pdf/simplePdf";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 export type ExportRecordType = "proposal" | "change_order" | "daily_report";
 
@@ -15,17 +16,6 @@ type ExportDocument = {
 function getSingle<T>(value: T[] | T | null | undefined) {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(parsed);
 }
 
 function formatDateTime(value: string | null | undefined) {
@@ -200,7 +190,7 @@ async function getDailyReportDocument(id: string): Promise<ExportDocument | null
     subject: `Daily report ${report.report_date}`,
     defaultTo: "",
     lines: [
-      `Report Date: ${formatDate(report.report_date)}`,
+      `Report Date: ${formatDateOnly(report.report_date)}`,
       `Job: ${job ? `${job.job_number} · ${job.name}` : "—"}`,
       `Submitted By: ${submitter?.full_name || "—"}`,
       "",

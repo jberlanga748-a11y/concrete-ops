@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewerDateTime } from "@/components/time/ViewerDateTime";
 import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
 import {
   DataTable,
@@ -13,6 +14,7 @@ import {
   TableToolbar,
 } from "@/components/ui/table";
 import { getDailyReportJobOptions, getDailyReports, type DailyReportListRow } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getJobLabel(jobs: DailyReportListRow["jobs"]) {
   if (!jobs) return "—";
@@ -28,41 +30,6 @@ function getSubmitter(users: DailyReportListRow["users"]) {
   if (!users) return "—";
   if (Array.isArray(users)) return users[0]?.full_name ?? "—";
   return users.full_name;
-}
-
-function formatDateOnly(value: string | null | undefined) {
-  if (!value) return "—";
-
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return value;
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
 }
 
 export default async function DailyReportsPage({
@@ -276,7 +243,7 @@ export default async function DailyReportsPage({
                           </div>
                           <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-2 lg:hidden">
                             <p className="font-app-mono uppercase tracking-[0.16em] text-zinc-500">Filed</p>
-                            <p className="mt-1 text-sm font-medium text-zinc-900">{formatDateTime(report.created_at)}</p>
+                            <ViewerDateTime value={report.created_at} className="mt-1 text-sm font-medium text-zinc-900" />
                           </div>
                         </div>
                       </div>
@@ -292,7 +259,7 @@ export default async function DailyReportsPage({
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="space-y-1">
-                        <p className="font-medium text-zinc-900">{formatDateTime(report.created_at)}</p>
+                        <ViewerDateTime value={report.created_at} className="font-medium text-zinc-900" />
                         <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Logged to office record</p>
                       </div>
                     </TableCell>

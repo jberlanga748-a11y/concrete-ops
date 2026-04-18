@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createDailyReport, updateDailyReport } from "@/lib/db/mutations";
 import type { JobAssignmentOptionRow, TimeOption } from "@/lib/db/queries";
+import { formatDateOnly } from "@/lib/time/formatting";
 import { postJson } from "@/lib/ai/client";
 import { StatusChip } from "@/components/ui/feedback";
 import { FieldLabel } from "@/components/ui/form";
@@ -59,29 +60,6 @@ function FormCard({
 
 function FieldHint({ children }: { children: ReactNode }) {
   return <p className="mt-2 text-xs leading-5 text-zinc-500">{children}</p>;
-}
-
-function formatDateOnly(value: string | null | undefined) {
-  if (!value) return "—";
-
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return value;
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 export function DailyReportForm({
