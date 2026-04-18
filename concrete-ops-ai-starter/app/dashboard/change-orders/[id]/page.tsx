@@ -63,12 +63,20 @@ export default async function ChangeOrderDetailPage({
             <h1 className="text-3xl font-semibold">{changeOrder.title}</h1>
             <p className="mt-2 text-zinc-600">{getJobLabel(changeOrder.jobs)}</p>
           </div>
-          <Link
-            href="/dashboard/change-orders"
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50"
-          >
-            Back to Change Orders
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/dashboard/change-orders/${changeOrder.id}/edit`}
+              className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50"
+            >
+              Edit Change Order
+            </Link>
+            <Link
+              href="/dashboard/change-orders"
+              className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50"
+            >
+              Back to Change Orders
+            </Link>
+          </div>
         </div>
       </div>
 

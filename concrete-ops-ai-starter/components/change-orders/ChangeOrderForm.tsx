@@ -3,8 +3,8 @@
 import { type ReactNode, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/ai/client";
-import { createChangeOrder } from "@/lib/db/mutations";
-import type { DailyReportOption, JobFileRow, TimeOption } from "@/lib/db/queries";
+import { createChangeOrder, updateChangeOrder } from "@/lib/db/mutations";
+import type { ChangeOrderDetailRow, DailyReportOption, JobFileRow, TimeOption } from "@/lib/db/queries";
 import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
 
 function FormShell({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
@@ -36,30 +36,48 @@ function FormNotice({
   );
 }
 
+type ChangeOrderFormInitialValues = Pick<
+  ChangeOrderDetailRow,
+  "job_id" | "daily_report_id" | "title" | "description" | "status" | "direct_cost_total" | "markup_percent"
+>;
+
 export function ChangeOrderForm({
+  changeOrderId,
   jobOptions,
   dailyReportOptions,
   proofFiles,
   hideFinancials = false,
+  initialValues,
+  initialProofFileIds = [],
 }: {
+  changeOrderId?: string;
   jobOptions: TimeOption[];
   dailyReportOptions: DailyReportOption[];
   proofFiles: JobFileRow[];
   hideFinancials?: boolean;
+  initialValues?: ChangeOrderFormInitialValues | null;
+  initialProofFileIds?: string[];
 }) {
   const router = useRouter();
-  const [jobId, setJobId] = useState("");
-  const [dailyReportId, setDailyReportId] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"draft" | "submitted" | "approved" | "rejected" | "executed">("draft");
-  const [directCostTotal, setDirectCostTotal] = useState("0");
-  const [markupPercent, setMarkupPercent] = useState("0");
-  const [proofFileIds, setProofFileIds] = useState<string[]>([]);
+  const isEditing = Boolean(changeOrderId);
+  const [jobId, setJobId] = useState(initialValues?.job_id ?? "");
+  const [dailyReportId, setDailyReportId] = useState(initialValues?.daily_report_id ?? "");
+  const [title, setTitle] = useState(initialValues?.title ?? "");
+  const [description, setDescription] = useState(initialValues?.description ?? "");
+  const [status, setStatus] = useState<"draft" | "submitted" | "approved" | "rejected" | "executed">(initialValues?.status ?? "draft");
+  const [directCostTotal, setDirectCostTotal] = useState(String(initialValues?.direct_cost_total ?? 0));
+  const [markupPercent, setMarkupPercent] = useState(String(initialValues?.markup_percent ?? 0));
+  const [proofFileIds, setProofFileIds] = useState<string[]>(initialProofFileIds);
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
+
+  const formTitle = isEditing ? "Update Change Order" : "New Change Order";
+  const formDescription = isEditing
+    ? "Adjust scope, pricing, report context, and supporting field proof without losing the original record."
+    : "Capture scope and pricing changes with optional report context and supporting field proof.";
+  const submitLabel = isEditing ? "Save Change Order" : "Create Change Order";
 
   const filteredProofFiles = useMemo(() => {
     if (!jobId) return proofFiles;
@@ -79,6 +97,17 @@ export function ChangeOrderForm({
 
   function toggleProof(fileId: string) {
     setProofFileIds((current) => (current.includes(fileId) ? current.filter((id) => id !== fileId) : [...current, fileId]));
+  }
+
+  function handleJobChange(nextJobId: string) {
+    setJobId(nextJobId);
+    setDailyReportId("");
+    setProofFileIds(
+      (current) =>
+        nextJobId
+          ? current.filter((fileId) => proofFiles.some((file) => file.id === fileId && file.job_id === nextJobId))
+          : [],
+    );
   }
 
   async function handleRewriteWithAI() {
@@ -136,7 +165,7 @@ export function ChangeOrderForm({
     setLoading(true);
     setMessage(null);
 
-    const result = await createChangeOrder({
+    const payload = {
       jobId,
       dailyReportId: dailyReportId || undefined,
       title,
@@ -146,26 +175,29 @@ export function ChangeOrderForm({
       markupPercent: Number(markupPercent) || 0,
       totalAmount: totalAmountPreview,
       proofFileIds,
-    });
+    };
+
+    const result = changeOrderId ? await updateChangeOrder(changeOrderId, payload) : await createChangeOrder(payload);
 
     if (result.error || !result.data) {
       setMessageType("error");
-      setMessage(result.error || "Failed to create change order.");
+      setMessage(result.error || `Failed to ${isEditing ? "update" : "create"} change order.`);
       setLoading(false);
       return;
     }
 
     setMessageType("success");
-    setMessage("Change order created.");
+    setMessage(isEditing ? "Change order updated." : "Change order created.");
     setLoading(false);
     router.push(`/dashboard/change-orders/${result.data.id}`);
+    router.refresh();
   }
 
   return (
     <FormShell
       eyebrow="Commercial"
-      title="New Change Order"
-      description="Capture scope and pricing changes with optional report context and supporting field proof."
+      title={formTitle}
+      description={formDescription}
     >
       <div className="space-y-4">
         <FormSection
@@ -177,10 +209,7 @@ export function ChangeOrderForm({
               <FieldLabel required>Job</FieldLabel>
               <select
                 value={jobId}
-                onChange={(e) => {
-                  setJobId(e.target.value);
-                  setDailyReportId("");
-                }}
+                onChange={(e) => handleJobChange(e.target.value)}
                 className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
               >
                 <option value="">Select job</option>
@@ -326,11 +355,15 @@ export function ChangeOrderForm({
             disabled={loading}
             className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Create Change Order"}
+            {loading ? "Saving..." : submitLabel}
           </button>
         </FormActions>
 
-        {message ? <FormNotice tone={messageType} message={message} /> : <FormNotice message="Required fields: job and title." />}
+        {message ? (
+          <FormNotice tone={messageType} message={message} />
+        ) : (
+          <FormNotice message={`Required fields: job and title.${isEditing ? " Editing preserves the original change order record." : ""}`} />
+        )}
       </div>
     </FormShell>
   );

@@ -618,18 +618,33 @@ type ChangeOrderInput = {
   proofFileIds: string[];
 };
 
-export async function createChangeOrder(input: ChangeOrderInput) {
-  const auth = await getCurrentAppUser();
-  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
-  const { supabase, appUser } = auth;
+async function validateChangeOrderTargets(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  jobId: string;
+  dailyReportId?: string;
+  proofFileIds: string[];
+}) {
+  const { supabase, companyId, jobId, dailyReportId } = args;
+  const proofFileIds = Array.from(new Set(args.proofFileIds.filter(Boolean)));
 
-  if (input.dailyReportId) {
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (jobError) return { error: jobError.message };
+  if (!job) return { error: "Selected job was not found." };
+
+  if (dailyReportId) {
     const { data: dailyReport, error: dailyReportError } = await supabase
       .from("daily_reports")
       .select("id")
-      .eq("company_id", appUser.company_id)
-      .eq("job_id", input.jobId)
-      .eq("id", input.dailyReportId)
+      .eq("company_id", companyId)
+      .eq("job_id", jobId)
+      .eq("id", dailyReportId)
       .maybeSingle();
 
     if (dailyReportError || !dailyReport) {
@@ -637,24 +652,106 @@ export async function createChangeOrder(input: ChangeOrderInput) {
     }
   }
 
-  const proofFileIds = Array.from(new Set(input.proofFileIds.filter(Boolean)));
   if (proofFileIds.length > 0) {
     const { data: proofFiles, error: proofFilesError } = await supabase
       .from("job_files")
       .select("id, job_id")
-      .eq("company_id", appUser.company_id)
+      .eq("company_id", companyId)
       .in("id", proofFileIds);
 
     if (proofFilesError) return { error: proofFilesError.message };
 
     const allProofFilesMatchJob =
       (proofFiles ?? []).length === proofFileIds.length &&
-      (proofFiles ?? []).every((file: { id: string; job_id: string }) => file.job_id === input.jobId);
+      (proofFiles ?? []).every((file: { id: string; job_id: string }) => file.job_id === jobId);
 
     if (!allProofFilesMatchJob) {
       return { error: "Selected proof files must belong to the same job as the change order." };
     }
   }
+
+  return { data: { proofFileIds } };
+}
+
+async function syncChangeOrderProofFiles(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  companyId: string;
+  changeOrderId: string;
+  proofFileIds: string[];
+}) {
+  const { supabase, companyId, changeOrderId, proofFileIds } = args;
+
+  const { error: deleteFilesError } = await supabase
+    .from("change_order_files")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("change_order_id", changeOrderId);
+
+  if (deleteFilesError) return { error: deleteFilesError.message };
+
+  const { error: deleteLinksError } = await supabase
+    .from("document_links")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("link_type", "change_order")
+    .eq("linked_record_id", changeOrderId);
+
+  if (deleteLinksError) return { error: deleteLinksError.message };
+
+  if (proofFileIds.length === 0) {
+    return { data: true };
+  }
+
+  const { error: proofError } = await supabase.from("change_order_files").insert(
+    proofFileIds.map((jobFileId) => ({
+      company_id: companyId,
+      change_order_id: changeOrderId,
+      job_file_id: jobFileId,
+    })),
+  );
+
+  if (proofError) return { error: proofError.message };
+
+  for (const jobFileId of proofFileIds) {
+    const ensuredDocument = await ensureDocumentForJobFile({
+      supabase,
+      companyId,
+      jobFileId,
+    });
+    if (ensuredDocument.error || !ensuredDocument.data) {
+      return { error: ensuredDocument.error || "Failed to create linked document." };
+    }
+
+    const linked = await upsertDocumentLink({
+      supabase,
+      companyId,
+      documentId: ensuredDocument.data.id,
+      linkType: "change_order",
+      linkedRecordId: changeOrderId,
+    });
+    if (linked.error) return { error: linked.error };
+  }
+
+  return { data: true };
+}
+
+export async function createChangeOrder(input: ChangeOrderInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const targetValidation = await validateChangeOrderTargets({
+    supabase,
+    companyId: appUser.company_id,
+    jobId: input.jobId,
+    dailyReportId: input.dailyReportId,
+    proofFileIds: input.proofFileIds,
+  });
+  if (targetValidation.error || !targetValidation.data) {
+    return { error: targetValidation.error || "Selected change order links are not valid." };
+  }
+
+  const { proofFileIds } = targetValidation.data;
 
   const payload = {
     company_id: appUser.company_id,
@@ -672,37 +769,13 @@ export async function createChangeOrder(input: ChangeOrderInput) {
   const { data: changeOrder, error: changeOrderError } = await supabase.from("change_orders").insert(payload).select("id").single();
   if (changeOrderError || !changeOrder) return { error: changeOrderError?.message || "Failed to create change order." };
 
-  if (proofFileIds.length > 0) {
-    const { error: proofError } = await supabase.from("change_order_files").insert(
-      proofFileIds.map((jobFileId) => ({
-        company_id: appUser.company_id,
-        change_order_id: changeOrder.id,
-        job_file_id: jobFileId,
-      })),
-    );
-
-    if (proofError) return { error: proofError.message };
-
-    for (const jobFileId of proofFileIds) {
-      const ensuredDocument = await ensureDocumentForJobFile({
-        supabase,
-        companyId: appUser.company_id,
-        jobFileId,
-      });
-      if (ensuredDocument.error || !ensuredDocument.data) {
-        return { error: ensuredDocument.error || "Failed to create linked document." };
-      }
-
-      const linked = await upsertDocumentLink({
-        supabase,
-        companyId: appUser.company_id,
-        documentId: ensuredDocument.data.id,
-        linkType: "change_order",
-        linkedRecordId: changeOrder.id,
-      });
-      if (linked.error) return { error: linked.error };
-    }
-  }
+  const proofSync = await syncChangeOrderProofFiles({
+    supabase,
+    companyId: appUser.company_id,
+    changeOrderId: changeOrder.id,
+    proofFileIds,
+  });
+  if (proofSync.error) return { error: proofSync.error };
 
   const notification = await createAdminNotifications({
     supabase,
@@ -730,6 +803,73 @@ export async function createChangeOrder(input: ChangeOrderInput) {
     targetTable: "change_orders",
     targetId: changeOrder.id,
     summary: `Created change order "${input.title.trim()}".`,
+  });
+  if (audit.error) return { error: audit.error };
+
+  return { data: changeOrder };
+}
+
+export async function updateChangeOrder(id: string, input: ChangeOrderInput) {
+  const auth = await getCurrentAppUser();
+  if (auth.error || !auth.appUser) return { error: auth.error || "You must be signed in." };
+  const { supabase, appUser } = auth;
+
+  const targetValidation = await validateChangeOrderTargets({
+    supabase,
+    companyId: appUser.company_id,
+    jobId: input.jobId,
+    dailyReportId: input.dailyReportId,
+    proofFileIds: input.proofFileIds,
+  });
+  if (targetValidation.error || !targetValidation.data) {
+    return { error: targetValidation.error || "Selected change order links are not valid." };
+  }
+
+  const { proofFileIds } = targetValidation.data;
+
+  const { data: changeOrder, error: changeOrderError } = await supabase
+    .from("change_orders")
+    .update({
+      job_id: input.jobId,
+      daily_report_id: input.dailyReportId || null,
+      title: input.title,
+      description: input.description?.trim() || null,
+      status: input.status,
+      direct_cost_total: input.directCostTotal,
+      markup_percent: input.markupPercent,
+      total_amount: input.totalAmount,
+    })
+    .eq("company_id", appUser.company_id)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (changeOrderError || !changeOrder) {
+    return { error: changeOrderError?.message || "Failed to update change order." };
+  }
+
+  const proofSync = await syncChangeOrderProofFiles({
+    supabase,
+    companyId: appUser.company_id,
+    changeOrderId: id,
+    proofFileIds,
+  });
+  if (proofSync.error) return { error: proofSync.error };
+
+  const actorEmployeeId = await getActorEmployeeId({
+    supabase,
+    companyId: appUser.company_id,
+    userId: appUser.id,
+  });
+  const audit = await createAuditLog({
+    supabase,
+    companyId: appUser.company_id,
+    actorUserId: appUser.id,
+    actorEmployeeId,
+    actionType: "change_order.updated",
+    targetTable: "change_orders",
+    targetId: id,
+    summary: `Updated change order "${input.title.trim()}".`,
   });
   if (audit.error) return { error: audit.error };
 
