@@ -2,21 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createToolboxTalk } from "@/lib/db/mutations";
-import type { EmployeeOption, ToolboxTalkAttendeeOptionRow } from "@/lib/db/queries";
+import { createToolboxTalk, updateToolboxTalk } from "@/lib/db/mutations";
+import type { EmployeeOption, ToolboxTalkAttendeeOptionRow, ToolboxTalkDetailRow } from "@/lib/db/queries";
 
 export function ToolboxTalkForm({
+  toolboxTalkId,
   foremanOptions,
-  attendeeOptions,
+  attendeeOptions = [],
+  initialValues,
 }: {
+  toolboxTalkId?: string;
   foremanOptions: EmployeeOption[];
-  attendeeOptions: ToolboxTalkAttendeeOptionRow[];
+  attendeeOptions?: ToolboxTalkAttendeeOptionRow[];
+  initialValues?: Pick<ToolboxTalkDetailRow, "topic" | "talk_date" | "foreman_employee_id" | "notes"> | null;
 }) {
   const router = useRouter();
-  const [topic, setTopic] = useState("");
-  const [talkDate, setTalkDate] = useState(new Date().toISOString().slice(0, 10));
-  const [foremanEmployeeId, setForemanEmployeeId] = useState("");
-  const [notes, setNotes] = useState("");
+  const [topic, setTopic] = useState(initialValues?.topic ?? "");
+  const [talkDate, setTalkDate] = useState(initialValues?.talk_date ?? new Date().toISOString().slice(0, 10));
+  const [foremanEmployeeId, setForemanEmployeeId] = useState(initialValues?.foreman_employee_id ?? "");
+  const [notes, setNotes] = useState(initialValues?.notes ?? "");
   const [attendeeEmployeeIds, setAttendeeEmployeeIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -40,25 +44,33 @@ export function ToolboxTalkForm({
     setLoading(true);
     setMessage(null);
 
-    const result = await createToolboxTalk({
-      topic,
-      talkDate,
-      foremanEmployeeId: foremanEmployeeId || undefined,
-      notes,
-      attendeeEmployeeIds,
-    });
+    const result = toolboxTalkId
+      ? await updateToolboxTalk(toolboxTalkId, {
+          topic,
+          talkDate,
+          foremanEmployeeId: foremanEmployeeId || undefined,
+          notes,
+        })
+      : await createToolboxTalk({
+          topic,
+          talkDate,
+          foremanEmployeeId: foremanEmployeeId || undefined,
+          notes,
+          attendeeEmployeeIds,
+        });
 
     if (result.error || !result.data) {
       setMessageType("error");
-      setMessage(result.error || "Failed to create toolbox talk.");
+      setMessage(result.error || `Failed to ${toolboxTalkId ? "update" : "create"} toolbox talk.`);
       setLoading(false);
       return;
     }
 
     setMessageType("success");
-    setMessage("Toolbox talk created.");
+    setMessage(toolboxTalkId ? "Toolbox talk updated." : "Toolbox talk created.");
     setLoading(false);
     router.push(`/dashboard/toolbox-talks/${result.data.id}`);
+    router.refresh();
   }
 
   return (
@@ -97,22 +109,28 @@ export function ToolboxTalkForm({
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-28 w-full rounded-2xl border px-4 py-3" placeholder="Key reminders, weather, PPE, or site-specific hazards" />
         </div>
 
-        <div className="rounded-2xl border p-4">
-          <p className="font-medium">Initial Attendees</p>
-          <p className="mt-1 text-sm text-zinc-600">Optional: preselect anyone already gathered so the foreman can move faster.</p>
-          <div className="mt-3 max-h-64 space-y-2 overflow-auto text-sm">
-            {attendeeOptions.map((option) => (
-              <label key={option.employeeId} className="flex items-start gap-2 rounded-xl border p-3">
-                <input type="checkbox" checked={attendeeEmployeeIds.includes(option.employeeId)} onChange={() => toggleAttendee(option.employeeId)} />
-                <span>{option.employeeLabel}</span>
-              </label>
-            ))}
-            {attendeeOptions.length === 0 ? <p className="text-zinc-600">No active employees available to add yet.</p> : null}
+        {!toolboxTalkId ? (
+          <div className="rounded-2xl border p-4">
+            <p className="font-medium">Initial Attendees</p>
+            <p className="mt-1 text-sm text-zinc-600">Optional: preselect anyone already gathered so the foreman can move faster.</p>
+            <div className="mt-3 max-h-64 space-y-2 overflow-auto text-sm">
+              {attendeeOptions.map((option) => (
+                <label key={option.employeeId} className="flex items-start gap-2 rounded-xl border p-3">
+                  <input type="checkbox" checked={attendeeEmployeeIds.includes(option.employeeId)} onChange={() => toggleAttendee(option.employeeId)} />
+                  <span>{option.employeeLabel}</span>
+                </label>
+              ))}
+              {attendeeOptions.length === 0 ? <p className="text-zinc-600">No active employees available to add yet.</p> : null}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-2xl border p-4 text-sm text-zinc-600">
+            Update talk attendance from the detail page so existing attendee signatures stay intact.
+          </div>
+        )}
 
         <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
-          {loading ? "Saving..." : "Create Toolbox Talk"}
+          {loading ? "Saving..." : toolboxTalkId ? "Save Toolbox Talk" : "Create Toolbox Talk"}
         </button>
 
         {message ? (

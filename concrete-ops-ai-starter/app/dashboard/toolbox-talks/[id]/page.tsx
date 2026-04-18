@@ -34,9 +34,14 @@ export default async function ToolboxTalkDetailPage({
             <h1 className="text-3xl font-semibold">{talk.topic}</h1>
             <p className="mt-2 text-zinc-600">{formatDateOnly(talk.talk_date)}</p>
           </div>
-          <Link href="/dashboard/toolbox-talks" className="rounded-xl border px-4 py-2 text-sm">
-            Back to Toolbox Talks
-          </Link>
+          <div className="flex gap-3">
+            <Link href={`/dashboard/toolbox-talks/${talk.id}/edit`} className="rounded-xl border px-4 py-2 text-sm">
+              Edit Toolbox Talk
+            </Link>
+            <Link href="/dashboard/toolbox-talks" className="rounded-xl border px-4 py-2 text-sm">
+              Back to Toolbox Talks
+            </Link>
+          </div>
         </div>
       </div>
 
