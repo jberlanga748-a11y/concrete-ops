@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
 import { DashboardActivityTime } from "@/components/dashboard/DashboardActivityTime";
+import { ViewerCurrentDateLabel } from "@/components/time/ViewerCurrentDateLabel";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
@@ -29,7 +30,7 @@ import {
   type JobFileRow,
   type JobTimeEntryRow,
 } from "@/lib/db/queries";
-import { formatCurrentDateLabel, formatDateOnly } from "@/lib/time/formatting";
+import { formatDateOnly } from "@/lib/time/formatting";
 
 function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   if (!employees) return "—";
@@ -251,8 +252,6 @@ export default async function DashboardPage() {
   ).size;
   const canUseAdminOpsCopilot = appUser ? ["owner", "office_admin"].includes(appUser.role) : false;
 
-  const todayLabel = formatCurrentDateLabel();
-
   const focusMessage =
     allUnreadNotifications.length > 0
       ? "Clear the unread office queue after reviewing today's reports so follow-up stays same-day."
@@ -365,7 +364,9 @@ export default async function DashboardPage() {
             <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
               Operations Command
             </Badge>
-            <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{todayLabel}</p>
+            <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+              <ViewerCurrentDateLabel />
+            </p>
             <h1 className="mt-4 max-w-3xl text-[clamp(2.25rem,4vw,4rem)] font-semibold tracking-[-0.07em] text-[#101828]">
               A steadier command view for field work, documentation, and office follow-up.
             </h1>

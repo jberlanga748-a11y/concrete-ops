@@ -4,9 +4,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { ViewerCurrentDateLabel } from "@/components/time/ViewerCurrentDateLabel";
 import { Badge } from "@/components/ui/badge";
 import type { AppRole } from "@/lib/auth/roles";
-import { formatCurrentDateLabel } from "@/lib/time/formatting";
 
 type IconName =
   | "dashboard"
@@ -309,7 +309,6 @@ export function AppShell({
   const portalTitle = role === "foreman" ? "Foreman Workspace" : "Operations Command";
   const activeTitle = activeEntry?.label ?? portalTitle;
   const activeSection = activeEntry?.sectionTitle ?? "Overview";
-  const todayLabel = formatCurrentDateLabel({ monthStyle: "short" });
   const totalModules = navEntries.filter((entry) => !entry.href.includes("#")).length;
 
   return (
@@ -327,9 +326,7 @@ export function AppShell({
                       A sharper control layer for field execution, office coordination, and documentation.
                     </p>
                   </div>
-                  <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
-                    {portalTitle}
-                  </Badge>
+                  <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">{portalTitle}</Badge>
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
@@ -398,7 +395,7 @@ export function AppShell({
                     <p className="mt-2 text-base font-semibold text-white">{getRoleLabel(role)}</p>
                   </div>
                   <Badge variant="outline" className="rounded-full border-white/15 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300">
-                    {todayLabel}
+                    <ViewerCurrentDateLabel monthStyle="short" />
                   </Badge>
                 </div>
 
@@ -434,7 +431,8 @@ export function AppShell({
                 <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops AI</p>
                 <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-white">{activeTitle}</p>
                 <p className="mt-1 text-sm text-zinc-400">
-                  {activeSection} · {todayLabel}
+                  {activeSection}
+                  <ViewerCurrentDateLabel monthStyle="short" prefix=" · " />
                 </p>
               </div>
               <SignOutButton className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/10 disabled:opacity-50" />
@@ -499,7 +497,9 @@ export function AppShell({
               <div className="flex shrink-0 items-center gap-3">
                 <div className="rounded-[22px] border border-zinc-200/80 bg-white/80 px-4 py-3">
                   <p className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
-                  <p className="mt-1 text-sm font-semibold text-zinc-900">{todayLabel}</p>
+                  <p className="mt-1 text-sm font-semibold text-zinc-900">
+                    <ViewerCurrentDateLabel monthStyle="short" />
+                  </p>
                 </div>
                 <Link
                   href="/employee"

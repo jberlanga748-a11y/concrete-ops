@@ -40,6 +40,13 @@ describe("time formatting", () => {
     expect(formatCurrentDateLabel({ date, includeWeekday: false })).toBe("April 18");
   });
 
+  it("formats current date labels for the intended local timezone", () => {
+    const date = new Date("2026-04-18T00:30:00.000Z");
+
+    expect(formatCurrentDateLabel({ date, timeZone: "America/Los_Angeles" })).toBe("Friday, April 17");
+    expect(formatCurrentDateLabel({ date, timeZone: "Asia/Tokyo" })).toBe("Saturday, April 18");
+  });
+
   it("handles empty and invalid timestamp values safely", () => {
     expect(formatTimestampInTimeZone(null, { timeZone: "UTC" })).toBe("—");
     expect(formatTimestampInTimeZone("not-a-real-date", { timeZone: "UTC" })).toBe("not-a-real-date");

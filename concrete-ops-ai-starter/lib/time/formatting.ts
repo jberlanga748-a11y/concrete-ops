@@ -145,11 +145,11 @@ export function formatTimestampDateOnly(
 
 export function formatCurrentDateLabel(
   {
-    timeZone = DEFAULT_TIME_ZONE,
+    timeZone,
     includeWeekday = true,
     monthStyle = "long",
     date = new Date(),
   }: CurrentDateLabelOptions = {},
 ) {
-  return formatInTimeZone(date, timeZone, getCurrentDateLabelPattern(includeWeekday, monthStyle));
+  return formatInTimeZone(date, timeZone ?? getViewerTimeZone(), getCurrentDateLabelPattern(includeWeekday, monthStyle));
 }
