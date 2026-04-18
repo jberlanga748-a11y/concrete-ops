@@ -530,21 +530,24 @@ export async function getEmployeeUserLinkOptions() {
     .order("full_name", { ascending: true });
 
   if (error) {
-    return [] as EmployeeUserLinkOption[];
+    return { data: [] as EmployeeUserLinkOption[], error };
   }
 
-  return (data ?? []).map((employee) => ({
-    id: employee.id,
-    user_id: employee.user_id,
-    is_active: employee.is_active,
-    label: [
-      employee.full_name,
-      employee.job_title,
-      employee.crew_name,
-      employee.email,
-      employee.is_active ? null : "Inactive",
-    ].filter(Boolean).join(" · "),
-  })) as EmployeeUserLinkOption[];
+  return {
+    data: (data ?? []).map((employee) => ({
+      id: employee.id,
+      user_id: employee.user_id,
+      is_active: employee.is_active,
+      label: [
+        employee.full_name,
+        employee.job_title,
+        employee.crew_name,
+        employee.email,
+        employee.is_active ? null : "Inactive",
+      ].filter(Boolean).join(" · "),
+    })) as EmployeeUserLinkOption[],
+    error: null,
+  };
 }
 
 export async function getJobAssignments(jobId: string) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ApprovalsList } from "@/components/approvals/ApprovalsList";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { requireOfficeUser } from "@/lib/auth/server";
 import {
   getApprovals,
@@ -17,7 +18,7 @@ export default async function ApprovalsPage({
   const params = (await searchParams) ?? {};
   const approvalType = params.approvalType?.trim() || "";
   const status = params.status?.trim() || "";
-  const [{ data: approvals }, approvalTypes, approvalStatuses] = await Promise.all([
+  const [{ data: approvals, error }, approvalTypes, approvalStatuses] = await Promise.all([
     getApprovals({
       approvalType: approvalType === "proposal" || approvalType === "change_order" ? approvalType : undefined,
       status:
@@ -75,7 +76,22 @@ export default async function ApprovalsPage({
         </button>
       </form>
 
-      <ApprovalsList approvals={approvals ?? []} />
+      {error ? (
+        <ErrorPanel
+          title="We couldn’t load approvals right now"
+          description="The approvals queue is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/dashboard/approvals"
+          actionLabel="Try again"
+        />
+      ) : (approvals ?? []).length === 0 ? (
+        <EmptyState
+          icon="file"
+          title="No approvals found"
+          description="Approvals will show up here once proposals or change orders are sent out for review."
+        />
+      ) : (
+        <ApprovalsList approvals={approvals ?? []} />
+      )}
     </div>
   );
 }

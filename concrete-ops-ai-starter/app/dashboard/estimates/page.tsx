@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
 import { getEstimates, type EstimateListRow } from "@/lib/db/queries";
 
 function getCustomer(customers: EstimateListRow["customers"]) {
@@ -17,7 +18,7 @@ function getJob(jobs: EstimateListRow["jobs"]) {
 }
 
 export default async function EstimatesPage() {
-  const { data: estimates } = await getEstimates();
+  const { data: estimates, error } = await getEstimates();
 
   return (
     <div className="space-y-6">
@@ -34,41 +35,55 @@ export default async function EstimatesPage() {
       </div>
 
       <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-100">
-            <tr>
-              <th className="px-4 py-3 text-left">Title</th>
-              <th className="px-4 py-3 text-left">Customer</th>
-              <th className="px-4 py-3 text-left">Job</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Subtotal</th>
-              <th className="px-4 py-3 text-left">Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(estimates ?? []).map((estimate) => (
-              <tr key={estimate.id} className="border-t">
-                <td className="px-4 py-4">{estimate.title}</td>
-                <td className="px-4 py-4">{getCustomer(estimate.customers)}</td>
-                <td className="px-4 py-4">{getJob(estimate.jobs)}</td>
-                <td className="px-4 py-4">{estimate.status}</td>
-                <td className="px-4 py-4">{estimate.subtotal.toFixed(2)}</td>
-                <td className="px-4 py-4">
-                  <Link href={`/dashboard/estimates/${estimate.id}`} className="underline">
-                    Open
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {(estimates ?? []).length === 0 ? (
+        {error ? (
+          <div className="p-4">
+            <ErrorPanel
+              title="We couldn’t load estimates right now"
+              description="The estimate board is temporarily unavailable. Try refreshing the page or come back in a moment."
+              actionHref="/dashboard/estimates"
+              actionLabel="Try again"
+            />
+          </div>
+        ) : (estimates ?? []).length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon="briefcase"
+              title="No estimates created yet"
+              description="Create the first estimate so labor, material, and equipment scope have a clean starting point."
+              actionHref="/dashboard/estimates/new"
+              actionLabel="Create estimate"
+            />
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100">
               <tr>
-                <td className="px-4 py-6 text-zinc-600" colSpan={6}>
-                  No estimates created yet.
-                </td>
+                <th className="px-4 py-3 text-left">Title</th>
+                <th className="px-4 py-3 text-left">Customer</th>
+                <th className="px-4 py-3 text-left">Job</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Subtotal</th>
+                <th className="px-4 py-3 text-left">Open</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(estimates ?? []).map((estimate) => (
+                <tr key={estimate.id} className="border-t">
+                  <td className="px-4 py-4">{estimate.title}</td>
+                  <td className="px-4 py-4">{getCustomer(estimate.customers)}</td>
+                  <td className="px-4 py-4">{getJob(estimate.jobs)}</td>
+                  <td className="px-4 py-4">{estimate.status}</td>
+                  <td className="px-4 py-4">{estimate.subtotal.toFixed(2)}</td>
+                  <td className="px-4 py-4">
+                    <Link href={`/dashboard/estimates/${estimate.id}`} className="underline">
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

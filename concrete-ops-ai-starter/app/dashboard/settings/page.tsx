@@ -1,10 +1,14 @@
+import { ErrorPanel } from "@/components/ui/feedback";
 import { UserManagementPanel } from "@/components/settings/UserManagementPanel";
 import { requireOfficeUser } from "@/lib/auth/server";
 import { getEmployeeUserLinkOptions, getManagedUsers } from "@/lib/db/queries";
 
 export default async function SettingsPage() {
   await requireOfficeUser();
-  const [{ data: users }, employeeOptions] = await Promise.all([
+  const [
+    { data: users, error: usersError },
+    { data: employeeOptions, error: employeeOptionsError },
+  ] = await Promise.all([
     getManagedUsers(),
     getEmployeeUserLinkOptions(),
   ]);
@@ -16,11 +20,20 @@ export default async function SettingsPage() {
         <p className="mt-3 text-zinc-600">Manage user access, role assignment, and employee linking from one place.</p>
       </div>
 
-      <UserManagementPanel
-        users={users ?? []}
-        employeeOptions={employeeOptions}
-        invitesEnabled={Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)}
-      />
+      {usersError || employeeOptionsError ? (
+        <ErrorPanel
+          title="We couldn’t load user settings right now"
+          description="The user management workspace is temporarily unavailable. Try refreshing the page or come back in a moment."
+          actionHref="/dashboard/settings"
+          actionLabel="Try again"
+        />
+      ) : (
+        <UserManagementPanel
+          users={users ?? []}
+          employeeOptions={employeeOptions ?? []}
+          invitesEnabled={Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)}
+        />
+      )}
     </div>
   );
 }
