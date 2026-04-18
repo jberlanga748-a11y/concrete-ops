@@ -11,7 +11,7 @@ export default async function NewUploadPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold">New Upload</h1>
-            <p className="mt-2 text-zinc-600">Office-managed photo/document upload tied to job records.</p>
+            <p className="mt-2 text-zinc-600">Photo and document upload tied to job records.</p>
           </div>
           <Link href="/dashboard/uploads" className="rounded-xl border px-4 py-2 text-sm">
             Back to Uploads
@@ -22,8 +22,9 @@ export default async function NewUploadPage() {
       <EmployeeUploadForm
         jobOptions={jobOptions}
         dailyReportOptions={dailyReportOptions}
-        title="Office Upload"
-        description="Attach office-managed files to jobs and optional daily reports."
+        title="Job Upload"
+        description="Attach job photos or files to jobs and optional daily reports."
+        jobRequirementHint="Uploads need an assigned job so field and office teams can trace proof back to the right project."
         tipMessage="Tip: add a clear note so the office and field teams can trace this file back to the same job record quickly."
       />
     </div>
