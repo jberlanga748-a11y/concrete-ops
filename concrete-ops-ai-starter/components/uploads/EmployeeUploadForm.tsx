@@ -39,6 +39,7 @@ export function EmployeeUploadForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
+  const hasJobs = jobOptions.length > 0;
 
   const scopedReportOptions = useMemo(() => {
     if (!jobId) return dailyReportOptions;
@@ -46,6 +47,12 @@ export function EmployeeUploadForm({
   }, [dailyReportOptions, jobId]);
 
   async function handleSubmit() {
+    if (!hasJobs) {
+      setMessageType("error");
+      setMessage("You do not have any active job assignments yet, so uploads cannot be linked to a job.");
+      return;
+    }
+
     if (!jobId || !file) {
       setMessageType("error");
       setMessage("Job and photo/document are required.");
@@ -89,17 +96,30 @@ export function EmployeeUploadForm({
       <div className="mt-5 space-y-4">
         <div>
           <p className="mb-2 text-sm text-zinc-600">Job</p>
-          <select value={jobId} onChange={(e) => { setJobId(e.target.value); setDailyReportId(""); }} className="w-full rounded-2xl border px-4 py-3">
-            <option value="">Select job</option>
+          <select
+            value={jobId}
+            onChange={(e) => { setJobId(e.target.value); setDailyReportId(""); }}
+            disabled={!hasJobs || loading}
+            className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+          >
+            <option value="">{hasJobs ? "Select job" : "No active job assignments"}</option>
             {jobOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
+          {!hasJobs ? (
+            <p className="mt-2 text-xs text-amber-700">Uploads need an assigned job so the office can trace field proof back to the right project.</p>
+          ) : null}
         </div>
 
         <div>
           <p className="mb-2 text-sm text-zinc-600">Linked daily report (optional)</p>
-          <select value={dailyReportId} onChange={(e) => setDailyReportId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+          <select
+            value={dailyReportId}
+            onChange={(e) => setDailyReportId(e.target.value)}
+            disabled={!hasJobs || loading}
+            className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+          >
             <option value="">Select daily report</option>
             {scopedReportOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
@@ -110,7 +130,7 @@ export function EmployeeUploadForm({
 
         <div>
           <p className="mb-2 text-sm text-zinc-600">Tag</p>
-          <select value={tag} onChange={(e) => setTag(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+          <select value={tag} onChange={(e) => setTag(e.target.value)} disabled={loading} className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500">
             {TAG_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
@@ -119,16 +139,16 @@ export function EmployeeUploadForm({
 
         <div>
           <p className="mb-2 text-sm text-zinc-600">Note (optional)</p>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Short context for what this file shows" className="min-h-20 w-full rounded-2xl border px-4 py-3" />
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Short context for what this file shows" disabled={loading} className="min-h-20 w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500" />
         </div>
 
         <div>
           <p className="mb-2 text-sm text-zinc-600">Photo / document</p>
-          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border px-4 py-3" />
+          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={loading || !hasJobs} className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500" />
           <p className="mt-2 text-xs text-zinc-500">Accepted: image files and PDF.</p>
         </div>
 
-        <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
+        <button onClick={handleSubmit} disabled={loading || !hasJobs} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
           {loading ? "Uploading..." : "Save Upload"}
         </button>
 

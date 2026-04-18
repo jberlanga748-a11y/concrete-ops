@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { EmployeeSelfClockCard } from "@/components/employee/EmployeeSelfClockCard";
+import { EmptyState } from "@/components/ui/feedback";
 import { createClient } from "@/lib/supabase/server";
 import type { Job, JobPhase } from "@/lib/db/schema";
 
@@ -23,9 +24,17 @@ export default async function EmployeeTimePage() {
 
   if (!employee) {
     return (
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">No employee record is linked to your user yet.</p>
+      <div className="space-y-6">
+        <div className="rounded-3xl border bg-white p-6 shadow-sm">
+          <h1 className="text-3xl font-semibold">Employee Time</h1>
+          <p className="mt-3 text-zinc-600">Clock in and out once your employee profile is connected.</p>
+        </div>
+
+        <EmptyState
+          icon="clock"
+          title="Your employee record is still missing"
+          description="This time board only works after the office links your login to an employee record. Once that happens, your assigned jobs and shift controls will appear here."
+        />
       </div>
     );
   }
@@ -72,8 +81,18 @@ export default async function EmployeeTimePage() {
     <div className="space-y-6">
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
         <h1 className="text-3xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">Clock in/out for your shifts.</p>
+        <p className="mt-3 text-zinc-600">Clock in and out for your shifts, with job options scoped to your active assignments only.</p>
       </div>
+
+      {jobOptions.length === 0 ? (
+        <EmptyState
+          icon="briefcase"
+          title="No active job assignments yet"
+          description="You are ready to use self-service time, but the office still needs to assign you to an active job before you can clock in."
+          actionHref="/employee"
+          actionLabel="Back to portal home"
+        />
+      ) : null}
 
       <EmployeeSelfClockCard employeeId={employee.id} jobOptions={jobOptions} phaseOptions={phaseOptions} />
     </div>

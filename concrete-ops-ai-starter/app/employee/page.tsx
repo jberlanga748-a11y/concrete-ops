@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { EmptyState } from "@/components/ui/feedback";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/lib/db/schema";
 import { formatTimestamp } from "@/lib/time/formatting";
@@ -32,18 +33,38 @@ export default async function EmployeeHomePage() {
 
   const { data: employee } = await supabase.from("employees").select("id").eq("user_id", appUser.id).maybeSingle();
 
+  if (!employee) {
+    return (
+      <div className="space-y-6">
+        <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Employee Portal</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Your account is signed in, but your employee profile is not ready yet.</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+            Time, uploads, PPE, and policy acknowledgments all depend on an employee record. Once the office links your profile, this portal will populate automatically.
+          </p>
+        </section>
+
+        <EmptyState
+          icon="users"
+          title="Waiting on employee setup"
+          description="Ask an owner or office admin to create or reconnect your employee record so your assignments, compliance items, and self-service tools can appear here."
+          actionHref="/employee/policies"
+          actionLabel="Open policies"
+        />
+      </div>
+    );
+  }
+
   const [{ data: openEntry }, { data: uploads }] = await Promise.all([
-    employee
-      ? supabase
-          .from("time_entries")
-          .select("id, clock_in_at, status")
-          .eq("employee_id", employee.id)
-          .is("clock_out_at", null)
-          .in("status", ["clocked_in", "on_break"])
-          .order("clock_in_at", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
+    supabase
+      .from("time_entries")
+      .select("id, clock_in_at, status")
+      .eq("employee_id", employee.id)
+      .is("clock_out_at", null)
+      .in("status", ["clocked_in", "on_break"])
+      .order("clock_in_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from("job_files")
       .select("id, file_name, tag, note, created_at, jobs(job_number, name)")
@@ -242,8 +263,14 @@ export default async function EmployeeHomePage() {
             </li>
           ))}
           {allUploads.length === 0 ? (
-            <li className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 p-5 text-sm text-zinc-600">
-              No uploads yet. When you start adding jobsite photos and documents, they will show up here for quick review.
+            <li>
+              <EmptyState
+                icon="file"
+                title="No uploads yet"
+                description="Once you add field photos, delivery slips, or other jobsite proof, your latest files will show here for quick review."
+                actionHref="/employee/uploads"
+                actionLabel="Add first upload"
+              />
             </li>
           ) : null}
         </ul>
