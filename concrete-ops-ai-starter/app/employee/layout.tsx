@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
 import { EmployeeShell } from "@/components/layout/EmployeeShell";
 import { ErrorPanel } from "@/components/ui/feedback";
-import type { AppRole } from "@/lib/auth/roles";
+import { getProfileNotReadyRedirectPath, resolveAppUser } from "@/lib/auth/app-user";
 import { getRoleHomePath } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
-
-const ADMIN_ROLES = new Set(["owner", "office_admin", "foreman"]);
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -17,11 +15,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     redirect("/login?next=/employee");
   }
 
-  const { data: appUser, error: appUserError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("auth_user_id", user.id)
-    .maybeSingle<{ role: AppRole }>();
+  const { appUser, error: appUserError } = await resolveAppUser(supabase, user);
 
   if (appUserError) {
     return (
@@ -37,10 +31,10 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   }
 
   if (!appUser) {
-    redirect("/login");
+    redirect(getProfileNotReadyRedirectPath("/employee"));
   }
 
-  if (ADMIN_ROLES.has(appUser.role)) {
+  if (getRoleHomePath(appUser.role) !== "/employee") {
     redirect(getRoleHomePath(appUser.role));
   }
 
