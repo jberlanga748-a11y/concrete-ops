@@ -1,9 +1,10 @@
-import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getProfileNotReadyRedirectPath, resolveAppUser } from "@/lib/auth/app-user";
+import { adminRoles, getRoleHomePath } from "@/lib/auth/roles";
 import { getEnv } from "@/lib/env";
 
-const ADMIN_ROLES = new Set(["owner", "office_admin", "foreman"]);
+const ADMIN_ROLES = new Set(adminRoles);
 const OFFICE_ONLY_PREFIXES = [
   "/dashboard/settings",
   "/dashboard/employees",
@@ -54,50 +55,25 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    let { data: appUser } = await supabase
-      .from("users")
-      .select("id, role, company_id, email, status")
-      .eq("auth_user_id", user.id)
-      .maybeSingle();
+    const { appUser, error: appUserError } = await resolveAppUser(supabase, user);
 
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!appUser && user.email && serviceRoleKey) {
-      const adminClient = createAdminClient(env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-
-      const { data: invitedUser } = await adminClient
-        .from("users")
-        .select("id, role, company_id, email, status")
-        .is("auth_user_id", null)
-        .ilike("email", user.email)
-        .maybeSingle();
-
-      if (invitedUser) {
-        await adminClient
-          .from("users")
-          .update({
-            auth_user_id: user.id,
-            status: "active",
-            last_login_at: new Date().toISOString(),
-          })
-          .eq("id", invitedUser.id);
-
-        await adminClient
-          .from("employees")
-          .update({ user_id: invitedUser.id })
-          .eq("company_id", invitedUser.company_id)
-          .is("user_id", null)
-          .ilike("email", user.email);
-
-        appUser = {
-          ...invitedUser,
-          status: "active",
-        };
-      }
+    if (appUserError) {
+      return response;
     }
 
-    const role = appUser?.role ?? "employee";
+    if (!appUser) {
+      if (isAuthRoute) {
+        return response;
+      }
+
+      if (isDashboardRoute || isEmployeeRoute) {
+        return NextResponse.redirect(new URL(getProfileNotReadyRedirectPath(pathname), request.url));
+      }
+
+      return response;
+    }
+
+    const { role } = appUser;
     const isAdmin = ADMIN_ROLES.has(role);
 
     // Foreman landing: send dashboard root to foreman home
@@ -111,7 +87,7 @@ export async function updateSession(request: NextRequest) {
     // If logged in and trying to access auth pages, send to correct home
     if (isAuthRoute) {
       const url = request.nextUrl.clone();
-      url.pathname = isAdmin ? "/dashboard" : "/employee";
+      url.pathname = getRoleHomePath(role);
       url.search = "";
       return NextResponse.redirect(url);
     }
@@ -127,7 +103,7 @@ export async function updateSession(request: NextRequest) {
     // Admin roles can't access employee portal
     if (isAdmin && isEmployeeRoute) {
       const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
+      url.pathname = getRoleHomePath(role);
       url.search = "";
       return NextResponse.redirect(url);
     }

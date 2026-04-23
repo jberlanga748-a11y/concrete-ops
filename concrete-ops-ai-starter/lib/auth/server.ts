@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getProfileNotReadyRedirectPath, resolveAppUser } from "@/lib/auth/app-user";
 import type { AppRole } from "@/lib/auth/roles";
 import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
@@ -11,43 +12,56 @@ export type AppUserContext = {
   fullName: string;
 };
 
-export async function getCurrentAppUserContext() {
+type CurrentAppUserState =
+  | { state: "signed_out" }
+  | { state: "unlinked" }
+  | { state: "ready"; appUser: AppUserContext };
+
+async function getCurrentAppUserState(): Promise<CurrentAppUserState> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  if (!user) {
+    return { state: "signed_out" };
+  }
 
-  const { data: appUser } = await supabase
-    .from("users")
-    .select("id, company_id, role, email, full_name")
-    .eq("auth_user_id", user.id)
-    .maybeSingle<{
-      id: string;
-      company_id: string;
-      role: AppRole;
-      email: string;
-      full_name: string;
-    }>();
+  const { appUser } = await resolveAppUser(supabase, user);
 
-  if (!appUser) return null;
+  if (!appUser) {
+    return { state: "unlinked" };
+  }
 
   return {
-    id: appUser.id,
-    companyId: appUser.company_id,
-    role: appUser.role,
-    email: appUser.email,
-    fullName: appUser.full_name,
-  } satisfies AppUserContext;
+    state: "ready",
+    appUser: {
+      id: appUser.id,
+      companyId: appUser.company_id,
+      role: appUser.role,
+      email: appUser.email,
+      fullName: appUser.full_name ?? appUser.email,
+    } satisfies AppUserContext,
+  };
+}
+
+export async function getCurrentAppUserContext() {
+  const currentAppUser = await getCurrentAppUserState();
+  return currentAppUser.state === "ready" ? currentAppUser.appUser : null;
 }
 
 export async function requireOfficeUser(nextPath = "/dashboard/settings") {
-  const appUser = await getCurrentAppUserContext();
+  const currentAppUser = await getCurrentAppUserState();
 
-  if (!appUser) {
+  if (currentAppUser.state === "signed_out") {
     redirect(`/login?next=${nextPath}`);
   }
+
+  if (currentAppUser.state === "unlinked") {
+    redirect(getProfileNotReadyRedirectPath(nextPath));
+  }
+
+  const { appUser } = currentAppUser;
 
   if (!isOfficeRole(appUser.role)) {
     redirect(getRoleHomePath(appUser.role));
@@ -57,11 +71,17 @@ export async function requireOfficeUser(nextPath = "/dashboard/settings") {
 }
 
 export async function requireForemanUser() {
-  const appUser = await getCurrentAppUserContext();
+  const currentAppUser = await getCurrentAppUserState();
 
-  if (!appUser) {
+  if (currentAppUser.state === "signed_out") {
     redirect("/login?next=/dashboard/foreman");
   }
+
+  if (currentAppUser.state === "unlinked") {
+    redirect(getProfileNotReadyRedirectPath("/dashboard/foreman"));
+  }
+
+  const { appUser } = currentAppUser;
 
   if (appUser.role !== "foreman") {
     redirect(getRoleHomePath(appUser.role));

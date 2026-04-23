@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { resolveAppUser } from "@/lib/auth/app-user";
+import { getRoleHomePath } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SignupPage() {
@@ -9,13 +11,11 @@ export default async function SignupPage() {
   } = await supabase.auth.getUser();
 
   if (user) {
-    const { data: appUser } = await supabase
-      .from("users")
-      .select("role")
-      .eq("auth_user_id", user.id)
-      .maybeSingle();
+    const { appUser } = await resolveAppUser(supabase, user);
 
-    redirect(appUser?.role === "owner" || appUser?.role === "office_admin" || appUser?.role === "foreman" ? "/dashboard" : "/employee");
+    if (appUser) {
+      redirect(getRoleHomePath(appUser.role));
+    }
   }
 
   return (
