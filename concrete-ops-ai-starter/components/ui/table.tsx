@@ -9,9 +9,9 @@ export function TableShell({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
-      {toolbar ? <div className="border-b border-zinc-200 px-5 py-5 sm:px-6">{toolbar}</div> : null}
-      <div className="overflow-x-auto">{children}</div>
+    <section className="overflow-hidden rounded-[34px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,248,249,0.92))] shadow-[0_26px_58px_rgba(15,23,42,0.08)] backdrop-blur">
+      {toolbar ? <div className="px-5 py-5 sm:px-7 sm:py-6">{toolbar}</div> : null}
+      <div className="overflow-x-auto border-t border-white/90 bg-white/92">{children}</div>
     </section>
   );
 }
@@ -30,22 +30,26 @@ export function TableToolbar({
   children?: ReactNode;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          {title ? <h2 className="text-lg font-semibold tracking-tight text-zinc-950">{title}</h2> : null}
-          {description ? <p className="mt-1 text-sm leading-6 text-zinc-600">{description}</p> : null}
+          {title ? <h2 className="text-[1.45rem] font-semibold tracking-[-0.045em] text-zinc-950">{title}</h2> : null}
+          {description ? <p className="mt-2 max-w-3xl text-sm leading-7 text-zinc-600">{description}</p> : null}
         </div>
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
           {countLabel ? (
-            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-600">
+            <span className="rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600 shadow-[0_10px_22px_rgba(15,23,42,0.05)]">
               {countLabel}
             </span>
           ) : null}
           {actions}
         </div>
       </div>
-      {children ? <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/80 p-4">{children}</div> : null}
+      {children ? (
+        <div className="rounded-[28px] border border-white bg-[linear-gradient(180deg,rgba(247,248,250,0.92),rgba(241,244,246,0.82))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -55,7 +59,7 @@ export function DataTable({ children }: { children: ReactNode }) {
 }
 
 export function TableHead({ children }: { children: ReactNode }) {
-  return <thead className="bg-zinc-100/80">{children}</thead>;
+  return <thead className="bg-[linear-gradient(180deg,rgba(244,246,248,0.98),rgba(239,242,245,0.88))]">{children}</thead>;
 }
 
 export function TableHeadCell({
@@ -79,7 +83,7 @@ export function TableBody({ children }: { children: ReactNode }) {
 }
 
 export function TableRow({ children }: { children: ReactNode }) {
-  return <tr className="transition hover:bg-zinc-50/80">{children}</tr>;
+  return <tr className="transition-colors hover:bg-[#fffaf6]">{children}</tr>;
 }
 
 export function TableCell({
@@ -102,7 +106,7 @@ export function TableActionLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center rounded-xl border border-zinc-300 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-700 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+      className="inline-flex items-center justify-center rounded-[18px] border border-zinc-300 bg-white px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-[0_10px_22px_rgba(15,23,42,0.04)] transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
     >
       {label}
     </Link>
