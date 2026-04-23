@@ -443,42 +443,81 @@ export default async function DashboardPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
 
         <div className="relative">
-          <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
-            Operations Command
-          </Badge>
-          <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
-            <ViewerCurrentDateLabel />
-          </p>
-          <h1 className="mt-4 max-w-5xl text-[clamp(2.35rem,4.2vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#101828]">
-            A steadier command view for field work, documentation, and office follow-up.
-          </h1>
-          <p className="mt-5 max-w-4xl text-base leading-8 text-zinc-600">
-            See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
-          </p>
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.42fr)_minmax(320px,0.92fr)] xl:items-start">
+            <div className="min-w-0">
+              <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
+                Operations Command
+              </Badge>
+              <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                <ViewerCurrentDateLabel />
+              </p>
+              <h1 className="mt-4 max-w-5xl text-[clamp(2.35rem,4.2vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#101828]">
+                A steadier command view for field work, documentation, and office follow-up.
+              </h1>
+              <p className="mt-5 max-w-4xl text-base leading-8 text-zinc-600">
+                See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
+              </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              href="/dashboard/daily-reports"
-              className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
-            >
-              Review today&apos;s reports
-            </Link>
-            <Link
-              href="/dashboard/jobs"
-              className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-            >
-              Open job board
-            </Link>
-            <Link
-              href="#tools-and-ai"
-              className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-            >
-              Browse Tools &amp; AI
-            </Link>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link
+                  href="/dashboard/daily-reports"
+                  className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
+                >
+                  Review today&apos;s reports
+                </Link>
+                <Link
+                  href="/dashboard/jobs"
+                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                >
+                  Open job board
+                </Link>
+                <Link
+                  href="#tools-and-ai"
+                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                >
+                  Browse Tools &amp; AI
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_20px_42px_rgba(15,23,42,0.06)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recommended Focus</p>
+                  <h2 className="mt-3 text-[1.35rem] font-semibold tracking-[-0.04em] text-[#101828]">
+                    Make the command surface carry the operating picture first.
+                  </h2>
+                </div>
+                <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#d7e2ec] bg-white text-[#2c5678] shadow-[0_12px_24px_rgba(15,23,42,0.05)]">
+                  <LayoutDashboardIcon className="h-5 w-5" />
+                </span>
+              </div>
+              <p className="mt-4 text-sm leading-7 text-zinc-600">{focusMessage}</p>
+
+              <div className="mt-5 grid gap-3">
+                {briefingItems.map((item) => (
+                  <div key={item.label} className="rounded-[22px] border border-white bg-white/92 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">{item.label}</p>
+                    <p className="mt-2 text-sm font-semibold text-zinc-950">
+                      {item.label === "Office queue" && item.value === "Queue unavailable" ? "Notification queue unavailable" : item.value}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-zinc-600">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href="/dashboard/notifications"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
+              >
+                Review follow-up queue
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           <div className="mt-8 overflow-hidden rounded-[30px] border border-white/85 bg-white/90 shadow-[0_22px_44px_rgba(15,23,42,0.06)]">
-            <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.84fr,0.84fr,0.84fr,1.48fr]">
+            <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-3">
               {briefingItems.map((item) => (
                 <div key={item.label} className="bg-white/94 px-5 py-5">
                   <div className="flex items-center justify-between gap-3">
@@ -489,32 +528,12 @@ export default async function DashboardPage() {
                   <p className="mt-2 text-sm leading-6 text-zinc-600">{item.detail}</p>
                 </div>
               ))}
-
-              <div className="bg-[linear-gradient(135deg,#0f1820_0%,#15222d_100%)] px-6 py-5 text-white">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recommended Focus</p>
-                    <h2 className="mt-3 text-[1.45rem] font-semibold tracking-[-0.04em] text-white">Keep the day moving from one wider command surface.</h2>
-                  </div>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-white/10 bg-white/5 text-zinc-200">
-                    <LayoutDashboardIcon className="h-5 w-5" />
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-zinc-300">{focusMessage}</p>
-                <Link
-                  href="/dashboard/notifications"
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-orange-100"
-                >
-                  Review follow-up queue
-                  <ArrowRightIcon className="h-4 w-4" />
-                </Link>
-              </div>
             </div>
           </div>
         </div>
       </SurfaceCard>
 
-      <section className="grid gap-5 xl:grid-cols-4">
+      <section className="grid gap-5 xl:grid-cols-2 2xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
@@ -535,7 +554,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 xl:grid-cols-3">
+        <div className="mt-8 grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
           {actionLanes.map((lane) => (
             <ActionLaneCard key={lane.title} lane={lane} />
           ))}

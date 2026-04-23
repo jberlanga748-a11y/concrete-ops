@@ -322,182 +322,185 @@ export function AppShell({
   const activeTitle = activeEntry?.label ?? portalTitle;
   const activeSection = activeEntry?.sectionTitle ?? "Overview";
   const totalModules = navEntries.filter((entry) => !entry.href.includes("#")).length;
+  const sectionSummary = getSectionSummary(activeSection);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.12),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_22%),linear-gradient(180deg,#eef2f4_0%,#f7f8f6_55%,#fbfbfa_100%)] text-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1940px] gap-3 px-3 pb-28 pt-3 sm:px-4 lg:gap-4 lg:px-5 lg:pb-6 lg:pt-6">
-        <aside className="hidden w-[236px] shrink-0 lg:block">
-          <div className="sticky top-6 overflow-hidden rounded-[30px] border border-[#1b2833] bg-[linear-gradient(180deg,#111a22_0%,#17242d_100%)] text-zinc-100 shadow-[0_22px_44px_rgba(15,23,42,0.16)]">
-            <div className="border-b border-white/10 p-5">
-              <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Premium Operations Platform</p>
-                <div className="mt-4 flex items-start justify-between gap-4">
-                  <div>
-                    <h1 className="text-[1.7rem] font-semibold tracking-[-0.06em] text-white">Concrete Ops</h1>
-                    <p className="mt-3 max-w-[13rem] text-sm leading-6 text-zinc-300">
-                      A sharper control layer for field execution, office coordination, and documentation.
-                    </p>
+      <div className="mx-auto min-h-screen w-full max-w-[2100px] px-3 pb-28 pt-3 sm:px-4 lg:px-5 lg:pb-6 lg:pt-6">
+        <div className="grid min-h-full gap-3 lg:grid-cols-[236px_minmax(0,1fr)] lg:gap-4 xl:grid-cols-[248px_minmax(0,1fr)]">
+          <aside className="hidden min-w-0 lg:block">
+            <div className="sticky top-6 overflow-hidden rounded-[30px] border border-[#1b2833] bg-[linear-gradient(180deg,#111a22_0%,#17242d_100%)] text-zinc-100 shadow-[0_22px_44px_rgba(15,23,42,0.16)]">
+              <div className="border-b border-white/10 p-5">
+                <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Premium Operations Platform</p>
+                  <div className="mt-4 flex items-start justify-between gap-4">
+                    <div>
+                      <h1 className="text-[1.7rem] font-semibold tracking-[-0.06em] text-white">Concrete Ops</h1>
+                      <p className="mt-3 max-w-[13rem] text-sm leading-6 text-zinc-300">
+                        A sharper control layer for field execution, office coordination, and documentation.
+                      </p>
+                    </div>
+                    <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">{portalTitle}</Badge>
                   </div>
-                  <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">{portalTitle}</Badge>
-                </div>
 
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/10 bg-black/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
-                    {sections.length} workstreams
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-black/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
-                    {totalModules} modules
-                  </span>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-white/10 bg-black/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                      {sections.length} workstreams
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-black/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                      {totalModules} modules
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-[calc(100vh-19rem)] overflow-y-auto px-4 py-5">
+                {sections.map((section) => (
+                  <section key={section.title} className="mb-6 last:mb-0">
+                    <div className="mb-3 px-2">
+                      <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{section.title}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      {section.items.map((item) => {
+                        const active = isActive(pathname, item.href);
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`group flex items-center gap-3 rounded-[18px] px-3 py-2.5 transition ${
+                              active
+                                ? "bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] text-white shadow-[0_14px_28px_rgba(201,106,44,0.16)]"
+                                : "text-zinc-300 hover:bg-white/[0.05] hover:text-white"
+                            }`}
+                          >
+                            <span
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[16px] border ${
+                                active
+                                  ? "border-white/20 bg-white/10 text-white"
+                                  : "border-white/10 bg-black/10 text-zinc-400 group-hover:border-white/15 group-hover:bg-white/[0.05] group-hover:text-white"
+                              }`}
+                            >
+                              <NavIcon icon={item.icon} />
+                            </span>
+                            <span className="min-w-0 flex-1 text-[0.94rem] font-semibold">{item.label}</span>
+                            <span
+                              className={`h-2.5 w-2.5 rounded-full transition ${
+                                active ? "bg-[#cf6f33]" : "bg-white/10 opacity-0 group-hover:opacity-100"
+                              }`}
+                            />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+
+              <div className="border-t border-white/10 p-5">
+                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Workspace Status</p>
+                      <p className="mt-2 text-base font-semibold text-white">{getRoleLabel(role)}</p>
+                    </div>
+                    <Badge variant="outline" className="rounded-full border-white/15 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300">
+                      <ViewerCurrentDateLabel monthStyle="short" />
+                    </Badge>
+                  </div>
+
+                  <p className="mt-3 text-[13px] leading-5 text-zinc-300">{getRoleSummary(role)}</p>
+
+                  <div className={`mt-4 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
+                    <Link
+                      href="/employee"
+                      className="rounded-[20px] border border-white/10 bg-black/10 px-4 py-3 text-center text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/8"
+                    >
+                      Employee Portal
+                    </Link>
+                    {showSettingsShortcut ? (
+                      <Link
+                        href="/dashboard/settings"
+                        className="rounded-[20px] border border-white/10 bg-black/10 px-4 py-3 text-center text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/8"
+                      >
+                        Settings
+                      </Link>
+                    ) : null}
+                  </div>
+
+                  <SignOutButton className="mt-3 w-full rounded-[20px] border border-white/12 bg-white/[0.02] px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/[0.08] disabled:opacity-50" />
                 </div>
               </div>
             </div>
+          </aside>
 
-            <div className="max-h-[calc(100vh-19rem)] overflow-y-auto px-4 py-5">
-              {sections.map((section) => (
-                <section key={section.title} className="mb-6 last:mb-0">
-                  <div className="mb-3 px-2">
-                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{section.title}</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    {section.items.map((item) => {
-                      const active = isActive(pathname, item.href);
-
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={`group flex items-center gap-3 rounded-[18px] px-3 py-2.5 transition ${
-                            active
-                              ? "bg-[linear-gradient(135deg,rgba(201,106,44,0.22),rgba(201,106,44,0.08))] text-white shadow-[0_14px_28px_rgba(201,106,44,0.16)]"
-                              : "text-zinc-300 hover:bg-white/[0.05] hover:text-white"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[16px] border ${
-                              active
-                                ? "border-white/20 bg-white/10 text-white"
-                                : "border-white/10 bg-black/10 text-zinc-400 group-hover:border-white/15 group-hover:bg-white/[0.05] group-hover:text-white"
-                            }`}
-                          >
-                            <NavIcon icon={item.icon} />
-                          </span>
-                          <span className="min-w-0 flex-1 text-[0.94rem] font-semibold">{item.label}</span>
-                          <span
-                            className={`h-2.5 w-2.5 rounded-full transition ${
-                              active ? "bg-[#cf6f33]" : "bg-white/10 opacity-0 group-hover:opacity-100"
-                            }`}
-                          />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-
-            <div className="border-t border-white/10 p-5">
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
-                <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex min-h-full flex-col gap-4 lg:gap-5 lg:rounded-[40px] lg:border lg:border-white/70 lg:bg-[linear-gradient(180deg,rgba(255,255,255,0.46),rgba(245,247,248,0.24))] lg:p-4 lg:shadow-[0_28px_60px_rgba(15,23,42,0.08)] xl:p-5">
+              <header className="rounded-[30px] border border-[#18232d] bg-[#0c141c] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Workspace Status</p>
-                    <p className="mt-2 text-base font-semibold text-white">{getRoleLabel(role)}</p>
+                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
+                    <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-white">{activeTitle}</p>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {activeSection}
+                      <ViewerCurrentDateLabel monthStyle="short" prefix=" · " />
+                    </p>
                   </div>
-                  <Badge variant="outline" className="rounded-full border-white/15 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300">
-                    <ViewerCurrentDateLabel monthStyle="short" />
-                  </Badge>
+                  <SignOutButton className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/10 disabled:opacity-50" />
                 </div>
-
-                <p className="mt-3 text-[13px] leading-5 text-zinc-300">{getRoleSummary(role)}</p>
 
                 <div className={`mt-4 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
                   <Link
                     href="/employee"
-                    className="rounded-[20px] border border-white/10 bg-black/10 px-4 py-3 text-center text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/8"
+                    className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100"
                   >
                     Employee Portal
                   </Link>
                   {showSettingsShortcut ? (
                     <Link
                       href="/dashboard/settings"
-                      className="rounded-[20px] border border-white/10 bg-black/10 px-4 py-3 text-center text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/8"
+                      className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100"
                     >
                       Settings
                     </Link>
                   ) : null}
                 </div>
 
-                <SignOutButton className="mt-3 w-full rounded-[20px] border border-white/12 bg-white/[0.02] px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/[0.08] disabled:opacity-50" />
-              </div>
-            </div>
-          </div>
-        </aside>
+                <details className="group mt-4 rounded-[24px] border border-white/10 bg-white/5 p-3">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-white">
+                    Browse all modules
+                    <span className="rounded-full border border-white/10 bg-black/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                      {totalModules}
+                    </span>
+                  </summary>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-4 lg:gap-6">
-          <header className="rounded-[30px] border border-[#18232d] bg-[#0c141c] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
-                <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-white">{activeTitle}</p>
-                <p className="mt-1 text-sm text-zinc-400">
-                  {activeSection}
-                  <ViewerCurrentDateLabel monthStyle="short" prefix=" · " />
-                </p>
-              </div>
-              <SignOutButton className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/10 disabled:opacity-50" />
-            </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {secondaryMobileNav.map((item) => {
+                      const active = isActive(pathname, item.href);
 
-            <div className={`mt-4 grid gap-2 ${showSettingsShortcut ? "grid-cols-2" : "grid-cols-1"}`}>
-              <Link
-                href="/employee"
-                className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100"
-              >
-                Employee Portal
-              </Link>
-              {showSettingsShortcut ? (
-                <Link
-                  href="/dashboard/settings"
-                  className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-zinc-100"
-                >
-                  Settings
-                </Link>
-              ) : null}
-            </div>
-
-            <details className="group mt-4 rounded-[24px] border border-white/10 bg-white/5 p-3">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-white">
-                Browse all modules
-                <span className="rounded-full border border-white/10 bg-black/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
-                  {totalModules}
-                </span>
-              </summary>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {secondaryMobileNav.map((item) => {
-                  const active = isActive(pathname, item.href);
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`rounded-[18px] border px-3 py-3 text-sm transition ${
-                        active
-                          ? "border-[#cf6f33]/60 bg-[rgba(201,106,44,0.16)] text-white"
-                          : "border-white/10 bg-black/10 text-zinc-300"
-                      }`}
-                    >
-                      <span className="block font-medium">{item.label}</span>
-                      <span className="mt-1 block text-xs text-zinc-500">{item.sectionTitle}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </details>
-          </header>
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`rounded-[18px] border px-3 py-3 text-sm transition ${
+                            active
+                              ? "border-[#cf6f33]/60 bg-[rgba(201,106,44,0.16)] text-white"
+                              : "border-white/10 bg-black/10 text-zinc-300"
+                          }`}
+                        >
+                          <span className="block font-medium">{item.label}</span>
+                          <span className="mt-1 block text-xs text-zinc-500">{item.sectionTitle}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </details>
+              </header>
 
           <section className="hidden rounded-[36px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,249,250,0.84))] px-7 py-6 shadow-[0_28px_68px_rgba(15,23,42,0.08)] backdrop-blur lg:block xl:px-8">
-            <div className="flex items-start justify-between gap-6">
-              <div className="min-w-0 max-w-none">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.52fr)_minmax(320px,0.88fr)] xl:items-start">
+              <div className="min-w-0 rounded-[30px] border border-white/90 bg-white/74 px-6 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] xl:px-7">
                 <div className="flex flex-wrap items-center gap-3">
                   <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{activeSection}</p>
                   <Badge
@@ -508,35 +511,77 @@ export function AppShell({
                   </Badge>
                 </div>
                 <h2 className="mt-4 text-[2.6rem] font-semibold tracking-[-0.07em] text-[#101828]">{activeTitle}</h2>
-                <p className="mt-4 max-w-5xl text-sm leading-7 text-[#5b6574]">{getSectionSummary(activeSection)}</p>
-              </div>
-              <div className="shrink-0 rounded-full border border-zinc-200 bg-white/92 px-4 py-2 shadow-[0_10px_22px_rgba(15,23,42,0.05)]">
-                <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
-                <p className="mt-1 text-sm font-semibold text-zinc-950">
-                  <ViewerCurrentDateLabel monthStyle="short" />
-                </p>
-              </div>
-            </div>
+                <p className="mt-4 max-w-5xl text-sm leading-7 text-[#5b6574]">{sectionSummary}</p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/employee"
-                className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-              >
-                Employee Portal
-              </Link>
-              {showSettingsShortcut ? (
-                <Link
-                  href="/dashboard/settings"
-                  className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
-                >
-                  Settings
-                </Link>
-              ) : null}
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href="/employee"
+                    className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                  >
+                    Employee Portal
+                  </Link>
+                  {showSettingsShortcut ? (
+                    <Link
+                      href="/dashboard/settings"
+                      className="rounded-[20px] border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                    >
+                      Settings
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="rounded-[30px] border border-[#1c2832] bg-[linear-gradient(180deg,#111a22_0%,#182632_100%)] p-5 text-white shadow-[0_22px_44px_rgba(15,23,42,0.14)]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Workspace posture</p>
+                      <h3 className="mt-3 text-[1.2rem] font-semibold tracking-[-0.04em] text-white">Keep the main product plane in focus.</h3>
+                    </div>
+                    <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
+                      {portalTitle}
+                    </Badge>
+                  </div>
+                  <p className="mt-4 text-sm leading-7 text-zinc-300">{getRoleSummary(role)}</p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                    <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        <ViewerCurrentDateLabel monthStyle="short" />
+                      </p>
+                    </div>
+                    <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Modules</p>
+                      <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.04em] text-white">{totalModules}</p>
+                      <p className="mt-1 text-xs leading-5 text-zinc-400">{activeSection} stays anchored in the main workspace.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[30px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,248,250,0.88))] p-5 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
+                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Current surface</p>
+                  <p className="mt-3 text-[1.15rem] font-semibold tracking-[-0.04em] text-zinc-950">{activeTitle}</p>
+                  <p className="mt-2 text-sm leading-7 text-zinc-600">{sectionSummary}</p>
+                  <div className={`mt-5 grid gap-3 ${showSettingsShortcut ? "sm:grid-cols-2 xl:grid-cols-1" : "grid-cols-1"}`}>
+                    <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)]">
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Access</p>
+                      <p className="mt-2 text-sm font-semibold text-zinc-950">{getRoleLabel(role)}</p>
+                    </div>
+                    {showSettingsShortcut ? (
+                      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)]">
+                        <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Shortcut</p>
+                        <p className="mt-2 text-sm font-semibold text-zinc-950">Settings stays one hop away.</p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
-          <main className="min-w-0 flex-1">{children}</main>
+              <main className="min-w-0 flex-1 lg:px-1">{children}</main>
+            </div>
+          </div>
         </div>
       </div>
 

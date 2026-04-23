@@ -64,6 +64,24 @@ function BoardStat({
   );
 }
 
+function BoardFocusItem({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[20px] border border-white bg-white/92 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-zinc-950">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-zinc-600">{detail}</p>
+    </div>
+  );
+}
+
 export default async function EstimatesPage() {
   const { data: estimates, error } = await getEstimates();
   const estimateRows = estimates ?? [];
@@ -75,35 +93,68 @@ export default async function EstimatesPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <section className="overflow-hidden rounded-[32px] border border-zinc-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(245,247,248,0.92))] p-6 shadow-[0_20px_48px_rgba(15,23,42,0.08)] sm:p-8">
-        <div className="max-w-5xl">
-          <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Estimating Workflow</p>
-          <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
-            Keep scope, customer context, and pricing confidence on one board.
-          </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
-            Review estimate work with a calmer desktop composition, then move straight into the record that still needs scope refinement, pricing review, or customer follow-up.
-          </p>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)] xl:items-start">
+          <div className="min-w-0">
+            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Estimating Workflow</p>
+            <h1 className="mt-4 text-[clamp(2rem,3vw,3.35rem)] font-semibold tracking-[-0.06em] text-[#101828]">
+              Keep scope, customer context, and pricing confidence on one board.
+            </h1>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600 sm:text-base">
+              Review estimate work with a calmer desktop composition, then move straight into the record that still needs scope refinement, pricing review, or customer follow-up.
+            </p>
 
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              href="/dashboard/estimates/new"
-              className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
-            >
-              New estimate
-            </Link>
-            {latestEstimate ? (
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
-                href={`/dashboard/estimates/${latestEstimate.id}`}
-                className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                href="/dashboard/estimates/new"
+                className="inline-flex items-center justify-center rounded-[22px] bg-[#101828] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1b2432]"
               >
-                Open latest estimate
+                New estimate
               </Link>
-            ) : null}
+              {latestEstimate ? (
+                <Link
+                  href={`/dashboard/estimates/${latestEstimate.id}`}
+                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                >
+                  Open latest estimate
+                </Link>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_20px_42px_rgba(15,23,42,0.06)]">
+            <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Board focus</p>
+            <h2 className="mt-3 text-[1.3rem] font-semibold tracking-[-0.04em] text-zinc-950">Use this board for active pricing follow-up.</h2>
+            <p className="mt-3 text-sm leading-7 text-zinc-600">
+              Keep the estimate log readable from the office side, then move into the exact record that still needs scope refinement or customer-ready polish.
+            </p>
+            <p className="mt-3 text-sm font-medium text-zinc-900">
+              {latestEstimate
+                ? `${latestEstimate.title} · ${getCustomer(latestEstimate.customers)}`
+                : "Create the first estimate to start the estimating workflow."}
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              <BoardFocusItem
+                label="Latest estimate"
+                value={latestEstimate?.title ?? "No estimate in view"}
+                detail={latestEstimate ? "Use the freshest pricing record as the next follow-up entry point." : "Create the first estimate to start the workflow."}
+              />
+              <BoardFocusItem
+                label="Customer context"
+                value={latestEstimate ? getCustomer(latestEstimate.customers) : "No customer linked yet"}
+                detail="Keep customer and scope context visible before diving into line-item review."
+              />
+              <BoardFocusItem
+                label="Job alignment"
+                value={latestEstimate ? getJob(latestEstimate.jobs) : "No linked job yet"}
+                detail="The estimating board should lead naturally into the matching project record."
+              />
+            </div>
           </div>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[28px] border border-white/85 bg-white/88 shadow-[0_18px_38px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-[0.78fr,0.78fr,0.9fr,1.54fr]">
+          <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-3">
             <BoardStat
               label="Estimates in view"
               value={estimateRows.length}
@@ -119,18 +170,6 @@ export default async function EstimatesPage() {
               value={formatCurrency(boardSubtotal)}
               detail={`${linkedCustomers} customer${linkedCustomers === 1 ? "" : "s"} represented across the board.`}
             />
-            <div className="bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] px-5 py-4">
-              <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Board focus</p>
-              <p className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-zinc-950">Use this board for active pricing follow-up.</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                Keep the estimate log readable from the office side, then move into the exact record that still needs scope refinement or customer-ready polish.
-              </p>
-              <p className="mt-3 text-sm font-medium text-zinc-900">
-                {latestEstimate
-                  ? `${latestEstimate.title} · ${getCustomer(latestEstimate.customers)}`
-                  : "Create the first estimate to start the estimating workflow."}
-              </p>
-            </div>
           </div>
         </div>
       </section>
