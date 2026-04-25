@@ -1,5 +1,6 @@
 import { EmployeeUploadForm } from "@/components/uploads/EmployeeUploadForm";
 import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
+import { KpiTile, PageHeader } from "@/components/ui/page-primitives";
 import { getEmployeeUploadDailyReportOptions, getEmployeeUploadJobOptions } from "@/lib/db/queries";
 
 export default async function EmployeeUploadsPage() {
@@ -13,11 +14,20 @@ export default async function EmployeeUploadsPage() {
   const missingEmployeeLink = loadError === "No employee record is linked to your user.";
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Employee Uploads</h1>
-        <p className="mt-3 text-zinc-600">Upload progress photos or supporting documents and keep them tied to the right assigned job.</p>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Employee Workflow"
+        title="Employee Uploads"
+        description="Upload progress photos or supporting documents and keep them tied to the right assigned job."
+      />
+
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+      {!loadError ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <KpiTile label="Assigned jobs" value={String(jobOptions.length)} helper="Active assignments available for uploads." />
+          <KpiTile label="Daily reports" value={String(dailyReportOptions.length)} helper="Report records available for linking." />
+        </div>
+      ) : null}
 
       {loadError ? missingEmployeeLink ? (
         <EmptyState
@@ -45,6 +55,7 @@ export default async function EmployeeUploadsPage() {
       ) : null}
 
       {!loadError ? <EmployeeUploadForm jobOptions={jobOptions} dailyReportOptions={dailyReportOptions} /> : null}
+      </div>
     </div>
   );
 }

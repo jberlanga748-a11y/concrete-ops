@@ -7,23 +7,30 @@ import { createProposal, updateProposal } from "@/lib/db/mutations";
 import type { CustomerOption, ProposalDetailRow, ProposalSectionRow, TimeOption } from "@/lib/db/queries";
 import type { ProposalSectionType, ProposalStatus } from "@/lib/db/schema";
 import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
 import { useToast } from "@/components/ui/ToastProvider";
+
+const fieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500";
+const compactFieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500";
+const secondaryButtonClassName =
+  "inline-flex items-center justify-center rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-blue-50 disabled:opacity-50";
 
 function FormShell({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p>
-        <h2 className="mt-2 text-2xl font-semibold text-zinc-950">{title}</h2>
-        <p className="mt-2 text-sm text-zinc-600">{description}</p>
-      </div>
+    <div className="space-y-4">
+      <OperationalCard className="p-4">
+        <p className="mb-2 text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">{eyebrow}</p>
+        <SectionHeader title={title} description={description} />
+      </OperationalCard>
       <div className="space-y-4">{children}</div>
     </div>
   );
 }
 
 function FieldHint({ children }: { children: ReactNode }) {
-  return <p className="mt-2 text-sm text-zinc-500">{children}</p>;
+  return <p className="mt-2 text-sm font-medium text-slate-500">{children}</p>;
 }
 
 function FormNotice({
@@ -34,7 +41,7 @@ function FormNotice({
   tone?: "success" | "error" | "info";
 }) {
   return (
-    <p className={`text-sm ${tone === "error" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-zinc-500"}`}>
+    <p className={`text-sm font-bold ${tone === "error" ? "text-red-600" : tone === "success" ? "text-emerald-700" : "text-slate-500"}`}>
       {message}
     </p>
   );
@@ -230,7 +237,7 @@ export function ProposalForm({
               <select
                 value={customerId}
                 onChange={(e) => setCustomerId(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="">Select customer</option>
                 {customerOptions.map((customer) => (
@@ -245,7 +252,7 @@ export function ProposalForm({
               <select
                 value={jobId}
                 onChange={(e) => setJobId(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="">Select job</option>
                 {jobOptions.map((job) => (
@@ -263,7 +270,7 @@ export function ProposalForm({
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
                 placeholder="Example: Concrete Removal and Replacement Proposal"
               />
             </div>
@@ -272,7 +279,7 @@ export function ProposalForm({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ProposalStatus)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="draft">Draft</option>
                 <option value="sent">Sent</option>
@@ -287,7 +294,7 @@ export function ProposalForm({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+              className={`${fieldClassName} min-h-24 resize-y`}
               placeholder="Internal notes or context for the office team"
             />
           </div>
@@ -298,27 +305,27 @@ export function ProposalForm({
           description="Structure the narrative with section rows so customers can scan scope, exclusions, and terms quickly."
         >
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => addRow("scope")} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium">
+            <button type="button" onClick={() => addRow("scope")} className={secondaryButtonClassName}>
               Add Scope
             </button>
-            <button onClick={() => addRow("exclusion")} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium">
+            <button type="button" onClick={() => addRow("exclusion")} className={secondaryButtonClassName}>
               Add Exclusion
             </button>
-            <button onClick={() => addRow("term")} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium">
+            <button type="button" onClick={() => addRow("term")} className={secondaryButtonClassName}>
               Add Term
             </button>
           </div>
 
           <div className="space-y-3">
             {rows.map((row, index) => (
-              <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-4">
+              <div key={index} className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
                 <div className="grid gap-3 md:grid-cols-4">
                   <div>
                     <FieldLabel>Section type</FieldLabel>
                     <select
                       value={row.sectionType}
                       onChange={(e) => updateRow(index, { sectionType: e.target.value as ProposalSectionType })}
-                      className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                      className={compactFieldClassName}
                     >
                       <option value="scope">Scope</option>
                       <option value="exclusion">Exclusion</option>
@@ -330,7 +337,7 @@ export function ProposalForm({
                     <input
                       value={row.heading}
                       onChange={(e) => updateRow(index, { heading: e.target.value })}
-                      className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                      className={compactFieldClassName}
                       placeholder="Example: Work Scope, Exclusions, Payment Terms"
                     />
                   </div>
@@ -340,7 +347,7 @@ export function ProposalForm({
                   <textarea
                     value={row.content}
                     onChange={(e) => updateRow(index, { content: e.target.value })}
-                    className="min-h-28 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                    className={`${compactFieldClassName} min-h-28 resize-y`}
                     placeholder="Write section details"
                   />
                   <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -350,21 +357,21 @@ export function ProposalForm({
                           type="button"
                           onClick={() => handleRewriteScopeWithAI(index)}
                           disabled={assistantRowIndex === index || loading}
-                          className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 disabled:opacity-50"
+                          className={secondaryButtonClassName}
                         >
                           {assistantRowIndex === index ? "Rewriting..." : "Rewrite with AI"}
                         </button>
-                        <p className="text-xs leading-5 text-zinc-500">
+                        <p className="text-xs font-medium leading-5 text-slate-500">
                           Rewrites rough scope text into concise, customer-facing language without inventing scope details.
                         </p>
                       </>
                     ) : (
-                      <p className="text-xs leading-5 text-zinc-500">AI rewrite is available for scope sections.</p>
+                      <p className="text-xs font-medium leading-5 text-slate-500">AI rewrite is available for scope sections.</p>
                     )}
                   </div>
                 </div>
                 <div className="mt-3 flex justify-end">
-                  <button onClick={() => removeRow(index)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium">
+                  <button type="button" onClick={() => removeRow(index)} className={secondaryButtonClassName}>
                     Remove Section
                   </button>
                 </div>
@@ -377,9 +384,10 @@ export function ProposalForm({
 
         <FormActions hint="Use concise sections so scope and terms are easy for customers to approve.">
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 transition hover:bg-blue-800 disabled:opacity-50"
           >
             {loading ? "Saving..." : proposal?.id ? "Save Proposal" : "Create Proposal"}
           </button>

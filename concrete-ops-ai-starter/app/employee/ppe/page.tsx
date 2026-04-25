@@ -1,4 +1,5 @@
 import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
+import { KpiTile, OperationalCard, PageHeader, SectionHeader } from "@/components/ui/page-primitives";
 import { getMyPPEItems, type PPEItemRow } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
 
@@ -18,12 +19,14 @@ export default async function EmployeePPEPage() {
   const fitCheckCount = (items ?? []).filter((item) => item.status === "pending_fit_check").length;
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">My PPE</h1>
-        <p className="mt-3 text-zinc-600">See what has been issued to you and what needs a fit check or replacement.</p>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Employee Workflow"
+        title="My PPE"
+        description="See what has been issued to you and what needs a fit check or replacement."
+      />
 
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
       {error ? (
         <ErrorPanel
           title="We couldn’t load your PPE records right now"
@@ -33,21 +36,9 @@ export default async function EmployeePPEPage() {
         />
       ) : (items ?? []).length > 0 ? (
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Issued Items</p>
-            <p className="mt-3 text-3xl font-semibold text-zinc-950">{items?.length ?? 0}</p>
-            <p className="mt-2 text-sm text-zinc-600">Current PPE records assigned to your account.</p>
-          </div>
-          <div className="rounded-3xl border bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Needs Replacement</p>
-            <p className="mt-3 text-3xl font-semibold text-zinc-950">{replacementCount}</p>
-            <p className="mt-2 text-sm text-zinc-600">Items that need office follow-up or reissue.</p>
-          </div>
-          <div className="rounded-3xl border bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Pending Fit Check</p>
-            <p className="mt-3 text-3xl font-semibold text-zinc-950">{fitCheckCount}</p>
-            <p className="mt-2 text-sm text-zinc-600">Items still waiting on sizing or fit confirmation.</p>
-          </div>
+          <KpiTile label="Issued Items" value={String(items?.length ?? 0)} helper="Current PPE records assigned to your account." />
+          <KpiTile label="Needs Replacement" value={String(replacementCount)} helper="Items that need office follow-up or reissue." />
+          <KpiTile label="Pending Fit Check" value={String(fitCheckCount)} helper="Items still waiting on sizing or fit confirmation." />
         </div>
       ) : null}
 
@@ -55,35 +46,33 @@ export default async function EmployeePPEPage() {
         {(items ?? []).map((item) => {
           const employee = getEmployee(item.employees);
           return (
-            <section key={item.id} className="rounded-3xl border bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-semibold">{item.item_name}</h2>
-                  <p className="mt-1 text-sm text-zinc-600">
-                    {[employee?.full_name, employee?.crew_name, formatLabel(item.status)].filter(Boolean).join(" / ")}
-                  </p>
-                </div>
-                <StatusChip tone={item.status === "issued" ? "success" : item.status === "needs_replacement" ? "warning" : "info"}>
+            <OperationalCard key={item.id} className="p-4">
+              <SectionHeader
+                title={item.item_name}
+                description={[employee?.full_name, employee?.crew_name, formatLabel(item.status)].filter(Boolean).join(" / ")}
+                action={
+                  <StatusChip tone={item.status === "issued" ? "success" : item.status === "needs_replacement" ? "warning" : "info"}>
                   {formatLabel(item.status)}
-                </StatusChip>
-              </div>
+                  </StatusChip>
+                }
+              />
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-700">
-                  <p className="font-medium">Issued</p>
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm font-bold text-slate-700">
+                  <p className="font-black text-slate-950">Issued</p>
                   <p className="mt-1">{formatDateOnly(item.issued_at)}</p>
                 </div>
-                <div className="rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-700">
-                  <p className="font-medium">Replacement Due</p>
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm font-bold text-slate-700">
+                  <p className="font-black text-slate-950">Replacement Due</p>
                   <p className="mt-1">{formatDateOnly(item.replacement_due_at)}</p>
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-700">
-                <p className="font-medium">Fit Notes</p>
+              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm font-bold text-slate-700">
+                <p className="font-black text-slate-950">Fit Notes</p>
                 <p className="mt-1 whitespace-pre-wrap">{item.fit_notes || "-"}</p>
               </div>
-            </section>
+            </OperationalCard>
           );
         })}
 
@@ -94,6 +83,7 @@ export default async function EmployeePPEPage() {
             description="Once the office issues or records your PPE, it will show up here with replacement timing and fit notes."
           />
         ) : null}
+      </div>
       </div>
     </div>
   );

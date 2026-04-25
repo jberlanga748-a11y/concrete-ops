@@ -1,8 +1,17 @@
 import { redirect } from "next/navigation";
 import { EmployeeSelfClockCard } from "@/components/employee/EmployeeSelfClockCard";
 import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
+import { KpiTile, PageHeader } from "@/components/ui/page-primitives";
 import { createClient } from "@/lib/supabase/server";
 import type { Job, JobPhase } from "@/lib/db/schema";
+
+function EmployeeTimeHeader({
+  description = "Clock in and out for your shifts once the employee time board is available.",
+}: {
+  description?: string;
+}) {
+  return <PageHeader eyebrow="Employee Workflow" title="Employee Time" description={description} />;
+}
 
 export default async function EmployeeTimePage() {
   const supabase = await createClient();
@@ -18,18 +27,17 @@ export default async function EmployeeTimePage() {
 
   if (appUserError) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold">Employee Time</h1>
-          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
-        </div>
+      <div>
+        <EmployeeTimeHeader />
 
+        <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
         <ErrorPanel
           title="We couldn’t load your time board right now"
           description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
           actionHref="/employee/time"
           actionLabel="Try again"
         />
+        </div>
       </div>
     );
   }
@@ -42,35 +50,33 @@ export default async function EmployeeTimePage() {
 
   if (employeeError) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold">Employee Time</h1>
-          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
-        </div>
+      <div>
+        <EmployeeTimeHeader />
 
+        <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
         <ErrorPanel
           title="We couldn’t load your time board right now"
           description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
           actionHref="/employee/time"
           actionLabel="Try again"
         />
+        </div>
       </div>
     );
   }
 
   if (!employee) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold">Employee Time</h1>
-          <p className="mt-3 text-zinc-600">Clock in and out once your employee profile is connected.</p>
-        </div>
+      <div>
+        <EmployeeTimeHeader description="Clock in and out once your employee profile is connected." />
 
+        <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
         <EmptyState
           icon="clock"
           title="Your employee record is still missing"
           description="This time board only works after the office links your login to an employee record. Once that happens, your assigned jobs and shift controls will appear here."
         />
+        </div>
       </div>
     );
   }
@@ -95,18 +101,17 @@ export default async function EmployeeTimePage() {
 
   if (assignmentsError || phasesError) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold">Employee Time</h1>
-          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
-        </div>
+      <div>
+        <EmployeeTimeHeader />
 
+        <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
         <ErrorPanel
           title="We couldn’t load your time board right now"
           description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
           actionHref="/employee/time"
           actionLabel="Try again"
         />
+        </div>
       </div>
     );
   }
@@ -126,18 +131,17 @@ export default async function EmployeeTimePage() {
 
   if (jobsError) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold">Employee Time</h1>
-          <p className="mt-3 text-zinc-600">Clock in and out for your shifts once the employee time board is available.</p>
-        </div>
+      <div>
+        <EmployeeTimeHeader />
 
+        <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
         <ErrorPanel
           title="We couldn’t load your time board right now"
           description="The employee time board is temporarily unavailable. Try refreshing the page or come back in a moment."
           actionHref="/employee/time"
           actionLabel="Try again"
         />
+        </div>
       </div>
     );
   }
@@ -153,12 +157,14 @@ export default async function EmployeeTimePage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Employee Time</h1>
-        <p className="mt-3 text-zinc-600">Clock in and out for your shifts, with job options scoped to your active assignments only.</p>
-      </div>
+    <div>
+      <EmployeeTimeHeader description="Clock in and out for your shifts, with job options scoped to your active assignments only." />
 
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+      <div className="grid gap-4 md:grid-cols-2">
+        <KpiTile label="Assigned jobs" value={String(jobOptions.length)} helper="Active job options scoped to your assignments." />
+        <KpiTile label="Phases" value={String(phaseOptions.length)} helper="Optional phase choices available for time entries." />
+      </div>
       {jobOptions.length === 0 ? (
         <EmptyState
           icon="briefcase"
@@ -170,6 +176,7 @@ export default async function EmployeeTimePage() {
       ) : null}
 
       <EmployeeSelfClockCard employeeId={employee.id} jobOptions={jobOptions} phaseOptions={phaseOptions} />
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { PolicyAcknowledgmentButton } from "@/components/policies/PolicyAcknowledgmentButton";
 import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
+import { OperationalCard, PageHeader, SectionHeader } from "@/components/ui/page-primitives";
 import { getMyPolicyAcknowledgments, type PolicyDetailRow } from "@/lib/db/queries";
 import { formatTimestamp } from "@/lib/time/formatting";
 
@@ -17,12 +18,14 @@ export default async function EmployeePoliciesPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold">Policies</h1>
-        <p className="mt-3 text-zinc-600">Read active company policies and acknowledge anything still waiting on your signature.</p>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Employee Workflow"
+        title="Policies"
+        description="Read active company policies and acknowledge anything still waiting on your signature."
+      />
 
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
       {error ? (
         <ErrorPanel
           title="We couldn’t load your policies right now"
@@ -37,20 +40,16 @@ export default async function EmployeePoliciesPage() {
           if (!policy) return null;
 
           return (
-            <section key={ack.id} className="rounded-3xl border bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-semibold">{policy.title}</h2>
-                  <p className="mt-1 text-sm text-zinc-600">
-                    {[policy.category, policy.version_label, ack.status === "signed" ? `Signed ${formatTimestamp(ack.acknowledged_at)}` : "Awaiting acknowledgment"].filter(Boolean).join(" · ")}
-                  </p>
-                </div>
-                <PolicyAcknowledgmentButton policyId={policy.id} signed={ack.status === "signed"} />
-              </div>
-              <div className="mt-4 whitespace-pre-wrap rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-700">
+            <OperationalCard key={ack.id} className="p-4">
+              <SectionHeader
+                title={policy.title}
+                description={[policy.category, policy.version_label, ack.status === "signed" ? `Signed ${formatTimestamp(ack.acknowledged_at)}` : "Awaiting acknowledgment"].filter(Boolean).join(" · ")}
+                action={<PolicyAcknowledgmentButton policyId={policy.id} signed={ack.status === "signed"} />}
+              />
+              <div className="mt-4 whitespace-pre-wrap rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm font-medium leading-6 text-slate-700">
                 {policy.content}
               </div>
-            </section>
+            </OperationalCard>
           );
         })}
 
@@ -63,6 +62,7 @@ export default async function EmployeePoliciesPage() {
         ) : null}
       </div>
       )}
+      </div>
     </div>
   );
 }

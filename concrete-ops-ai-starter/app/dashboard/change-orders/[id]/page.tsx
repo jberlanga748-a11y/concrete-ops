@@ -1,8 +1,11 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { ApprovalsCard } from "@/components/approvals/ApprovalsCard";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { RecordDeliveryCard } from "@/components/exports/RecordDeliveryCard";
+import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import { KpiTile, OperationalCard, PageHeader, RecordPreview, SectionHeader } from "@/components/ui/page-primitives";
 import {
   getChangeOrderById,
   getApprovalsForEntity,
@@ -28,6 +31,15 @@ function getReportLabel(reports: ChangeOrderDetailRow["daily_reports"]) {
     return report ? `${report.report_date} (${report.id})` : "—";
   }
   return `${reports.report_date} (${reports.id})`;
+}
+
+function formatCurrency(value: number | string | null | undefined) {
+  const amount = Number(value) || 0;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export default async function ChangeOrderDetailPage({
@@ -56,93 +68,82 @@ export default async function ChangeOrderDetailPage({
   if (!changeOrder) notFound();
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">{changeOrder.title}</h1>
-            <p className="mt-2 text-zinc-600">{getJobLabel(changeOrder.jobs)}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/dashboard/change-orders/${changeOrder.id}/edit`}
-              className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50"
-            >
+    <div>
+      <PageHeader
+        eyebrow="Change Order"
+        title={changeOrder.title}
+        description={getJobLabel(changeOrder.jobs)}
+        actions={
+          <>
+            <Link href={`/dashboard/change-orders/${changeOrder.id}/edit`} className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
               Edit Change Order
             </Link>
-            <Link
-              href="/dashboard/change-orders"
-              className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50"
-            >
+            <Link href="/dashboard/change-orders" className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
               Back to Change Orders
             </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3 rounded-3xl border bg-white p-6 shadow-sm">
-        <p>
-          <span className="font-medium">Status:</span> {changeOrder.status}
-        </p>
-        <p>
-          <span className="font-medium">Linked Daily Report:</span>{" "}
-          {getReportLabel(changeOrder.daily_reports)}
-        </p>
-        <p>
-          <span className="font-medium">Description:</span>{" "}
-          {changeOrder.description || "—"}
-        </p>
-        {!isForeman ? (
-          <p>
-            <span className="font-medium">Direct Cost Total:</span>{" "}
-            {changeOrder.direct_cost_total}
-          </p>
-        ) : null}
-        {!isForeman ? (
-          <p>
-            <span className="font-medium">Markup Percent:</span>{" "}
-            {changeOrder.markup_percent}
-          </p>
-        ) : null}
-        {!isForeman ? (
-          <p>
-            <span className="font-medium">Total Amount:</span> {changeOrder.total_amount}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Linked Field Proof</h2>
-        <div className="mt-4">
-          <DocumentList documents={documents ?? []} emptyMessage="No linked field proof files." />
-        </div>
-      </div>
-
-      <RecordDeliveryCard
-        title="PDF + Email"
-        description="Export a clean change order PDF or send/resend it by email."
-        recordType="change_order"
-        recordId={changeOrder.id}
-        pdfUrl={`/api/change-orders/${changeOrder.id}/pdf`}
-        defaultSubject={`${changeOrder.title} change order`}
+          </>
+        }
       />
 
-      <ApprovalsCard approvalType="change_order" relatedId={changeOrder.id} approvals={approvals ?? []} />
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+          <div className="grid gap-4 md:grid-cols-2">
+            <KpiTile label="Status" value={changeOrder.status} helper="Current lifecycle state." />
+            <KpiTile
+              label={isForeman ? "Line items" : "Total Amount"}
+              value={isForeman ? String((lineItems ?? []).length) : formatCurrency(changeOrder.total_amount)}
+              helper={isForeman ? "Cost detail hidden for foreman view." : "Customer-facing change order total."}
+            />
+          </div>
+          <RecordPreview
+            title="Change order summary"
+            rows={[
+              ["Job", getJobLabel(changeOrder.jobs)],
+              ["Report", getReportLabel(changeOrder.daily_reports)],
+              ["Status", <StatusChip tone="info">{changeOrder.status}</StatusChip>],
+              ["Description", changeOrder.description || "—"],
+              ...(!isForeman
+                ? ([
+                    ["Direct cost", formatCurrency(changeOrder.direct_cost_total)],
+                    ["Markup", `${changeOrder.markup_percent}%`],
+                  ] as Array<[string, ReactNode]>)
+                : []),
+            ]}
+          />
+        </div>
 
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Line Items</h2>
-        <ul className="mt-4 space-y-2 text-sm">
-          {(lineItems ?? []).map((item) => (
-            <li key={item.id} className="rounded-2xl border p-3">
-              {item.description} · Qty {item.quantity} · Unit {item.unit_cost} · Total{" "}
-              {item.line_total}
-            </li>
-          ))}
+        <OperationalCard className="p-4">
+          <SectionHeader title="Linked Field Proof" description="Photos and documents connected to the change order." />
+          <DocumentList documents={documents ?? []} emptyMessage="No linked field proof files." />
+        </OperationalCard>
 
-          {(lineItems ?? []).length === 0 ? (
-            <li className="text-zinc-600">No line items yet.</li>
-          ) : null}
-        </ul>
+        <RecordDeliveryCard
+          title="PDF + Email"
+          description="Export a clean change order PDF or send/resend it by email."
+          recordType="change_order"
+          recordId={changeOrder.id}
+          pdfUrl={`/api/change-orders/${changeOrder.id}/pdf`}
+          defaultSubject={`${changeOrder.title} change order`}
+        />
+
+        <ApprovalsCard approvalType="change_order" relatedId={changeOrder.id} approvals={approvals ?? []} />
+
+        <OperationalCard className="p-4">
+          <SectionHeader title="Line Items" description="Cost rows attached to this change order." />
+          <ul className="space-y-2 text-sm">
+            {(lineItems ?? []).map((item) => (
+              <li key={item.id} className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 font-bold text-slate-700">
+                {item.description} · Qty {item.quantity} · Unit {formatCurrency(item.unit_cost)} · Total {formatCurrency(item.line_total)}
+              </li>
+            ))}
+
+            {(lineItems ?? []).length === 0 ? (
+              <li>
+                <EmptyState icon="file" title="No line items yet" description="Add line items when the change order needs a cost breakdown." />
+              </li>
+            ) : null}
+          </ul>
+        </OperationalCard>
       </div>
     </div>
   );

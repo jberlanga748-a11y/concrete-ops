@@ -31,12 +31,12 @@ export function PolicyAcknowledgmentButton({
   }
 
   if (signed) {
-    return <p className="text-sm text-green-700">Acknowledged.</p>;
+    return <p className="text-sm font-bold text-emerald-700">Acknowledged.</p>;
   }
 
   return (
     <div className="space-y-2">
-      <button onClick={handleSign} disabled={loading} className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">
+      <button type="button" onClick={handleSign} disabled={loading} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800 disabled:opacity-50">
         {loading ? "Signing..." : "Acknowledge Policy"}
       </button>
       {message ? <p className="text-sm text-red-600">{message}</p> : null}

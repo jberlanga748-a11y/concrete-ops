@@ -7,7 +7,11 @@ import type { EmployeeOption, JobAssignmentRow } from "@/lib/db/queries";
 import type { AssignmentRole } from "@/lib/db/schema";
 import { EmptyState, StatusChip } from "@/components/ui/feedback";
 import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
 import { useToast } from "@/components/ui/ToastProvider";
+
+const fieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-500";
 
 function getEmployeeDetails(assignment: JobAssignmentRow) {
   const employee = Array.isArray(assignment.employees) ? assignment.employees[0] : assignment.employees;
@@ -62,11 +66,11 @@ function AssignmentRow({
   }
 
   return (
-    <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-5">
+    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-base font-semibold text-zinc-950">{employee?.full_name || "Employee"}</p>
-          <p className="mt-1 text-sm leading-6 text-zinc-600">
+          <p className="text-base font-black text-slate-950">{employee?.full_name || "Employee"}</p>
+          <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
             {[employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ") || "No extra details"}
           </p>
         </div>
@@ -79,7 +83,7 @@ function AssignmentRow({
           <select
             value={assignmentRole}
             onChange={(e) => setAssignmentRole(e.target.value as AssignmentRole)}
-            className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+            className={fieldClassName}
           >
             <option value="foreman">Foreman</option>
             <option value="lead">Lead</option>
@@ -92,7 +96,7 @@ function AssignmentRow({
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+            className={fieldClassName}
           />
         </div>
         <div>
@@ -101,7 +105,7 @@ function AssignmentRow({
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+            className={fieldClassName}
           />
         </div>
         <div>
@@ -109,7 +113,7 @@ function AssignmentRow({
           <select
             value={isActive ? "active" : "inactive"}
             onChange={(e) => setIsActive(e.target.value === "active")}
-            className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+            className={fieldClassName}
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -119,9 +123,10 @@ function AssignmentRow({
 
       <div className="mt-4">
         <button
+          type="button"
           onClick={handleSave}
           disabled={loading}
-          className="rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 transition hover:bg-blue-800 disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Assignment"}
         </button>
@@ -194,14 +199,11 @@ export function JobAssignmentsCard({
   }
 
   return (
-    <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Assignments</p>
-        <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Crew planning</h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-600">
-          Manage who is assigned to this job and what role they carry before the field day starts.
-        </p>
-      </div>
+    <OperationalCard className="p-4">
+      <SectionHeader
+        title="Crew planning"
+        description="Manage who is assigned to this job and what role they carry before the field day starts."
+      />
 
       <div className="mt-5 space-y-4">
         <FormSection
@@ -214,7 +216,7 @@ export function JobAssignmentsCard({
               <select
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="">Select employee</option>
                 {employeeOptions.map((employee) => (
@@ -229,7 +231,7 @@ export function JobAssignmentsCard({
               <select
                 value={assignmentRole}
                 onChange={(e) => setAssignmentRole(e.target.value as AssignmentRole)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="foreman">Foreman</option>
                 <option value="lead">Lead</option>
@@ -242,7 +244,7 @@ export function JobAssignmentsCard({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               />
             </div>
             <div>
@@ -251,7 +253,7 @@ export function JobAssignmentsCard({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               />
             </div>
           </div>
@@ -261,7 +263,7 @@ export function JobAssignmentsCard({
             <select
               value={isActive ? "active" : "inactive"}
               onChange={(e) => setIsActive(e.target.value === "active")}
-              className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+              className={fieldClassName}
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -271,9 +273,10 @@ export function JobAssignmentsCard({
 
         <FormActions hint="Assignments keep the Job Hub, daily report crew rows, and foreman workflow aligned around the same crew list.">
           <button
+            type="button"
             onClick={handleCreate}
             disabled={loading}
-            className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 transition hover:bg-blue-800 disabled:opacity-50"
           >
             {loading ? "Saving..." : "Add Assignment"}
           </button>
@@ -293,6 +296,6 @@ export function JobAssignmentsCard({
           ) : null}
         </div>
       </div>
-    </section>
+    </OperationalCard>
   );
 }

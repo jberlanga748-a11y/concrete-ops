@@ -6,20 +6,25 @@ import { postJson } from "@/lib/ai/client";
 import { createChangeOrder, updateChangeOrder } from "@/lib/db/mutations";
 import type { ChangeOrderDetailRow, ChangeOrderLineItemRow, DailyReportOption, JobFileRow, TimeOption } from "@/lib/db/queries";
 import { FieldLabel, FormActions, FormSection } from "@/components/ui/form";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
+
+const fieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500";
+const secondaryButtonClassName =
+  "inline-flex items-center justify-center rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-blue-50 disabled:opacity-50";
 
 function FormShell({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p>
-      <h2 className="mt-2 text-2xl font-semibold text-zinc-950">{title}</h2>
-      <p className="mt-2 text-sm text-zinc-600">{description}</p>
-      <div className="mt-5 space-y-4">{children}</div>
-    </div>
+    <OperationalCard className="p-4">
+      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">{eyebrow}</p>
+      <SectionHeader title={title} description={description} />
+      <div className="mt-4 space-y-4">{children}</div>
+    </OperationalCard>
   );
 }
 
 function FieldHint({ children }: { children: ReactNode }) {
-  return <p className="mt-2 text-xs text-zinc-500">{children}</p>;
+  return <p className="mt-2 text-xs font-medium text-slate-500">{children}</p>;
 }
 
 function FormNotice({
@@ -30,7 +35,7 @@ function FormNotice({
   tone?: "success" | "error" | "info";
 }) {
   return (
-    <p className={`text-sm ${tone === "error" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-zinc-500"}`}>
+    <p className={`text-sm font-bold ${tone === "error" ? "text-red-600" : tone === "success" ? "text-emerald-700" : "text-slate-500"}`}>
       {message}
     </p>
   );
@@ -267,7 +272,7 @@ export function ChangeOrderForm({
               <select
                 value={jobId}
                 onChange={(e) => handleJobChange(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="">Select job</option>
                 {jobOptions.map((job) => (
@@ -283,7 +288,7 @@ export function ChangeOrderForm({
               <select
                 value={dailyReportId}
                 onChange={(e) => setDailyReportId(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="">Select daily report</option>
                 {scopedReportOptions.map((report) => (
@@ -304,7 +309,7 @@ export function ChangeOrderForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Example: Extra slab edge prep"
-              className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+              className={fieldClassName}
             />
           </div>
 
@@ -314,7 +319,7 @@ export function ChangeOrderForm({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as typeof status)}
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={fieldClassName}
               >
                 <option value="draft">Draft</option>
                 <option value="submitted">Submitted</option>
@@ -329,18 +334,18 @@ export function ChangeOrderForm({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What changed and why"
-                className="min-h-24 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                className={`${fieldClassName} min-h-24 resize-y`}
               />
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={handleRewriteWithAI}
                   disabled={assistantLoading || loading}
-                  className="rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 disabled:opacity-50"
+                  className={secondaryButtonClassName}
                 >
                   {assistantLoading ? "Rewriting..." : "Rewrite with AI"}
                 </button>
-                <p className="text-xs leading-5 text-zinc-500">Keeps tone factual and customer-safe without inventing scope or pricing.</p>
+                <p className="text-xs font-medium leading-5 text-slate-500">Keeps tone factual and customer-safe without inventing scope or pricing.</p>
               </div>
             </div>
           </div>
@@ -356,7 +361,7 @@ export function ChangeOrderForm({
                 const lineTotal = Number(((Number(row.quantity) || 0) * (Number(row.unitCost) || 0)).toFixed(2));
 
                 return (
-                  <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-4">
+                  <div key={index} className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_140px]">
                       <div>
                         <FieldLabel>Description</FieldLabel>
@@ -364,7 +369,7 @@ export function ChangeOrderForm({
                           value={row.description}
                           onChange={(e) => updateLineItem(index, { description: e.target.value })}
                           placeholder="Concrete saw cutting, additional rebar, pump mobilization"
-                          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                          className={fieldClassName}
                         />
                       </div>
                       <div>
@@ -375,7 +380,7 @@ export function ChangeOrderForm({
                           step="0.01"
                           value={row.quantity}
                           onChange={(e) => updateLineItem(index, { quantity: e.target.value })}
-                          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                          className={fieldClassName}
                         />
                       </div>
                       <div>
@@ -386,16 +391,16 @@ export function ChangeOrderForm({
                           step="0.01"
                           value={row.unitCost}
                           onChange={(e) => updateLineItem(index, { unitCost: e.target.value })}
-                          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                          className={fieldClassName}
                         />
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-3">
-                      <p className="text-sm text-zinc-600">Line total: ${lineTotal.toFixed(2)}</p>
+                      <p className="text-sm font-black text-slate-700">Line total: ${lineTotal.toFixed(2)}</p>
                       <button
                         type="button"
                         onClick={() => removeLineItem(index)}
-                        className="rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                        className={secondaryButtonClassName}
                       >
                         Remove line
                       </button>
@@ -404,15 +409,15 @@ export function ChangeOrderForm({
                 );
               })}
             </div>
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
               <div>
-                <p className="text-sm text-zinc-600">Line item subtotal</p>
-                <p className="mt-1 text-2xl font-semibold text-zinc-950">${lineItemSubtotal.toFixed(2)}</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500">Line item subtotal</p>
+                <p className="mt-1 text-2xl font-black text-slate-950">${lineItemSubtotal.toFixed(2)}</p>
               </div>
               <button
                 type="button"
                 onClick={addLineItem}
-                className="rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+                className={secondaryButtonClassName}
               >
                 Add line item
               </button>
@@ -435,7 +440,7 @@ export function ChangeOrderForm({
                   value={normalizedLineItems.length > 0 ? effectiveDirectCostTotal.toFixed(2) : directCostTotal}
                   onChange={(e) => setDirectCostTotal(e.target.value)}
                   disabled={normalizedLineItems.length > 0}
-                  className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                  className={fieldClassName}
                 />
                 {normalizedLineItems.length > 0 ? (
                   <FieldHint>Direct cost is currently driven by the line items above.</FieldHint>
@@ -449,13 +454,13 @@ export function ChangeOrderForm({
                   step="0.01"
                   value={markupPercent}
                   onChange={(e) => setMarkupPercent(e.target.value)}
-                  className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3"
+                  className={fieldClassName}
                 />
               </div>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-              <p className="text-sm text-zinc-600">Total amount preview</p>
-              <p className="mt-1 text-2xl font-semibold text-zinc-950">${totalAmountPreview.toFixed(2)}</p>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-500">Total amount preview</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">${totalAmountPreview.toFixed(2)}</p>
             </div>
           </FormSection>
         ) : null}
@@ -466,18 +471,18 @@ export function ChangeOrderForm({
         >
           <div className="max-h-72 space-y-2 overflow-auto pr-1 text-sm">
             {filteredProofFiles.map((file) => (
-              <label key={file.id} className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3">
+              <label key={file.id} className="flex items-start gap-3 rounded-xl border border-blue-100 bg-white p-3">
                 <input type="checkbox" checked={proofFileIds.includes(file.id)} onChange={() => toggleProof(file.id)} />
                 <span>
-                  <span className="font-medium text-zinc-900">{file.file_name}</span>
-                  <span className="mt-1 block text-zinc-600">
+                  <span className="font-black text-slate-950">{file.file_name}</span>
+                  <span className="mt-1 block font-medium text-slate-500">
                     {file.tag} · {file.created_at}
                   </span>
                 </span>
               </label>
             ))}
             {filteredProofFiles.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-zinc-300 bg-white p-4 text-zinc-600">
+              <p className="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-4 font-medium text-slate-600">
                 No uploads available for the selected job.
               </p>
             ) : null}
@@ -486,9 +491,10 @@ export function ChangeOrderForm({
 
         <FormActions hint="Required fields: job and title. Add pricing and proof files when available to speed up review.">
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 transition hover:bg-blue-800 disabled:opacity-50"
           >
             {loading ? "Saving..." : submitLabel}
           </button>
