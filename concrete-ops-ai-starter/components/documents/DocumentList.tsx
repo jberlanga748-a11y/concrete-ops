@@ -63,33 +63,33 @@ export function DocumentList({
   return (
     <ul className="space-y-3 text-sm">
       {documents.map((document) => (
-        <li key={document.id} className="rounded-2xl border p-3">
+        <li key={document.id} className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="font-medium">{document.file_name}</p>
-              <p className="mt-1 text-zinc-600">
+              <p className="font-black text-slate-950">{document.file_name}</p>
+              <p className="mt-1 font-bold text-slate-500">
                 {[`Tag: ${document.tag}`, `Type: ${document.file_type}`, `Size: ${formatFileSize(document.file_size_bytes)}`].join(" · ")}
               </p>
-              <p className="mt-1 text-zinc-600">
+              <p className="mt-1 font-bold text-slate-500">
                 {[getJobLabel(document.jobs), getReportLabel(document.daily_reports)].filter((value) => value !== "—").join(" · ") || "No linked job context"}
               </p>
-              <p className="mt-1 text-zinc-500">
+              <p className="mt-1 font-medium text-slate-500">
                 {[`Uploaded by ${getUploader(document.users, document.employees)}`, formatTimestamp(document.created_at)].join(" · ")}
               </p>
-              <p className="mt-2 text-zinc-700">{document.note || "—"}</p>
-              <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">
+              <p className="mt-2 font-medium text-slate-700">{document.note || "—"}</p>
+              <p className="mt-2 text-xs font-black uppercase tracking-widest text-blue-700">
                 {getLinkedLabels(document).join(" · ") || "Document"}
               </p>
             </div>
 
-            <Link href={`/api/documents/${document.id}`} className="rounded-xl border px-3 py-2 text-xs font-medium hover:bg-zinc-50">
+            <Link href={`/api/documents/${document.id}`} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">
               Open File
             </Link>
           </div>
         </li>
       ))}
 
-      {documents.length === 0 ? <li className="text-zinc-600">{emptyMessage}</li> : null}
+      {documents.length === 0 ? <li className="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-4 font-medium text-slate-600">{emptyMessage}</li> : null}
     </ul>
   );
 }

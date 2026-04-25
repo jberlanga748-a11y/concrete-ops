@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ViewerDateTime } from "@/components/time/ViewerDateTime";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
 import { createApproval, updateApprovalStatus } from "@/lib/db/mutations";
 import type { ApprovalRow } from "@/lib/db/queries";
 
@@ -42,28 +43,28 @@ export function ApprovalsCard({
   }
 
   return (
-    <section className="rounded-3xl border bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">Approvals</h2>
-          <p className="mt-1 text-sm text-zinc-600">Send and manage proposal or change order approval status.</p>
-        </div>
-        <button onClick={handleSend} disabled={hasOpenApproval} className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">
+    <OperationalCard className="p-4">
+      <SectionHeader
+        title="Approvals"
+        description="Send and manage proposal or change order approval status."
+        action={
+        <button type="button" onClick={handleSend} disabled={hasOpenApproval} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800 disabled:opacity-50">
           {hasOpenApproval ? "Approval Pending" : approvals.length > 0 ? "Send Again" : "Send Approval"}
         </button>
-      </div>
+        }
+      />
 
       <ul className="mt-4 space-y-3 text-sm">
         {approvals.map((approval) => (
-          <li key={approval.id} className="rounded-2xl border p-4">
+          <li key={approval.id} className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium">{getTitle(approval)}</p>
-                <p className="mt-1 text-zinc-600">
+                <p className="font-black text-slate-950">{getTitle(approval)}</p>
+                <p className="mt-1 font-bold text-slate-500">
                   <span className="capitalize">{approval.approval_type}</span> · {approval.status} · Sent{" "}
                   <ViewerDateTime value={approval.sent_at} includeYear includeTimeZoneName={false} />
                 </p>
-                <p className="mt-1 text-zinc-500">
+                <p className="mt-1 font-medium text-slate-500">
                   Viewed: <ViewerDateTime value={approval.viewed_at} includeYear includeTimeZoneName={false} /> · Decided:{" "}
                   <ViewerDateTime value={approval.decided_at} includeYear includeTimeZoneName={false} />
                 </p>
@@ -71,14 +72,14 @@ export function ApprovalsCard({
               {["sent", "viewed"].includes(approval.status) ? (
                 <div className="flex flex-wrap gap-2">
                   {approval.status === "sent" ? (
-                    <button onClick={() => handleStatusChange(approval.id, "viewed")} className="rounded-xl border px-3 py-2 text-xs font-medium">
+                    <button type="button" onClick={() => handleStatusChange(approval.id, "viewed")} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">
                       Mark Viewed
                     </button>
                   ) : null}
-                  <button onClick={() => handleStatusChange(approval.id, "approved")} className="rounded-xl border px-3 py-2 text-xs font-medium">
+                  <button type="button" onClick={() => handleStatusChange(approval.id, "approved")} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">
                     Approve
                   </button>
-                  <button onClick={() => handleStatusChange(approval.id, "rejected")} className="rounded-xl border px-3 py-2 text-xs font-medium">
+                  <button type="button" onClick={() => handleStatusChange(approval.id, "rejected")} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">
                     Reject
                   </button>
                 </div>
@@ -86,8 +87,8 @@ export function ApprovalsCard({
             </div>
           </li>
         ))}
-        {approvals.length === 0 ? <li className="text-zinc-600">No approvals sent yet.</li> : null}
+        {approvals.length === 0 ? <li className="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-4 font-medium text-slate-600">No approvals sent yet.</li> : null}
       </ul>
-    </section>
+    </OperationalCard>
   );
 }

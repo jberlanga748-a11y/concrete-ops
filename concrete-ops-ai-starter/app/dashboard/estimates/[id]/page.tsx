@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EstimateForm } from "@/components/estimates/EstimateForm";
+import { KpiTile, PageHeader, RecordPreview } from "@/components/ui/page-primitives";
 import { getCustomerOptions, getDailyReportJobOptions, getEstimateById, getEstimateLineItems, type EstimateDetailRow } from "@/lib/db/queries";
 import { formatTimestamp } from "@/lib/time/formatting";
 
@@ -42,41 +43,37 @@ export default async function EstimateDetailPage({
   const creator = getCreator(estimate.users);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">{estimate.title}</h1>
-            <p className="mt-2 text-zinc-600">
-              {[estimate.status, customer?.name, job ? `${job.job_number} · ${job.name}` : null].filter(Boolean).join(" · ")}
-            </p>
-          </div>
-          <Link href="/dashboard/estimates" className="rounded-xl border px-4 py-2 text-sm">
+    <div>
+      <PageHeader
+        eyebrow="Estimate"
+        title={estimate.title}
+        description={[estimate.status, customer?.name, job ? `${job.job_number} · ${job.name}` : null].filter(Boolean).join(" · ")}
+        actions={
+          <Link href="/dashboard/estimates" className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
             Back to Estimates
           </Link>
+        }
+      />
+
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+          <div className="grid gap-4 md:grid-cols-2">
+            <KpiTile label="Subtotal" value={estimate.subtotal.toFixed(2)} helper="Current estimate line-item total." />
+            <KpiTile label="Status" value={estimate.status} helper="Pricing workflow state." />
+          </div>
+          <RecordPreview
+            title={customer?.name || "Customer"}
+            rows={[
+              ["Contact", [customer?.contact_name, customer?.phone, customer?.email].filter(Boolean).join(" · ") || "No contact details"],
+              ["Job", job ? `${job.job_number} · ${job.name}` : "—"],
+              ["Created", formatTimestamp(estimate.created_at)],
+              ["Owner", creator?.full_name || "—"],
+            ]}
+          />
         </div>
-      </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <section className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Customer</h2>
-          <p className="mt-2">{customer?.name || "—"}</p>
-          <p className="mt-1 text-sm text-zinc-600">
-            {[customer?.contact_name, customer?.phone, customer?.email].filter(Boolean).join(" · ") || "No contact details"}
-          </p>
-        </section>
-        <section className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Subtotal</h2>
-          <p className="mt-2 text-2xl font-semibold">{estimate.subtotal.toFixed(2)}</p>
-        </section>
-        <section className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h2 className="font-semibold">Created</h2>
-          <p className="mt-2 text-sm text-zinc-700">{formatTimestamp(estimate.created_at)}</p>
-          <p className="mt-1 text-sm text-zinc-600">{creator?.full_name || "—"}</p>
-        </section>
+        <EstimateForm estimate={estimate} lineItems={lineItems ?? []} customerOptions={customerOptions} jobOptions={jobOptions} />
       </div>
-
-      <EstimateForm estimate={estimate} lineItems={lineItems ?? []} customerOptions={customerOptions} jobOptions={jobOptions} />
     </div>
   );
 }

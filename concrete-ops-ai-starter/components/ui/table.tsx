@@ -3,15 +3,18 @@ import type { ReactNode } from "react";
 
 export function TableShell({
   toolbar,
+  filters,
   children,
 }: {
   toolbar?: ReactNode;
+  filters?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-[34px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,248,249,0.92))] shadow-[0_26px_58px_rgba(15,23,42,0.08)] backdrop-blur">
-      {toolbar ? <div className="px-5 py-5 sm:px-7 sm:py-6">{toolbar}</div> : null}
-      <div className="overflow-x-auto border-t border-white/90 bg-white/92">{children}</div>
+    <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5">
+      {toolbar ? <div className="px-4 py-4 sm:px-5">{toolbar}</div> : null}
+      {filters}
+      <div className={filters ? "overflow-x-auto bg-white" : "overflow-x-auto border-t border-blue-100 bg-white"}>{children}</div>
     </section>
   );
 }
@@ -30,15 +33,15 @@ export function TableToolbar({
   children?: ReactNode;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          {title ? <h2 className="text-[1.45rem] font-semibold tracking-[-0.045em] text-zinc-950">{title}</h2> : null}
-          {description ? <p className="mt-2 max-w-3xl text-sm leading-7 text-zinc-600">{description}</p> : null}
+          {title ? <h2 className="text-base font-black text-slate-950">{title}</h2> : null}
+          {description ? <p className="mt-1 max-w-3xl text-sm font-medium leading-5 text-slate-600">{description}</p> : null}
         </div>
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
           {countLabel ? (
-            <span className="rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600 shadow-[0_10px_22px_rgba(15,23,42,0.05)]">
+            <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
               {countLabel}
             </span>
           ) : null}
@@ -46,7 +49,7 @@ export function TableToolbar({
         </div>
       </div>
       {children ? (
-        <div className="rounded-[28px] border border-white bg-[linear-gradient(180deg,rgba(247,248,250,0.92),rgba(241,244,246,0.82))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3">
           {children}
         </div>
       ) : null}
@@ -59,7 +62,7 @@ export function DataTable({ children }: { children: ReactNode }) {
 }
 
 export function TableHead({ children }: { children: ReactNode }) {
-  return <thead className="bg-[linear-gradient(180deg,rgba(244,246,248,0.98),rgba(239,242,245,0.88))]">{children}</thead>;
+  return <thead className="border-b border-blue-100 bg-slate-50">{children}</thead>;
 }
 
 export function TableHeadCell({
@@ -71,7 +74,7 @@ export function TableHeadCell({
 }) {
   return (
     <th
-      className={`px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 ${className}`.trim()}
+      className={`px-4 py-3 text-left text-[11px] font-black uppercase tracking-widest text-slate-500 ${className}`.trim()}
     >
       {children}
     </th>
@@ -79,11 +82,11 @@ export function TableHeadCell({
 }
 
 export function TableBody({ children }: { children: ReactNode }) {
-  return <tbody className="divide-y divide-zinc-200">{children}</tbody>;
+  return <tbody className="divide-y divide-blue-50">{children}</tbody>;
 }
 
 export function TableRow({ children }: { children: ReactNode }) {
-  return <tr className="transition-colors hover:bg-[#fffaf6]">{children}</tr>;
+  return <tr className="transition-colors hover:bg-blue-50/50">{children}</tr>;
 }
 
 export function TableCell({
@@ -93,7 +96,7 @@ export function TableCell({
   children: ReactNode;
   className?: string;
 }) {
-  return <td className={`px-5 py-4 align-top text-zinc-700 ${className}`.trim()}>{children}</td>;
+  return <td className={`px-4 py-3 align-top font-medium text-slate-700 ${className}`.trim()}>{children}</td>;
 }
 
 export function TableActionLink({
@@ -106,7 +109,7 @@ export function TableActionLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center rounded-[18px] border border-zinc-300 bg-white px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-[0_10px_22px_rgba(15,23,42,0.04)] transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+      className="inline-flex items-center justify-center rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
     >
       {label}
     </Link>
@@ -122,7 +125,7 @@ export function TableEmptyRow({
 }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-5 py-8">
+      <td colSpan={colSpan} className="px-4 py-8">
         {children}
       </td>
     </tr>

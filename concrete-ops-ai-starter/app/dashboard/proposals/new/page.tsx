@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProposalForm } from "@/components/proposals/ProposalForm";
+import { KpiTile, PageHeader } from "@/components/ui/page-primitives";
 import { getCustomerOptions, getDailyReportJobOptions } from "@/lib/db/queries";
 
 export default async function NewProposalPage() {
@@ -9,20 +10,25 @@ export default async function NewProposalPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">New Proposal</h1>
-            <p className="mt-2 text-zinc-600">Draft a proposal with reusable scope, exclusions, and terms sections.</p>
-          </div>
-          <Link href="/dashboard/proposals" className="rounded-xl border px-4 py-2 text-sm">
+    <div>
+      <PageHeader
+        eyebrow="Office"
+        title="New Proposal"
+        description="Draft a proposal with reusable scope, exclusions, and terms sections."
+        actions={
+          <Link href="/dashboard/proposals" className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
             Back to Proposals
           </Link>
-        </div>
-      </div>
+        }
+      />
 
-      <ProposalForm customerOptions={customerOptions} jobOptions={jobOptions} />
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-2">
+          <KpiTile label="Customers" value={String(customerOptions.length)} helper="Active customers available for proposal drafts." />
+          <KpiTile label="Linked jobs" value={String(jobOptions.length)} helper="Available job records for context." />
+        </div>
+        <ProposalForm customerOptions={customerOptions} jobOptions={jobOptions} />
+      </div>
     </div>
   );
 }

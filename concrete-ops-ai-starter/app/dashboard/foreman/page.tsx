@@ -136,7 +136,7 @@ export default async function ForemanHomePage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Today</p>
               <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Jobs moving in the field</h2>
             </div>
-            <Link href="/dashboard/jobs" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+            <Link href="/dashboard/jobs" className="text-sm font-medium text-blue-700 hover:text-blue-800">
               View all jobs
             </Link>
           </div>
@@ -154,7 +154,7 @@ export default async function ForemanHomePage() {
                   <p className="mt-2 text-sm text-zinc-600">Current status: {job.status.replaceAll("_", " ")}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-700">
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
                     Field Ops
                   </span>
                   <Link
@@ -201,7 +201,7 @@ export default async function ForemanHomePage() {
               <Link
                 key={action.href}
                 href={action.href}
-                className="block rounded-2xl border border-zinc-200 px-4 py-4 transition hover:border-orange-300 hover:bg-orange-50"
+                className="block rounded-2xl border border-zinc-200 px-4 py-4 transition hover:border-blue-300 hover:bg-blue-50"
               >
                 <p className="text-sm font-semibold text-zinc-950">{action.title}</p>
                 <p className="mt-1 text-sm leading-6 text-zinc-600">{action.detail}</p>
@@ -217,7 +217,7 @@ export default async function ForemanHomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Recent Activity</p>
             <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Latest reports and crew movement</h2>
           </div>
-          <Link href="/dashboard/daily-reports" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+          <Link href="/dashboard/daily-reports" className="text-sm font-medium text-blue-700 hover:text-blue-800">
             View reports
           </Link>
         </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChangeOrderForm } from "@/components/change-orders/ChangeOrderForm";
+import { KpiTile, PageHeader } from "@/components/ui/page-primitives";
 import { getDailyReportJobOptions, getDailyReportOptions, getJobFiles } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,18 +21,26 @@ export default async function NewChangeOrderPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Create Change Order</h1>
-            <p className="mt-2 text-zinc-600">Link to job, optional daily report, and optional field proof uploads.</p>
-          </div>
-          <Link href="/dashboard/change-orders" className="rounded-xl border px-4 py-2 text-sm">Back to Change Orders</Link>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Change Orders"
+        title="Create Change Order"
+        description="Link to job, optional daily report, and optional field proof uploads."
+        actions={
+          <Link href="/dashboard/change-orders" className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
+            Back to Change Orders
+          </Link>
+        }
+      />
 
-      <ChangeOrderForm jobOptions={jobOptions} dailyReportOptions={dailyReportOptions} proofFiles={proofFiles ?? []} hideFinancials={isForeman} />
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          <KpiTile label="Jobs" value={String(jobOptions.length)} helper="Available projects for change orders." />
+          <KpiTile label="Daily reports" value={String(dailyReportOptions.length)} helper="Optional field records to connect." />
+          <KpiTile label="Proof files" value={String((proofFiles ?? []).length)} helper="Uploads available for supporting proof." />
+        </div>
+        <ChangeOrderForm jobOptions={jobOptions} dailyReportOptions={dailyReportOptions} proofFiles={proofFiles ?? []} hideFinancials={isForeman} />
+      </div>
     </div>
   );
 }

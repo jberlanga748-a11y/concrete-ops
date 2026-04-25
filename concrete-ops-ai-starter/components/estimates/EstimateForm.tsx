@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FieldLabel } from "@/components/ui/form";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
 import { createEstimate, updateEstimate } from "@/lib/db/mutations";
 import type { CustomerOption, EstimateDetailRow, EstimateLineItemRow, TimeOption } from "@/lib/db/queries";
 import type { EstimateLineItemType, EstimateStatus } from "@/lib/db/schema";
@@ -13,6 +15,13 @@ type EstimateLineItemFormRow = {
   unit: string;
   unitCost: string;
 };
+
+const fieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500";
+const compactFieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500";
+const secondaryButtonClassName =
+  "inline-flex items-center justify-center rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-blue-50";
 
 function buildInitialLineItems(lineItems?: EstimateLineItemRow[]) {
   if (!lineItems?.length) {
@@ -123,12 +132,16 @@ export function EstimateForm({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
+    <div className="space-y-4">
+      <OperationalCard className="p-4">
+        <SectionHeader
+          title="Estimate basics"
+          description="Set the customer, linked job, status, and scope notes before pricing line items."
+        />
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Customer *</p>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+            <FieldLabel required>Customer</FieldLabel>
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={fieldClassName}>
               <option value="">Select customer</option>
               {customerOptions.map((customer) => (
                 <option key={customer.id} value={customer.id}>
@@ -138,8 +151,8 @@ export function EstimateForm({
             </select>
           </div>
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Linked job</p>
-            <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full rounded-2xl border px-4 py-3">
+            <FieldLabel>Linked job</FieldLabel>
+            <select value={jobId} onChange={(e) => setJobId(e.target.value)} className={fieldClassName}>
               <option value="">Select job</option>
               {jobOptions.map((job) => (
                 <option key={job.id} value={job.id}>
@@ -152,12 +165,12 @@ export function EstimateForm({
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Estimate title *</p>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-2xl border px-4 py-3" placeholder="Example: South Pad Demo and Re-Pour" />
+            <FieldLabel required>Estimate title</FieldLabel>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className={fieldClassName} placeholder="Example: South Pad Demo and Re-Pour" />
           </div>
           <div>
-            <p className="mb-2 text-sm text-zinc-600">Status</p>
-            <select value={status} onChange={(e) => setStatus(e.target.value as EstimateStatus)} className="w-full rounded-2xl border px-4 py-3">
+            <FieldLabel>Status</FieldLabel>
+            <select value={status} onChange={(e) => setStatus(e.target.value as EstimateStatus)} className={fieldClassName}>
               <option value="draft">Draft</option>
               <option value="sent">Sent</option>
               <option value="approved">Approved</option>
@@ -167,33 +180,33 @@ export function EstimateForm({
         </div>
 
         <div className="mt-4">
-          <p className="mb-2 text-sm text-zinc-600">Notes</p>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-28 w-full rounded-2xl border px-4 py-3" placeholder="Scope assumptions, schedule notes, exclusions, or clarifying details" />
+          <FieldLabel>Notes</FieldLabel>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${fieldClassName} min-h-28 resize-y`} placeholder="Scope assumptions, schedule notes, exclusions, or clarifying details" />
         </div>
-      </div>
+      </OperationalCard>
 
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">Line Items</h2>
-            <p className="mt-1 text-sm text-zinc-600">Use labor, material, equipment, or other rows to build the estimate subtotal.</p>
-          </div>
+      <OperationalCard className="p-4">
+        <SectionHeader
+          title="Line Items"
+          description="Use labor, material, equipment, or other rows to build the estimate subtotal."
+          action={
           <div className="flex gap-2">
-            <button onClick={() => addRow("labor")} className="rounded-xl border px-3 py-2 text-sm">Add Labor</button>
-            <button onClick={() => addRow("material")} className="rounded-xl border px-3 py-2 text-sm">Add Material</button>
-            <button onClick={() => addRow("equipment")} className="rounded-xl border px-3 py-2 text-sm">Add Equipment</button>
+            <button type="button" onClick={() => addRow("labor")} className={secondaryButtonClassName}>Add Labor</button>
+            <button type="button" onClick={() => addRow("material")} className={secondaryButtonClassName}>Add Material</button>
+            <button type="button" onClick={() => addRow("equipment")} className={secondaryButtonClassName}>Add Equipment</button>
           </div>
-        </div>
+          }
+        />
 
         <div className="mt-4 space-y-3">
           {rows.map((row, index) => {
             const lineTotal = Number(((Number(row.quantity) || 0) * (Number(row.unitCost) || 0)).toFixed(2));
             return (
-              <div key={index} className="rounded-2xl border p-4">
+              <div key={index} className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                 <div className="grid gap-3 md:grid-cols-6">
                   <div>
-                    <p className="mb-2 text-xs text-zinc-500">Type</p>
-                    <select value={row.itemType} onChange={(e) => updateRow(index, { itemType: e.target.value as EstimateLineItemType })} className="w-full rounded-xl border px-3 py-2 text-sm">
+                    <FieldLabel>Type</FieldLabel>
+                    <select value={row.itemType} onChange={(e) => updateRow(index, { itemType: e.target.value as EstimateLineItemType })} className={compactFieldClassName}>
                       <option value="labor">Labor</option>
                       <option value="material">Material</option>
                       <option value="equipment">Equipment</option>
@@ -201,25 +214,25 @@ export function EstimateForm({
                     </select>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="mb-2 text-xs text-zinc-500">Description</p>
-                    <input value={row.description} onChange={(e) => updateRow(index, { description: e.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm" placeholder="Crew hours, rebar, skid steer, etc." />
+                    <FieldLabel>Description</FieldLabel>
+                    <input value={row.description} onChange={(e) => updateRow(index, { description: e.target.value })} className={compactFieldClassName} placeholder="Crew hours, rebar, skid steer, etc." />
                   </div>
                   <div>
-                    <p className="mb-2 text-xs text-zinc-500">Qty</p>
-                    <input type="number" min="0" step="0.01" value={row.quantity} onChange={(e) => updateRow(index, { quantity: e.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm" />
+                    <FieldLabel>Qty</FieldLabel>
+                    <input type="number" min="0" step="0.01" value={row.quantity} onChange={(e) => updateRow(index, { quantity: e.target.value })} className={compactFieldClassName} />
                   </div>
                   <div>
-                    <p className="mb-2 text-xs text-zinc-500">Unit</p>
-                    <input value={row.unit} onChange={(e) => updateRow(index, { unit: e.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm" placeholder="hrs, ea, days" />
+                    <FieldLabel>Unit</FieldLabel>
+                    <input value={row.unit} onChange={(e) => updateRow(index, { unit: e.target.value })} className={compactFieldClassName} placeholder="hrs, ea, days" />
                   </div>
                   <div>
-                    <p className="mb-2 text-xs text-zinc-500">Unit Cost</p>
-                    <input type="number" min="0" step="0.01" value={row.unitCost} onChange={(e) => updateRow(index, { unitCost: e.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm" />
+                    <FieldLabel>Unit Cost</FieldLabel>
+                    <input type="number" min="0" step="0.01" value={row.unitCost} onChange={(e) => updateRow(index, { unitCost: e.target.value })} className={compactFieldClassName} />
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <p className="text-sm text-zinc-600">Line total: {lineTotal.toFixed(2)}</p>
-                  <button onClick={() => removeRow(index)} className="rounded-xl border px-3 py-2 text-sm">
+                  <p className="text-sm font-black text-slate-700">Line total: {lineTotal.toFixed(2)}</p>
+                  <button type="button" onClick={() => removeRow(index)} className={secondaryButtonClassName}>
                     Remove Row
                   </button>
                 </div>
@@ -228,21 +241,21 @@ export function EstimateForm({
           })}
         </div>
 
-        <div className="mt-4 rounded-2xl border bg-zinc-50 p-4">
-          <p className="text-sm text-zinc-600">Subtotal</p>
-          <p className="mt-1 text-2xl font-semibold">{subtotal.toFixed(2)}</p>
+        <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Subtotal</p>
+          <p className="mt-1 text-2xl font-black text-slate-950">{subtotal.toFixed(2)}</p>
         </div>
-      </div>
+      </OperationalCard>
 
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
+      <div className="rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-sm shadow-blue-950/5">
+        <button type="button" onClick={handleSubmit} disabled={loading} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800 disabled:opacity-50">
           {loading ? "Saving..." : estimate?.id ? "Save Estimate" : "Create Estimate"}
         </button>
 
         {message ? (
-          <p className={`mt-3 text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
+          <p className={`mt-3 text-sm font-bold ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-emerald-700" : "text-slate-600"}`}>{message}</p>
         ) : (
-          <p className="mt-3 text-sm text-zinc-500">Keep line items readable for field and office teams reviewing labor, material, and equipment scope.</p>
+          <p className="mt-3 text-sm font-medium text-slate-500">Keep line items readable for field and office teams reviewing labor, material, and equipment scope.</p>
         )}
       </div>
     </div>

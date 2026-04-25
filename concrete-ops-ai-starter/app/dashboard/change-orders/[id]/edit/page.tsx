@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChangeOrderForm } from "@/components/change-orders/ChangeOrderForm";
+import { KpiTile, PageHeader } from "@/components/ui/page-primitives";
 import {
   getChangeOrderById,
   getChangeOrderFiles,
@@ -39,29 +40,36 @@ export default async function EditChangeOrderPage({
   if (!changeOrder) notFound();
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Update Change Order</h1>
-            <p className="mt-2 text-zinc-600">Adjust scope, pricing, status, and linked field proof without recreating the record.</p>
-          </div>
-          <Link href={`/dashboard/change-orders/${changeOrder.id}`} className="rounded-xl border px-4 py-2 text-sm">
+    <div>
+      <PageHeader
+        eyebrow="Change Orders"
+        title="Update Change Order"
+        description="Adjust scope, pricing, status, and linked field proof without recreating the record."
+        actions={
+          <Link href={`/dashboard/change-orders/${changeOrder.id}`} className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
             Back to Change Order
           </Link>
-        </div>
-      </div>
-
-      <ChangeOrderForm
-        changeOrderId={changeOrder.id}
-        jobOptions={jobOptions}
-        dailyReportOptions={dailyReportOptions}
-        proofFiles={proofFiles ?? []}
-        hideFinancials={isForeman}
-        initialValues={changeOrder}
-        initialProofFileIds={(linkedFiles ?? []).map((file) => file.job_file_id)}
-        initialLineItems={lineItems ?? []}
+        }
       />
+
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          <KpiTile label="Status" value={changeOrder.status} helper="Current lifecycle state." />
+          <KpiTile label="Line items" value={String((lineItems ?? []).length)} helper="Cost rows currently attached." />
+          <KpiTile label="Proof files" value={String((linkedFiles ?? []).length)} helper="Files currently linked to this change." />
+        </div>
+
+        <ChangeOrderForm
+          changeOrderId={changeOrder.id}
+          jobOptions={jobOptions}
+          dailyReportOptions={dailyReportOptions}
+          proofFiles={proofFiles ?? []}
+          hideFinancials={isForeman}
+          initialValues={changeOrder}
+          initialProofFileIds={(linkedFiles ?? []).map((file) => file.job_file_id)}
+          initialLineItems={lineItems ?? []}
+        />
+      </div>
     </div>
   );
 }

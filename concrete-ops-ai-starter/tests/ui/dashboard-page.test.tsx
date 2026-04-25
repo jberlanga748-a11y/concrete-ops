@@ -10,13 +10,21 @@ const {
   mockGetTimeEntries,
   mockGetDailyReports,
   mockGetDocuments,
+  mockGetCustomers,
+  mockGetEstimates,
+  mockGetJobs,
   mockGetNotifications,
+  mockGetProposals,
 } = vi.hoisted(() => ({
   mockGetCurrentAppUserContext: vi.fn(),
   mockGetTimeEntries: vi.fn(),
   mockGetDailyReports: vi.fn(),
   mockGetDocuments: vi.fn(),
+  mockGetCustomers: vi.fn(),
+  mockGetEstimates: vi.fn(),
+  mockGetJobs: vi.fn(),
   mockGetNotifications: vi.fn(),
+  mockGetProposals: vi.fn(),
 }));
 
 const redirectMock = vi.hoisted(() =>
@@ -37,7 +45,11 @@ vi.mock("@/lib/db/queries", () => ({
   getTimeEntries: mockGetTimeEntries,
   getDailyReports: mockGetDailyReports,
   getDocuments: mockGetDocuments,
+  getCustomers: mockGetCustomers,
+  getEstimates: mockGetEstimates,
+  getJobs: mockGetJobs,
   getNotifications: mockGetNotifications,
+  getProposals: mockGetProposals,
 }));
 
 async function renderDashboardPage(role: AppRole = "owner") {
@@ -51,7 +63,11 @@ async function renderDashboardPage(role: AppRole = "owner") {
   mockGetTimeEntries.mockResolvedValue({ data: [] });
   mockGetDailyReports.mockResolvedValue({ data: [] });
   mockGetDocuments.mockResolvedValue({ data: [] });
+  mockGetCustomers.mockResolvedValue({ data: [] });
+  mockGetEstimates.mockResolvedValue({ data: [] });
+  mockGetJobs.mockResolvedValue({ data: [] });
   mockGetNotifications.mockResolvedValue({ data: [] });
+  mockGetProposals.mockResolvedValue({ data: [] });
 
   render(
     <ToastProvider>
@@ -69,18 +85,10 @@ describe("DashboardPage", () => {
   it("creates real tools and copilot anchors for office users", async () => {
     await renderDashboardPage("owner");
 
-    expect(screen.getByRole("link", { name: "Browse Tools & AI" })).toHaveAttribute(
-      "href",
-      "#tools-and-ai",
-    );
-    expect(document.getElementById("tools-and-ai")).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Open Concrete Calculator" })).toHaveAttribute(
+    expect(screen.getByText("Tools and AI")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Concrete Calculator/ })).toHaveAttribute(
       "href",
       "/dashboard/concrete-calculator",
-    );
-    expect(screen.getByRole("link", { name: "Jump to Admin Ops Copilot" })).toHaveAttribute(
-      "href",
-      "#admin-ops-copilot",
     );
     expect(document.getElementById("admin-ops-copilot")).not.toBeNull();
     expect(screen.getByText("Admin Ops Copilot")).toBeInTheDocument();
@@ -101,7 +109,11 @@ describe("DashboardPage", () => {
     expect(mockGetTimeEntries).not.toHaveBeenCalled();
     expect(mockGetDailyReports).not.toHaveBeenCalled();
     expect(mockGetDocuments).not.toHaveBeenCalled();
+    expect(mockGetCustomers).not.toHaveBeenCalled();
+    expect(mockGetEstimates).not.toHaveBeenCalled();
+    expect(mockGetJobs).not.toHaveBeenCalled();
     expect(mockGetNotifications).not.toHaveBeenCalled();
+    expect(mockGetProposals).not.toHaveBeenCalled();
   });
 
   it("shows an error panel when dashboard data queries fail", async () => {
@@ -115,7 +127,11 @@ describe("DashboardPage", () => {
     mockGetTimeEntries.mockResolvedValue({ data: null, error: new Error("boom") });
     mockGetDailyReports.mockResolvedValue({ data: [], error: null });
     mockGetDocuments.mockResolvedValue({ data: [], error: null });
+    mockGetCustomers.mockResolvedValue({ data: [], error: null });
+    mockGetEstimates.mockResolvedValue({ data: [], error: null });
+    mockGetJobs.mockResolvedValue({ data: [], error: null });
     mockGetNotifications.mockResolvedValue({ data: [], error: null });
+    mockGetProposals.mockResolvedValue({ data: [], error: null });
 
     render(
       <ToastProvider>
@@ -144,7 +160,11 @@ describe("DashboardPage", () => {
     mockGetTimeEntries.mockResolvedValue({ data: [] });
     mockGetDailyReports.mockResolvedValue({ data: [] });
     mockGetDocuments.mockResolvedValue({ data: [] });
+    mockGetCustomers.mockResolvedValue({ data: [] });
+    mockGetEstimates.mockResolvedValue({ data: [] });
+    mockGetJobs.mockResolvedValue({ data: [] });
     mockGetNotifications.mockRejectedValue(new Error("boom"));
+    mockGetProposals.mockResolvedValue({ data: [] });
 
     render(
       <ToastProvider>
@@ -153,8 +173,8 @@ describe("DashboardPage", () => {
     );
 
     expect(screen.queryByText("We couldn’t load the operations command view right now")).not.toBeInTheDocument();
-    expect(screen.getByText("A steadier command view for field work, documentation, and office follow-up.")).toBeInTheDocument();
-    expect(screen.getByText("Queue unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Daily workspace")).toBeInTheDocument();
+    expect(screen.getAllByText("Queue unavailable").length).toBeGreaterThan(0);
   });
 
   it("keeps the dashboard home available when uploads fail", async () => {
@@ -168,7 +188,11 @@ describe("DashboardPage", () => {
     mockGetTimeEntries.mockResolvedValue({ data: [] });
     mockGetDailyReports.mockResolvedValue({ data: [] });
     mockGetDocuments.mockRejectedValue(new Error("boom"));
+    mockGetCustomers.mockResolvedValue({ data: [] });
+    mockGetEstimates.mockResolvedValue({ data: [] });
+    mockGetJobs.mockResolvedValue({ data: [] });
     mockGetNotifications.mockResolvedValue({ data: [] });
+    mockGetProposals.mockResolvedValue({ data: [] });
 
     render(
       <ToastProvider>
@@ -177,7 +201,7 @@ describe("DashboardPage", () => {
     );
 
     expect(screen.queryByText("We couldn’t load the operations command view right now")).not.toBeInTheDocument();
-    expect(screen.getByText("A steadier command view for field work, documentation, and office follow-up.")).toBeInTheDocument();
-    expect(screen.getAllByText("Recent uploads are temporarily unavailable.").length).toBeGreaterThan(0);
+    expect(screen.getByText("Daily workspace")).toBeInTheDocument();
+    expect(screen.getByText("Uploads unavailable")).toBeInTheDocument();
   });
 });

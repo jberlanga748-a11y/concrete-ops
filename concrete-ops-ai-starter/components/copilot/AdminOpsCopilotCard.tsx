@@ -100,8 +100,8 @@ export function AdminOpsCopilotCard() {
 
   return (
     <section className="relative overflow-hidden rounded-[32px] border border-zinc-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,249,0.94))] p-6 shadow-[0_26px_60px_rgba(15,23,42,0.08)] sm:p-7">
-      <div className="absolute inset-x-16 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(201,106,44,0.4),transparent)]" />
-      <div className="absolute right-0 top-0 h-40 w-40 bg-[radial-gradient(circle,rgba(201,106,44,0.12),transparent_68%)]" />
+      <div className="absolute inset-x-16 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(37,99,235,0.4),transparent)]" />
+      <div className="absolute right-0 top-0 h-40 w-40 bg-[radial-gradient(circle,rgba(37,99,235,0.12),transparent_68%)]" />
 
       <div className="relative grid gap-6 xl:grid-cols-[1.25fr,0.9fr]">
         <div>
@@ -126,7 +126,7 @@ export function AdminOpsCopilotCard() {
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               placeholder="Example: Which jobs had both a daily report and a change order in the last week?"
-              className="min-h-28 w-full rounded-[22px] border border-zinc-200 bg-[linear-gradient(180deg,#ffffff_0%,#fbfbfa_100%)] px-4 py-4 text-sm leading-6 text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition placeholder:text-zinc-400 focus:border-[#d69a72]"
+              className="min-h-28 w-full rounded-[22px] border border-zinc-200 bg-[linear-gradient(180deg,#ffffff_0%,#fbfbfa_100%)] px-4 py-4 text-sm leading-6 text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition placeholder:text-zinc-400 focus:border-[#93c5fd]"
             />
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
@@ -144,7 +144,7 @@ export function AdminOpsCopilotCard() {
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-[#ead3c3] bg-[linear-gradient(180deg,rgba(255,248,242,0.96),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[28px] border border-[#bfdbfe] bg-[linear-gradient(180deg,rgba(255,248,242,0.96),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
           <p className="font-app-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">How to use it well</p>
           <div className="mt-5 space-y-3">
             {[
@@ -196,7 +196,7 @@ export function AdminOpsCopilotCard() {
                         </span>
                         <p className="font-medium text-zinc-900">{citation.label}</p>
                       </div>
-                      <Link href={citationHref(citation)} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600 hover:text-orange-500">
+                      <Link href={citationHref(citation)} className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700 hover:text-blue-800">
                         {citationCtaLabel(citation)}
                       </Link>
                     </div>

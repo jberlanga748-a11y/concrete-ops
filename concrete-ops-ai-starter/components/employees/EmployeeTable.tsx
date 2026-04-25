@@ -38,8 +38,8 @@ export function EmployeeTable({
           {employees.map((employee) => (
             <TableRow key={employee.id}>
               <TableCell>
-                <p className="font-semibold text-zinc-950">{employee.full_name}</p>
-                <p className="mt-1 text-sm text-zinc-600">{employee.email || employee.phone || "No contact info"}</p>
+                <p className="font-black text-slate-950">{employee.full_name}</p>
+                <p className="mt-1 text-xs font-bold text-slate-500">{employee.email || employee.phone || "No contact info"}</p>
               </TableCell>
               <TableCell>{employee.crew_name || "—"}</TableCell>
               <TableCell>{employee.job_title || "—"}</TableCell>

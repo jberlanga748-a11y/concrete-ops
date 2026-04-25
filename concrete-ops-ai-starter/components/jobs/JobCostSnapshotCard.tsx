@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ViewerDateTime } from "@/components/time/ViewerDateTime";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
 import { refreshJobCostSnapshot } from "@/lib/db/mutations";
 import type { JobCostSnapshotRow } from "@/lib/db/queries";
 
@@ -30,6 +31,14 @@ export function JobCostSnapshotCard({
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const metrics = [
+    ["Actual Labor Hours", formatNumber(snapshot?.actual_labor_hours || 0)],
+    ["Actual Labor Cost", formatCurrency(snapshot?.actual_labor_cost || 0)],
+    ["Approved Change Orders", formatCurrency(snapshot?.approved_change_order_total || 0)],
+    ["Projected Revenue", formatCurrency(snapshot?.projected_revenue_total || 0)],
+    ["Time Entries Count", snapshot?.time_entry_count || 0],
+    ["Daily Reports Count", snapshot?.daily_report_count || 0],
+  ];
 
   async function handleRefresh() {
     setIsRefreshing(true);
@@ -48,53 +57,35 @@ export function JobCostSnapshotCard({
   }
 
   return (
-    <section className="rounded-2xl border bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Cost Snapshot</h2>
-          <p className="mt-1 text-sm text-zinc-600">Admin-only rollup from labor time, daily reports, and approved change orders.</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
-          {isRefreshing ? "Refreshing..." : snapshot ? "Refresh Snapshot" : "Create Snapshot"}
-        </button>
-      </div>
+    <OperationalCard className="p-4">
+      <SectionHeader
+        title="Cost Snapshot"
+        description="Admin-only rollup from labor time, daily reports, and approved change orders."
+        action={
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 transition hover:bg-blue-800 disabled:opacity-50"
+          >
+            {isRefreshing ? "Refreshing..." : snapshot ? "Refresh Snapshot" : "Create Snapshot"}
+          </button>
+        }
+      />
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-2xl border p-3">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Actual Labor Hours</p>
-          <p className="mt-2 text-xl font-semibold">{formatNumber(snapshot?.actual_labor_hours || 0)}</p>
-        </div>
-        <div className="rounded-2xl border p-3">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Actual Labor Cost</p>
-          <p className="mt-2 text-xl font-semibold">{formatCurrency(snapshot?.actual_labor_cost || 0)}</p>
-        </div>
-        <div className="rounded-2xl border p-3">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Approved Change Orders</p>
-          <p className="mt-2 text-xl font-semibold">{formatCurrency(snapshot?.approved_change_order_total || 0)}</p>
-        </div>
-        <div className="rounded-2xl border p-3">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Projected Revenue</p>
-          <p className="mt-2 text-xl font-semibold">{formatCurrency(snapshot?.projected_revenue_total || 0)}</p>
-        </div>
-        <div className="rounded-2xl border p-3">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Time Entries Count</p>
-          <p className="mt-2 text-xl font-semibold">{snapshot?.time_entry_count || 0}</p>
-        </div>
-        <div className="rounded-2xl border p-3">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Daily Reports Count</p>
-          <p className="mt-2 text-xl font-semibold">{snapshot?.daily_report_count || 0}</p>
-        </div>
+        {metrics.map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+            <p className="text-xs font-black uppercase tracking-widest text-slate-500">{label}</p>
+            <p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+          </div>
+        ))}
       </div>
 
-      <p className="mt-4 text-sm text-zinc-600">
+      <div className="mt-4 rounded-xl border border-blue-100 bg-white p-3 text-sm font-bold text-slate-500">
         Last refreshed: <ViewerDateTime value={snapshot?.updated_at} includeYear includeTimeZoneName={false} />
-      </p>
-      {message ? <p className="mt-2 text-sm text-zinc-600">{message}</p> : null}
-    </section>
+      </div>
+      {message ? <p className="mt-2 text-sm font-bold text-slate-500">{message}</p> : null}
+    </OperationalCard>
   );
 }

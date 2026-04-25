@@ -4,7 +4,8 @@ import { DocumentList } from "@/components/documents/DocumentList";
 import { JobAssignmentsCard } from "@/components/jobs/JobAssignmentsCard";
 import { JobCostSnapshotCard } from "@/components/jobs/JobCostSnapshotCard";
 import { ViewerDateTime } from "@/components/time/ViewerDateTime";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState, StatusChip } from "@/components/ui/feedback";
+import { KpiTile, OperationalCard, PageHeader, RecordPreview, SectionHeader } from "@/components/ui/page-primitives";
 import {
   getDocumentsForEntity,
   getEmployeeOptions,
@@ -17,21 +18,17 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/time/formatting";
 
 function formatSchedule(startDate: string | null | undefined, targetFinishDate: string | null | undefined) {
-  if (startDate && targetFinishDate) return `${formatDateOnly(startDate)} - ${formatDateOnly(targetFinishDate)}`;
+  if (startDate && targetFinishDate) return `${formatDateOnly(startDate)} to ${formatDateOnly(targetFinishDate)}`;
   if (startDate) return `Starts ${formatDateOnly(startDate)}`;
   if (targetFinishDate) return `Target ${formatDateOnly(targetFinishDate)}`;
-  return "Schedule not fully set";
+  return "Schedule not set";
 }
 
-function getStatusTone(status: string) {
+function getStatusTone(status: string): "neutral" | "success" | "warning" | "info" {
   const normalized = status.toLowerCase();
-  if (normalized.includes("complete") || normalized.includes("closed")) {
-    return "bg-emerald-100 text-emerald-700";
-  }
-  if (normalized.includes("hold") || normalized.includes("delay")) {
-    return "bg-amber-100 text-amber-700";
-  }
-  return "bg-orange-100 text-orange-700";
+  if (normalized.includes("complete") || normalized.includes("closed")) return "success";
+  if (normalized.includes("hold") || normalized.includes("delay")) return "warning";
+  return "info";
 }
 
 export default async function JobHubPage({ params }: { params: Promise<{ jobId: string }> }) {
@@ -71,241 +68,170 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
   const activeCrew = allTimeEntries.filter((entry) => entry.status === "clocked_in").length;
   const recentTimeEntries = allTimeEntries.slice(0, 5);
 
-  const summaryCards = [
-    {
-      label: "Status",
-      value: job.status.replaceAll("_", " "),
-      detail: `${activeCrew} crew clocked in right now`,
-      tone: getStatusTone(job.status),
-    },
-    {
-      label: "Customer",
-      value: customer?.name || "—",
-      detail: [customer?.contact_name, customer?.phone].filter(Boolean).join(" · ") || "No customer contact details",
-      tone: "bg-zinc-100 text-zinc-700",
-    },
-    {
-      label: "Foreman",
-      value: foreman?.full_name || "—",
-      detail: [foreman?.job_title, foreman?.crew_name].filter(Boolean).join(" · ") || "No foreman assigned",
-      tone: "bg-zinc-100 text-zinc-700",
-    },
-    {
-      label: "Schedule",
-      value: formatSchedule(job.start_date, job.target_finish_date),
-      detail: job.target_finish_date ? `Target finish ${formatDateOnly(job.target_finish_date)}` : "Schedule not fully set",
-      tone: "bg-zinc-100 text-zinc-700",
-    },
-  ];
-
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <section className="rounded-[32px] border border-zinc-900 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 p-6 text-white shadow-[0_30px_90px_rgba(24,24,27,0.28)] sm:p-8">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl">
-            <Link href="/dashboard/jobs" className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-300 hover:text-orange-200">
+    <div>
+      <PageHeader
+        eyebrow="Job Hub"
+        title={`${job.job_number} - ${job.name}`}
+        description="Keep this project moving with one shared job view for field activity, crew assignments, documents, and next-step follow-up."
+        actions={
+          <>
+            <Link href="/dashboard/jobs" className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
               Back to Jobs
             </Link>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              {job.job_number} · {job.name}
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
-              Keep this project moving with one shared job view for field activity, crew assignments, documents, and next-step follow-up.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-            <Link
-              href={`/dashboard/incidents/new?jobId=${job.id}`}
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-700 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/10"
-            >
-              Report Incident
-            </Link>
-            <Link
-              href={`/dashboard/uploads?jobId=${job.id}`}
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-700 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/10"
-            >
+            <Link href={`/dashboard/uploads?jobId=${job.id}`} className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
               View Uploads
             </Link>
             {!isForeman ? (
-              <Link
-                href={`/dashboard/jobs/${job.id}/edit`}
-                className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-orange-400"
-              >
+              <Link href={`/dashboard/jobs/${job.id}/edit`} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800">
                 Edit Job
               </Link>
             ) : null}
-          </div>
+          </>
+        }
+      />
+
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <KpiTile label="Status" value={job.status.replaceAll("_", " ")} helper={`${activeCrew} crew clocked in`} />
+          <KpiTile label="Customer" value={customer?.name || "—"} helper={[customer?.contact_name, customer?.phone].filter(Boolean).join(" · ") || "No contact details"} />
+          <KpiTile label="Foreman" value={foreman?.full_name || "—"} helper={[foreman?.job_title, foreman?.crew_name].filter(Boolean).join(" · ") || "Unassigned"} />
+          <KpiTile label="Schedule" value={formatSchedule(job.start_date, job.target_finish_date)} helper={job.target_finish_date ? `Target ${formatDateOnly(job.target_finish_date)}` : "Schedule not fully set"} />
         </div>
-      </section>
 
-      <section className="grid gap-4 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <article
-            key={card.label}
-            className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)]"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{card.label}</p>
-            <div className="mt-4 flex items-start justify-between gap-3">
-              <p className="text-lg font-semibold tracking-tight text-zinc-950">{card.value}</p>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${card.tone}`}>
-                {card.label}
-              </span>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">{card.detail}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.3fr,1fr]">
-        <article className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Work Overview</p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Project details and jobsite context</h2>
-            </div>
-            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-              {activeAssignments.length} active assignments
-            </span>
-          </div>
-
-          <div className="mt-5 grid gap-4 lg:grid-cols-[1.25fr,0.95fr]">
-            <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
-              <h3 className="text-sm font-semibold text-zinc-950">Description</h3>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-zinc-600">{job.description || "No description added yet."}</p>
-            </div>
-            <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
-              <h3 className="text-sm font-semibold text-zinc-950">Address</h3>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-zinc-600">{job.address || "No address added yet."}</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-zinc-200 bg-white p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Time entries</p>
-                  <p className="mt-2 text-lg font-semibold text-zinc-950">{allTimeEntries.length}</p>
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <div className="space-y-4">
+            <OperationalCard className="p-4">
+              <SectionHeader
+                title="Project Details"
+                description="Jobsite scope, address, and record counts stay readable without leaving the hub."
+                action={<StatusChip tone={getStatusTone(job.status)}>{job.status.replaceAll("_", " ")}</StatusChip>}
+              />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Description</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">{job.description || "No description added yet."}</p>
                 </div>
-                <div className="rounded-2xl border border-zinc-200 bg-white p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Documents</p>
-                  <p className="mt-2 text-lg font-semibold text-zinc-950">{allDocuments.length}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Field Activity</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Latest crew movement</h2>
-          </div>
-
-          <div className="mt-5 rounded-[24px] border border-orange-200 bg-orange-50 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-zinc-950">Live field status</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">
-                  {activeCrew > 0
-                    ? `${activeCrew} crew members are clocked in on this job.`
-                    : "No one is currently clocked in on this job."}
-                </p>
-              </div>
-              <Link href="/dashboard/time" className="text-sm font-medium text-orange-600 hover:text-orange-500">
-                Open time board
-              </Link>
-            </div>
-          </div>
-
-          <ul className="mt-4 space-y-3 text-sm">
-            {recentTimeEntries.map((entry) => {
-              const employee = Array.isArray(entry.employees) ? entry.employees[0] : entry.employees;
-              const phase = Array.isArray(entry.job_phases) ? entry.job_phases[0] : entry.job_phases;
-              return (
-                <li key={entry.id} className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-zinc-950">{employee?.full_name || "Employee"}</p>
-                      <p className="mt-1 text-zinc-600">{phase?.name || "General labor"}</p>
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Address</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">{job.address || "No address added yet."}</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl bg-white p-3">
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-500">Time entries</p>
+                      <p className="mt-2 text-2xl font-black text-slate-950">{allTimeEntries.length}</p>
                     </div>
-                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                      {entry.status.replaceAll("_", " ")}
-                    </span>
+                    <div className="rounded-xl bg-white p-3">
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-500">Documents</p>
+                      <p className="mt-2 text-2xl font-black text-slate-950">{allDocuments.length}</p>
+                    </div>
                   </div>
-                  <ViewerDateTime
-                    value={entry.clock_in_at}
-                    className="mt-2 text-xs uppercase tracking-wide text-zinc-500"
+                </div>
+              </div>
+            </OperationalCard>
+
+            <OperationalCard className="p-4">
+              <SectionHeader
+                title="Latest Crew Movement"
+                description={activeCrew > 0 ? `${activeCrew} crew members are clocked in on this job.` : "No one is currently clocked in on this job."}
+                action={
+                  <Link href="/dashboard/time" className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">
+                    Open Time
+                  </Link>
+                }
+              />
+              <div className="space-y-2">
+                {recentTimeEntries.map((entry) => {
+                  const employee = Array.isArray(entry.employees) ? entry.employees[0] : entry.employees;
+                  const phase = Array.isArray(entry.job_phases) ? entry.job_phases[0] : entry.job_phases;
+                  return (
+                    <div key={entry.id} className="rounded-xl border border-blue-100 bg-white p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-slate-950">{employee?.full_name || "Employee"}</p>
+                          <p className="mt-1 text-sm font-bold text-slate-500">{phase?.name || "General labor"}</p>
+                        </div>
+                        <StatusChip tone={getStatusTone(entry.status)}>{entry.status.replaceAll("_", " ")}</StatusChip>
+                      </div>
+                      <ViewerDateTime value={entry.clock_in_at} className="mt-2 block text-xs font-bold uppercase tracking-widest text-blue-700" />
+                    </div>
+                  );
+                })}
+                {recentTimeEntries.length === 0 ? (
+                  <EmptyState
+                    icon="clock"
+                    title="No time activity yet"
+                    description="Once the crew starts clocking time on this job, the latest movement will show up here for quick review."
+                    actionHref="/dashboard/time"
+                    actionLabel="Open time board"
                   />
-                </li>
+                ) : null}
+              </div>
+            </OperationalCard>
+
+            <OperationalCard className="p-4">
+              <SectionHeader
+                title="Documents"
+                description="Shared files linked to this job."
+                action={
+                  <Link href={`/dashboard/uploads?jobId=${jobId}`} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">
+                    View all
+                  </Link>
+                }
+              />
+              <DocumentList documents={allDocuments} emptyMessage="No documents linked to this job yet." />
+            </OperationalCard>
+          </div>
+
+          <RecordPreview
+            title="Job Snapshot"
+            rows={[
+              ["Customer", customer?.name || "—"],
+              ["Foreman", foreman?.full_name || "—"],
+              ["Schedule", formatSchedule(job.start_date, job.target_finish_date)],
+              ["Crew", `${activeAssignments.length} active assignments`],
+              ["Uploads", allDocuments.length.toString()],
+            ]}
+            actions={
+              <Link href={`/dashboard/incidents/new?jobId=${job.id}`} className="inline-flex rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">
+                Report Incident
+              </Link>
+            }
+          />
+        </div>
+
+        <OperationalCard className="p-4">
+          <SectionHeader title="Assigned Crew" description="Active assignments and schedule coverage for this job." />
+          <div className="grid gap-3 lg:grid-cols-2">
+            {activeAssignments.map((assignment) => {
+              const employee = Array.isArray(assignment.employees) ? assignment.employees[0] : assignment.employees;
+              return (
+                <div key={assignment.id} className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                  <p className="font-black text-slate-950">{employee?.full_name || "Employee"}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-500">
+                    {[assignment.assignment_role, employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ")}
+                  </p>
+                  <p className="mt-2 text-xs font-black uppercase tracking-widest text-blue-700">
+                    {formatDateOnly(assignment.start_date)} to {formatDateOnly(assignment.end_date)}
+                  </p>
+                </div>
               );
             })}
-            {recentTimeEntries.length === 0 ? (
-              <li>
+            {activeAssignments.length === 0 ? (
+              <div className="lg:col-span-2">
                 <EmptyState
-                  icon="clock"
-                  title="No time activity yet"
-                  description="Once the crew starts clocking time on this job, the latest movement will show up here for quick review."
-                  actionHref="/dashboard/time"
-                  actionLabel="Open time board"
+                  icon="users"
+                  title="No active crew assignments"
+                  description="Add assignments below so the Job Hub, time board, and daily report crew rows all line up around the same team."
                 />
-              </li>
+              </div>
             ) : null}
-          </ul>
-        </article>
-      </section>
-
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Crew</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Assigned crew and schedule coverage</h2>
           </div>
-          <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-            {activeCrew} clocked in now
-          </span>
-        </div>
+        </OperationalCard>
 
-        <ul className="mt-5 grid gap-3 lg:grid-cols-2">
-          {activeAssignments.map((assignment) => {
-            const employee = Array.isArray(assignment.employees) ? assignment.employees[0] : assignment.employees;
-            return (
-              <li key={assignment.id} className="rounded-[24px] border border-zinc-200 bg-zinc-50/70 p-4">
-                <p className="text-base font-semibold text-zinc-950">{employee?.full_name || "Employee"}</p>
-                <p className="mt-2 text-sm text-zinc-600">
-                  {[assignment.assignment_role, employee?.job_title, employee?.crew_name].filter(Boolean).join(" · ")}
-                </p>
-                <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">
-                  {formatDateOnly(assignment.start_date)} to {formatDateOnly(assignment.end_date)}
-                </p>
-              </li>
-            );
-          })}
-          {activeAssignments.length === 0 ? (
-            <li className="lg:col-span-2">
-              <EmptyState
-                icon="users"
-                title="No active crew assignments"
-                description="Add assignments below so the Job Hub, time board, and daily report crew rows all line up around the same team."
-              />
-            </li>
-          ) : null}
-        </ul>
-      </section>
+        {!isForeman ? <JobAssignmentsCard jobId={jobId} assignments={allAssignments} employeeOptions={employeeOptions} /> : null}
 
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Documents</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Shared files for this job</h2>
-          </div>
-          <Link href={`/dashboard/uploads?jobId=${jobId}`} className="text-sm font-medium text-orange-600 hover:text-orange-500">
-            View all uploads
-          </Link>
-        </div>
-        <div className="mt-5">
-          <DocumentList documents={allDocuments} emptyMessage="No documents linked to this job yet." />
-        </div>
-      </section>
-
-      {!isForeman ? <JobAssignmentsCard jobId={jobId} assignments={allAssignments} employeeOptions={employeeOptions} /> : null}
-
-      {canViewCosts ? <JobCostSnapshotCard jobId={jobId} snapshot={costSnapshot} /> : null}
+        {canViewCosts ? <JobCostSnapshotCard jobId={jobId} snapshot={costSnapshot} /> : null}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FieldLabel } from "@/components/ui/form";
+import { OperationalCard, SectionHeader } from "@/components/ui/page-primitives";
 import type { DailyReportOption, TimeOption } from "@/lib/db/queries";
 
 const TAG_OPTIONS = [
@@ -12,6 +14,9 @@ const TAG_OPTIONS = [
   { value: "damage", label: "Damage" },
   { value: "change_order_support", label: "Change Order Support" },
 ];
+
+const fieldClassName =
+  "w-full rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 type EmployeeUploadFormProps = {
   jobOptions: TimeOption[];
@@ -91,18 +96,17 @@ export function EmployeeUploadForm({
   }
 
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-sm">
-      <h2 className="text-2xl font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-zinc-600">{description}</p>
+    <OperationalCard className="p-4">
+      <SectionHeader title={title} description={description} />
 
-      <div className="mt-5 space-y-4">
+      <div className="mt-4 space-y-4">
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Job</p>
+          <FieldLabel>Job</FieldLabel>
           <select
             value={jobId}
             onChange={(e) => { setJobId(e.target.value); setDailyReportId(""); }}
             disabled={!hasJobs || loading}
-            className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+            className={fieldClassName}
           >
             <option value="">{hasJobs ? "Select job" : "No active job assignments"}</option>
             {jobOptions.map((option) => (
@@ -113,24 +117,24 @@ export function EmployeeUploadForm({
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Linked daily report (optional)</p>
+          <FieldLabel>Linked daily report (optional)</FieldLabel>
           <select
             value={dailyReportId}
             onChange={(e) => setDailyReportId(e.target.value)}
             disabled={!hasJobs || loading}
-            className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+            className={fieldClassName}
           >
             <option value="">Select daily report</option>
             {scopedReportOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
-          {jobId && scopedReportOptions.length === 0 ? <p className="mt-2 text-xs text-zinc-500">No reports for this job yet. You can still upload proof now.</p> : null}
+          {jobId && scopedReportOptions.length === 0 ? <p className="mt-2 text-xs font-medium text-slate-500">No reports for this job yet. You can still upload proof now.</p> : null}
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Tag</p>
-          <select value={tag} onChange={(e) => setTag(e.target.value)} disabled={loading} className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500">
+          <FieldLabel>Tag</FieldLabel>
+          <select value={tag} onChange={(e) => setTag(e.target.value)} disabled={loading} className={fieldClassName}>
             {TAG_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
@@ -138,26 +142,26 @@ export function EmployeeUploadForm({
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Note (optional)</p>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Short context for what this file shows" disabled={loading} className="min-h-20 w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500" />
+          <FieldLabel>Note (optional)</FieldLabel>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Short context for what this file shows" disabled={loading} className={`${fieldClassName} min-h-20 resize-y`} />
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-zinc-600">Photo / document</p>
-          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={loading || !hasJobs} className="w-full rounded-2xl border px-4 py-3 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500" />
-          <p className="mt-2 text-xs text-zinc-500">Accepted: image files and PDF.</p>
+          <FieldLabel>Photo / document</FieldLabel>
+          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={loading || !hasJobs} className={fieldClassName} />
+          <p className="mt-2 text-xs font-medium text-slate-500">Accepted: image files and PDF.</p>
         </div>
 
-        <button onClick={handleSubmit} disabled={loading || !hasJobs} className="rounded-2xl bg-zinc-900 px-5 py-3 text-white disabled:opacity-50">
+        <button type="button" onClick={handleSubmit} disabled={loading || !hasJobs} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800 disabled:opacity-50">
           {loading ? "Uploading..." : "Save Upload"}
         </button>
 
         {message ? (
-          <p className={`text-sm ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-green-700" : "text-zinc-600"}`}>{message}</p>
+          <p className={`text-sm font-bold ${messageType === "error" ? "text-red-600" : messageType === "success" ? "text-emerald-700" : "text-slate-600"}`}>{message}</p>
         ) : (
-          <p className="text-sm text-zinc-500">{tipMessage}</p>
+          <p className="text-sm font-medium text-slate-500">{tipMessage}</p>
         )}
       </div>
-    </div>
+    </OperationalCard>
   );
 }

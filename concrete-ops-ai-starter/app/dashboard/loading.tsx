@@ -1,11 +1,11 @@
 function SkeletonBlock({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-2xl bg-zinc-200/80 ${className}`} />;
+  return <div className={`animate-pulse rounded-xl bg-blue-100 ${className}`} />;
 }
 
 export default function DashboardLoading() {
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <section className="rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+    <div>
+      <section className="mb-5 border-b border-blue-100 bg-white px-5 py-5 sm:px-6 lg:px-8">
         <SkeletonBlock className="h-4 w-32" />
         <SkeletonBlock className="mt-4 h-10 w-96 max-w-full" />
         <SkeletonBlock className="mt-4 h-5 w-[32rem] max-w-full" />
@@ -15,9 +15,9 @@ export default function DashboardLoading() {
         </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-4">
+      <section className="grid gap-4 px-5 sm:px-6 lg:px-8 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+          <div key={index} className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
             <SkeletonBlock className="h-4 w-28" />
             <SkeletonBlock className="mt-4 h-10 w-20" />
             <SkeletonBlock className="mt-3 h-4 w-40" />
@@ -25,7 +25,7 @@ export default function DashboardLoading() {
         ))}
       </section>
 
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+      <section className="mx-5 mt-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5 sm:mx-6 lg:mx-8">
         <div className="flex items-center justify-between gap-4">
           <div>
             <SkeletonBlock className="h-4 w-28" />
