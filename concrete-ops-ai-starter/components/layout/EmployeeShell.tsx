@@ -137,11 +137,11 @@ export function EmployeeShell({ children }: { children: ReactNode }) {
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-[22px] border border-white/10 bg-black/10 p-3">
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">Sections</p>
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">Sections</p>
                     <p className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-white">{sections.length}</p>
                   </div>
                   <div className="rounded-[22px] border border-white/10 bg-black/10 p-3">
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">Modules</p>
+                    <p className="font-app-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">Modules</p>
                     <p className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-white">{navEntries.length}</p>
                   </div>
                 </div>
@@ -152,7 +152,7 @@ export function EmployeeShell({ children }: { children: ReactNode }) {
               {sections.map((section) => (
                 <section key={section.title} className="mb-6 last:mb-0">
                   <div className="mb-3 px-1">
-                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{section.title}</p>
+                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">{section.title}</p>
                     <p className="mt-2 text-xs leading-5 text-zinc-400">{section.summary}</p>
                   </div>
 
@@ -181,7 +181,7 @@ export function EmployeeShell({ children }: { children: ReactNode }) {
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block text-sm font-semibold">{item.label}</span>
-                            <span className={`mt-1 block text-xs ${active ? "text-orange-100/90" : "text-zinc-500 group-hover:text-zinc-300"}`}>
+                            <span className={`mt-1 block text-xs ${active ? "text-orange-100/90" : "text-zinc-400 group-hover:text-zinc-300"}`}>
                               {section.title}
                             </span>
                           </span>
@@ -197,7 +197,7 @@ export function EmployeeShell({ children }: { children: ReactNode }) {
               <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Today</p>
+                    <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-400">Today</p>
                     <p className="mt-2 text-base font-semibold text-white">
                       <ViewerCurrentDateLabel monthStyle="short" />
                     </p>
@@ -221,7 +221,7 @@ export function EmployeeShell({ children }: { children: ReactNode }) {
           <header className="rounded-[30px] border border-[#18232d] bg-[#0c141c] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
+                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Concrete Ops</p>
                 <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-white">{activeTitle}</p>
                 <p className="mt-1 text-sm text-zinc-400">
                   {activeSection}

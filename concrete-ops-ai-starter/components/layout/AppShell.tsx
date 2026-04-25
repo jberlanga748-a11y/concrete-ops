@@ -358,7 +358,7 @@ export function AppShell({
                 {sections.map((section) => (
                   <section key={section.title} className="mb-6 last:mb-0">
                     <div className="mb-3 px-2">
-                      <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{section.title}</p>
+                      <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">{section.title}</p>
                     </div>
 
                     <div className="space-y-1">
@@ -402,7 +402,7 @@ export function AppShell({
                 <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">Workspace Status</p>
+                      <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-400">Workspace Status</p>
                       <p className="mt-2 text-base font-semibold text-white">{getRoleLabel(role)}</p>
                     </div>
                     <Badge variant="outline" className="rounded-full border-white/15 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300">
@@ -440,7 +440,7 @@ export function AppShell({
               <header className="rounded-[30px] border border-[#18232d] bg-[#0c141c] px-4 py-4 text-zinc-100 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:hidden">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Concrete Ops</p>
+                    <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Concrete Ops</p>
                     <p className="mt-2 text-lg font-semibold tracking-[-0.04em] text-white">{activeTitle}</p>
                     <p className="mt-1 text-sm text-zinc-400">
                       {activeSection}
@@ -490,7 +490,7 @@ export function AppShell({
                           }`}
                         >
                           <span className="block font-medium">{item.label}</span>
-                          <span className="mt-1 block text-xs text-zinc-500">{item.sectionTitle}</span>
+                          <span className="mt-1 block text-xs text-zinc-400">{item.sectionTitle}</span>
                         </Link>
                       );
                     })}
@@ -535,7 +535,7 @@ export function AppShell({
                 <div className="rounded-[30px] border border-[#1c2832] bg-[linear-gradient(180deg,#111a22_0%,#182632_100%)] p-5 text-white shadow-[0_22px_44px_rgba(15,23,42,0.14)]">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Workspace posture</p>
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">Workspace posture</p>
                       <h3 className="mt-3 text-[1.2rem] font-semibold tracking-[-0.04em] text-white">Keep the main product plane in focus.</h3>
                     </div>
                     <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
@@ -545,13 +545,13 @@ export function AppShell({
                   <p className="mt-4 text-sm leading-7 text-zinc-300">{getRoleSummary(role)}</p>
                   <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                     <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Today</p>
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">Today</p>
                       <p className="mt-2 text-sm font-semibold text-white">
                         <ViewerCurrentDateLabel monthStyle="short" />
                       </p>
                     </div>
                     <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Modules</p>
+                      <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">Modules</p>
                       <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.04em] text-white">{totalModules}</p>
                       <p className="mt-1 text-xs leading-5 text-zinc-400">{activeSection} stays anchored in the main workspace.</p>
                     </div>
