@@ -44,14 +44,16 @@ function getStatusTone(status: string) {
 export function JobList({
   jobs,
   toolbar,
+  filters,
   canManage = false,
 }: {
   jobs: JobListRow[];
   toolbar?: ReactNode;
+  filters?: ReactNode;
   canManage?: boolean;
 }) {
   return (
-    <TableShell toolbar={toolbar}>
+    <TableShell toolbar={toolbar} filters={filters}>
       <DataTable>
         <TableHead>
           <tr>
@@ -60,7 +62,7 @@ export function JobList({
             <TableHeadCell className="hidden xl:table-cell">Foreman</TableHeadCell>
             <TableHeadCell className="hidden lg:table-cell">Schedule</TableHeadCell>
             <TableHeadCell>Status</TableHeadCell>
-            <TableHeadCell className="w-40">Actions</TableHeadCell>
+            <TableHeadCell className="w-40">Action</TableHeadCell>
           </tr>
         </TableHead>
         <TableBody>
@@ -72,62 +74,25 @@ export function JobList({
             return (
               <TableRow key={job.id}>
                 <TableCell className="min-w-[18rem]">
-                  <div className="space-y-3">
-                    <div>
-                      <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">{job.job_number}</p>
-                      <p className="mt-2 text-base font-semibold tracking-[-0.03em] text-zinc-950">{job.name}</p>
-                    </div>
-
-                    <div className="grid gap-2 text-xs text-zinc-600 md:hidden">
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-2">
-                        <p className="font-app-mono uppercase tracking-[0.16em] text-zinc-500">Customer</p>
-                        <p className="mt-1 text-sm font-medium text-zinc-900">{customerName}</p>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-2">
-                          <p className="font-app-mono uppercase tracking-[0.16em] text-zinc-500">Foreman</p>
-                          <p className="mt-1 text-sm font-medium text-zinc-900">{foremanName}</p>
-                        </div>
-                        <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-2">
-                          <p className="font-app-mono uppercase tracking-[0.16em] text-zinc-500">Schedule</p>
-                          <p className="mt-1 text-sm font-medium text-zinc-900">{scheduleLabel}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="font-black text-slate-950">{job.name}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{job.job_number} · <span className="md:hidden">{customerName}</span><span className="hidden md:inline">Job record</span></p>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  <div className="space-y-1">
-                    <p className="font-medium text-zinc-900">{customerName}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Customer record</p>
-                  </div>
+                  <p className="font-bold text-slate-700">{customerName}</p>
                 </TableCell>
                 <TableCell className="hidden xl:table-cell">
-                  <div className="space-y-1">
-                    <p className="font-medium text-zinc-900">{foremanName}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Assigned foreman</p>
-                  </div>
+                  <p className="font-bold text-slate-700">{foremanName}</p>
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  <div className="space-y-1">
-                    <p className="font-medium text-zinc-900">{scheduleLabel}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                      {job.target_finish_date ? `Target ${formatDateOnly(job.target_finish_date)}` : "Planning in progress"}
-                    </p>
-                  </div>
+                  <p className="font-bold text-slate-700">{scheduleLabel}</p>
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-2">
-                    <StatusChip tone={getStatusTone(job.status)}>{job.status.replaceAll("_", " ")}</StatusChip>
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                      {job.status === "on_hold" ? "Needs follow-up" : "Project status"}
-                    </p>
-                  </div>
+                  <StatusChip tone={getStatusTone(job.status)}>{job.status.replaceAll("_", " ")}</StatusChip>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
-                    <TableActionLink href={`/dashboard/jobs/${job.id}`} label="Open hub" />
-                    {canManage ? <TableActionLink href={`/dashboard/jobs/${job.id}/edit`} label="Edit plan" /> : null}
+                    <TableActionLink href={`/dashboard/jobs/${job.id}`} label="Open" />
+                    {canManage ? <TableActionLink href={`/dashboard/jobs/${job.id}/edit`} label="Edit" /> : null}
                   </div>
                 </TableCell>
               </TableRow>

@@ -100,7 +100,7 @@ describe("shared dashboard role visibility", () => {
 
     render(await UploadsPage({ searchParams: {} }));
 
-    expect(screen.getByText("Job Uploads")).toBeInTheDocument();
+    expect(screen.getByText("Uploads")).toBeInTheDocument();
     expect(screen.getByText("Field-visible photo and document record tied to jobs and reports.")).toBeInTheDocument();
     expect(screen.queryByText("Office-managed photo and document record tied to jobs and reports.")).not.toBeInTheDocument();
   });

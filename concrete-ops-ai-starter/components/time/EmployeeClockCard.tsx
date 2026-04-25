@@ -5,45 +5,10 @@ import { useRouter } from "next/navigation";
 import { clockOutLatestEntryAction, createClockInEntryAction } from "@/components/time/actions";
 import type { TimeOption } from "@/lib/db/queries";
 import { useToast } from "@/components/ui/ToastProvider";
+import { SectionHeader } from "@/components/ui/page-primitives";
 
 function getOptionLabel(options: TimeOption[], id: string, fallback: string) {
   return options.find((option) => option.id === id)?.label ?? fallback;
-}
-
-function StatTile({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <article className="rounded-[22px] border border-white/10 bg-white/[0.06] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">{label}</p>
-      <p className="mt-3 text-xl font-semibold tracking-tight text-white">{value}</p>
-    </article>
-  );
-}
-
-function SelectionPill({
-  label,
-  value,
-  active,
-}: {
-  label: string;
-  value: string;
-  active: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-[22px] border px-4 py-4 transition ${
-        active ? "border-amber-200 bg-white shadow-sm" : "border-zinc-200 bg-zinc-50/90"
-      }`}
-    >
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{label}</p>
-      <p className={`mt-2 text-sm font-medium leading-6 ${active ? "text-zinc-950" : "text-zinc-500"}`}>{value}</p>
-    </div>
-  );
 }
 
 function SelectField({
@@ -65,14 +30,14 @@ function SelectField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+      <label className="mb-1 block text-xs font-black uppercase tracking-widest text-slate-500">
         {label}
-        {required ? <span className="ml-1 text-amber-600">*</span> : null}
+        {required ? <span className="ml-1 text-blue-700">*</span> : null}
       </label>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-[20px] border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+        className="h-10 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
@@ -81,7 +46,7 @@ function SelectField({
           </option>
         ))}
       </select>
-      {hint ? <p className="mt-2 text-sm leading-6 text-zinc-500">{hint}</p> : null}
+      {hint ? <p className="mt-1 text-xs font-medium leading-5 text-slate-500">{hint}</p> : null}
     </div>
   );
 }
@@ -197,82 +162,68 @@ export function EmployeeClockCard({
   }
 
   return (
-    <section className="overflow-hidden rounded-[32px] border border-zinc-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-      <div className="border-b border-zinc-900 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.18),transparent_34%),linear-gradient(145deg,#171b18_0%,#232826_50%,#0f1110_100%)] px-6 py-6 text-white">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-300">Crew Dispatch</p>
-        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">Clock field labor without leaving the board.</h2>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-300">
-          Match employee, job, and phase selections with a more deliberate control surface for supervisors, operations, and
-          payroll support.
-        </p>
+    <section className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
+      <SectionHeader title="Crew Clock" description="Clock field labor without leaving the labor board." />
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <StatTile label="Active Crew" value={`${employeeOptions.length} available`} />
-          <StatTile label="Assignments" value={`${jobOptions.length} jobs`} />
-          <StatTile label="Phase Tags" value={`${phaseOptions.length} options`} />
+      <div className="mb-4 grid gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+        <div className="grid grid-cols-[96px_1fr] gap-3">
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Employee</p>
+          <p className="text-sm font-bold text-slate-700">{selectedEmployeeLabel}</p>
+        </div>
+        <div className="grid grid-cols-[96px_1fr] gap-3">
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Job</p>
+          <p className="text-sm font-bold text-slate-700">{selectedJobLabel}</p>
+        </div>
+        <div className="grid grid-cols-[96px_1fr] gap-3">
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Phase</p>
+          <p className="text-sm font-bold text-slate-700">{selectedPhaseLabel}</p>
         </div>
       </div>
 
-      <div className="space-y-5 p-6">
-        <div className="rounded-[28px] border border-zinc-200 bg-[linear-gradient(180deg,rgba(250,250,249,1)_0%,rgba(245,245,244,0.94)_100%)] p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">Run Sheet</p>
-          <div className="mt-4 grid gap-3">
-            <SelectionPill label="Employee" value={selectedEmployeeLabel} active={Boolean(employeeId)} />
-            <SelectionPill label="Job" value={selectedJobLabel} active={Boolean(jobId)} />
-            <SelectionPill label="Phase" value={selectedPhaseLabel} active={Boolean(jobPhaseId)} />
-          </div>
-        </div>
+      <div className="space-y-3">
+        <SelectField
+          label="Employee"
+          required
+          value={employeeId}
+          onChange={setEmployeeId}
+          options={employeeOptions}
+          placeholder="Select employee"
+        />
+        <SelectField
+          label="Job"
+          required
+          value={jobId}
+          onChange={setJobId}
+          options={jobOptions}
+          placeholder="Select job"
+          hint="Clock-out can use employee only, but selecting a job narrows the update."
+        />
+        <SelectField
+          label="Phase"
+          value={jobPhaseId}
+          onChange={setJobPhaseId}
+          options={phaseOptions}
+          placeholder="Select phase"
+        />
+      </div>
 
-        <div className="space-y-4">
-          <SelectField
-            label="Employee"
-            required
-            value={employeeId}
-            onChange={setEmployeeId}
-            options={employeeOptions}
-            placeholder="Select employee"
-          />
-          <SelectField
-            label="Job"
-            required
-            value={jobId}
-            onChange={setJobId}
-            options={jobOptions}
-            placeholder="Select job"
-            hint="Clock-out can use employee only, but selecting a job narrows the update to a specific assignment."
-          />
-          <SelectField
-            label="Phase"
-            value={jobPhaseId}
-            onChange={setJobPhaseId}
-            options={phaseOptions}
-            placeholder="Select phase"
-          />
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={handleClockIn}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-[22px] bg-amber-400 px-5 py-4 text-sm font-semibold text-zinc-950 shadow-[0_18px_40px_rgba(245,158,11,0.24)] transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loadingAction === "clock-in" ? "Clocking in..." : "Clock in"}
-          </button>
-          <button
-            type="button"
-            onClick={handleClockOut}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-[22px] bg-zinc-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loadingAction === "clock-out" ? "Clocking out..." : "Clock out"}
-          </button>
-        </div>
-
-        <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/90 p-4 text-sm leading-6 text-zinc-600">
-          Clock-in creates a new open shift immediately. Clock-out closes the latest matching open entry for the selected
-          employee, and successful saves trigger a fresh labor board reload beside this panel.
-        </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={handleClockIn}
+          disabled={isLoading}
+          className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loadingAction === "clock-in" ? "Clocking in..." : "Clock in"}
+        </button>
+        <button
+          type="button"
+          onClick={handleClockOut}
+          disabled={isLoading}
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-blue-100 bg-white px-4 text-sm font-black text-slate-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loadingAction === "clock-out" ? "Clocking out..." : "Clock out"}
+        </button>
       </div>
     </section>
   );

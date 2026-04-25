@@ -3,15 +3,18 @@ import type { ReactNode } from "react";
 
 export function TableShell({
   toolbar,
+  filters,
   children,
 }: {
   toolbar?: ReactNode;
+  filters?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5">
       {toolbar ? <div className="px-4 py-4 sm:px-5">{toolbar}</div> : null}
-      <div className="overflow-x-auto border-t border-blue-100 bg-white">{children}</div>
+      {filters}
+      <div className={filters ? "overflow-x-auto bg-white" : "overflow-x-auto border-t border-blue-100 bg-white"}>{children}</div>
     </section>
   );
 }

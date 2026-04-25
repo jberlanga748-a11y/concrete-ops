@@ -1,71 +1,116 @@
 import Link from "next/link";
-import { EmptyState, ErrorPanel } from "@/components/ui/feedback";
+import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
+import { PageHeader, RecordPreview } from "@/components/ui/page-primitives";
+import {
+  DataTable,
+  TableActionLink,
+  TableBody,
+  TableCell,
+  TableEmptyRow,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+  TableShell,
+  TableToolbar,
+} from "@/components/ui/table";
 import { getPolicies } from "@/lib/db/queries";
 
 export default async function PoliciesPage() {
   const { data: policies, error } = await getPolicies();
+  const policyRows = policies ?? [];
+  const latestPolicy = policyRows[0] ?? null;
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Policies</h1>
-            <p className="mt-2 text-zinc-600">Manage company policies and track who has acknowledged the current guidance.</p>
-          </div>
-          <Link href="/dashboard/policies/new" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
+    <div>
+      <PageHeader
+        eyebrow="Safety"
+        title="Policies"
+        description="Manage company policies and track who has acknowledged the current guidance."
+        actions={
+          <Link href="/dashboard/policies/new" className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800">
             New Policy
           </Link>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
         {error ? (
-          <div className="p-4">
-            <ErrorPanel
-              title="We couldn’t load policies right now"
-              description="The policy library is temporarily unavailable. Try refreshing the page or come back in a moment."
-              actionHref="/dashboard/policies"
-              actionLabel="Try again"
-            />
-          </div>
-        ) : (policies ?? []).length === 0 ? (
-          <div className="p-4">
-            <EmptyState
-              icon="file"
-              title="No policies created yet"
-              description="Create the first policy so crews and staff have a current guidance record to acknowledge."
-              actionHref="/dashboard/policies/new"
-              actionLabel="Create policy"
-            />
-          </div>
+          <ErrorPanel
+            title="We couldn’t load policies right now"
+            description="The policy library is temporarily unavailable. Try refreshing the page or come back in a moment."
+            actionHref="/dashboard/policies"
+            actionLabel="Try again"
+          />
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-100">
-              <tr>
-                <th className="px-4 py-3 text-left">Title</th>
-                <th className="px-4 py-3 text-left">Category</th>
-                <th className="px-4 py-3 text-left">Version</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Open</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(policies ?? []).map((policy) => (
-                <tr key={policy.id} className="border-t">
-                  <td className="px-4 py-4">{policy.title}</td>
-                  <td className="px-4 py-4">{policy.category || "—"}</td>
-                  <td className="px-4 py-4">{policy.version_label || "—"}</td>
-                  <td className="px-4 py-4">{policy.is_active ? "Active" : "Inactive"}</td>
-                  <td className="px-4 py-4">
-                    <Link href={`/dashboard/policies/${policy.id}`} className="underline">
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+            <TableShell
+              toolbar={
+                <TableToolbar
+                  title="Policy library"
+                  description="Keep policy title, category, version, and active status readable from one operational list."
+                  countLabel={`${policyRows.length} polic${policyRows.length === 1 ? "y" : "ies"}`}
+                />
+              }
+            >
+              <DataTable>
+                <TableHead>
+                  <tr>
+                    <TableHeadCell>Policy</TableHeadCell>
+                    <TableHeadCell className="hidden md:table-cell">Category</TableHeadCell>
+                    <TableHeadCell className="hidden lg:table-cell">Version</TableHeadCell>
+                    <TableHeadCell>Status</TableHeadCell>
+                    <TableHeadCell className="w-32">Action</TableHeadCell>
+                  </tr>
+                </TableHead>
+                <TableBody>
+                  {policyRows.map((policy) => (
+                    <TableRow key={policy.id}>
+                      <TableCell className="min-w-[18rem]">
+                        <p className="font-black text-slate-950">{policy.title}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{policy.category || "Uncategorized"}</p>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{policy.category || "—"}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{policy.version_label || "—"}</TableCell>
+                      <TableCell>
+                        <StatusChip tone={policy.is_active ? "success" : "warning"}>{policy.is_active ? "Active" : "Inactive"}</StatusChip>
+                      </TableCell>
+                      <TableCell>
+                        <TableActionLink href={`/dashboard/policies/${policy.id}`} label="Open" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {policyRows.length === 0 ? (
+                    <TableEmptyRow colSpan={5}>
+                      <EmptyState
+                        icon="file"
+                        title="No policies created yet"
+                        description="Create the first policy so crews and staff have a current guidance record to acknowledge."
+                        actionHref="/dashboard/policies/new"
+                        actionLabel="Create policy"
+                      />
+                    </TableEmptyRow>
+                  ) : null}
+                </TableBody>
+              </DataTable>
+            </TableShell>
+
+            <RecordPreview
+              title={latestPolicy?.title}
+              rows={[
+                ["Category", latestPolicy?.category || "—"],
+                ["Version", latestPolicy?.version_label || "—"],
+                ["Status", latestPolicy ? (latestPolicy.is_active ? "Active" : "Inactive") : "—"],
+                ["Record", latestPolicy ? "Policy library" : "No record selected"],
+              ]}
+              actions={
+                latestPolicy ? (
+                  <Link href={`/dashboard/policies/${latestPolicy.id}`} className="inline-flex rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">
+                    Open Policy
+                  </Link>
+                ) : null
+              }
+            />
+          </div>
         )}
       </div>
     </div>

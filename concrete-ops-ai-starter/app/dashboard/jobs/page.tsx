@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { BriefcaseBusinessIcon, Clock3Icon, UsersIcon } from "lucide-react";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
 import { isForemanRole } from "@/lib/auth/roles";
 import { JobList } from "@/components/jobs/JobList";
 import { ErrorPanel } from "@/components/ui/feedback";
-import { FilterBar, KpiTile, PageHeader, RecordPreview } from "@/components/ui/page-primitives";
+import { FilterBar, PageHeader, RecordPreview } from "@/components/ui/page-primitives";
 import { TableToolbar } from "@/components/ui/table";
 import { getJobs } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
@@ -30,9 +29,6 @@ export default async function JobsPage({
   const { data, error } = await getJobs();
   const jobs = data ?? [];
   const visibleJobs = selectedStatus === "all" ? jobs : jobs.filter((job) => job.status === selectedStatus);
-  const liveJobs = jobs.filter((job) => !["completed", "archived"].includes(job.status)).length;
-  const onHoldJobs = jobs.filter((job) => job.status === "on_hold").length;
-  const customerCount = new Set(jobs.map((job) => getCustomerName(job.customers)).filter((name) => name !== "—")).size;
   const nextJob = visibleJobs.find((job) => !["completed", "archived"].includes(job.status)) ?? visibleJobs[0] ?? null;
   const toolbarDescription = isForeman
     ? "Open a job to review field activity, documents, assignments, and the shared project record without losing the crew context."
@@ -66,12 +62,6 @@ export default async function JobsPage({
       />
 
       <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          <KpiTile label="Jobs on board" value={jobs.length.toString()} helper="Total project records" icon={<BriefcaseBusinessIcon className="h-4 w-4" />} />
-          <KpiTile label="Live planning" value={liveJobs.toString()} helper="Active planning or execution" icon={<Clock3Icon className="h-4 w-4" />} />
-          <KpiTile label="Customers" value={customerCount.toString()} helper={`${onHoldJobs} job${onHoldJobs === 1 ? "" : "s"} on hold`} icon={<UsersIcon className="h-4 w-4" />} />
-        </div>
-
         {error ? (
           <ErrorPanel
             title="We couldn’t load jobs right now"
@@ -82,10 +72,10 @@ export default async function JobsPage({
         ) : (
           <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
             <div className="min-w-0">
-              <FilterBar options={filterOptions} />
               <JobList
                 jobs={visibleJobs}
                 canManage={!isForeman}
+                filters={<FilterBar options={filterOptions} />}
                 toolbar={
                   <TableToolbar
                     title="Project board"

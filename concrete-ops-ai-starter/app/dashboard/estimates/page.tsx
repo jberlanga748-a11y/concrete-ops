@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { FileCheck2Icon, FolderKanbanIcon, UsersIcon } from "lucide-react";
 import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
-import { FilterBar, KpiTile, PageHeader, RecordPreview } from "@/components/ui/page-primitives";
+import { FilterBar, PageHeader, RecordPreview } from "@/components/ui/page-primitives";
 import {
   DataTable,
   TableActionLink,
@@ -56,9 +55,6 @@ export default async function EstimatesPage({
   const selectedStatus = searchParams?.status?.trim() ?? "all";
   const { data: estimates, error } = await getEstimates(selectedStatus === "all" ? undefined : { status: selectedStatus });
   const estimateRows = estimates ?? [];
-  const linkedCustomers = new Set(estimateRows.map((estimate) => getCustomer(estimate.customers)).filter((name) => name !== "—")).size;
-  const linkedJobs = new Set(estimateRows.map((estimate) => estimate.job_id).filter(Boolean)).size;
-  const boardSubtotal = estimateRows.reduce((total, estimate) => total + estimate.subtotal, 0);
   const latestEstimate = estimateRows[0] ?? null;
   const filterOptions = [
     { label: "All", href: "/dashboard/estimates", active: selectedStatus === "all" },
@@ -89,12 +85,6 @@ export default async function EstimatesPage({
       />
 
       <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          <KpiTile label="Estimates in view" value={estimateRows.length.toString()} helper="Records matching current filter" icon={<FileCheck2Icon className="h-4 w-4" />} />
-          <KpiTile label="Linked jobs" value={linkedJobs.toString()} helper="Projects tied to pricing work" icon={<FolderKanbanIcon className="h-4 w-4" />} />
-          <KpiTile label="Board subtotal" value={formatCurrency(boardSubtotal)} helper={`${linkedCustomers} customer${linkedCustomers === 1 ? "" : "s"} represented`} icon={<UsersIcon className="h-4 w-4" />} />
-        </div>
-
         {error ? (
           <ErrorPanel
             title="We couldn’t load estimates right now"
@@ -105,7 +95,6 @@ export default async function EstimatesPage({
         ) : (
           <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
             <div className="min-w-0">
-              <FilterBar options={filterOptions} />
               <TableShell
                 toolbar={
                   <TableToolbar
@@ -114,6 +103,7 @@ export default async function EstimatesPage({
                     countLabel={`${estimateRows.length} estimate${estimateRows.length === 1 ? "" : "s"}`}
                   />
                 }
+                filters={<FilterBar options={filterOptions} />}
               >
                 <DataTable>
                   <TableHead>
