@@ -102,7 +102,7 @@ export default async function JobsPage() {
                 !isForeman ? (
                   <Link
                     href="/dashboard/jobs/new"
-                    className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-orange-300 hover:bg-orange-50"
+                    className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-blue-300 hover:bg-blue-50"
                   >
                     Add job
                   </Link>

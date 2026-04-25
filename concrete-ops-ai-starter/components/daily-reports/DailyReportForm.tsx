@@ -32,7 +32,7 @@ type DailyReportFormValues = {
 };
 
 const fieldClassName =
-  "w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-zinc-400 focus:border-[#d79b73] focus:ring-2 focus:ring-[#f3dfd1]";
+  "w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-zinc-400 focus:border-[#93c5fd] focus:ring-2 focus:ring-[#dbeafe]";
 const textAreaClassName = `${fieldClassName} min-h-28 resize-y`;
 
 function FormCard({
@@ -334,7 +334,7 @@ export function DailyReportForm({
               <FieldHint>Be specific about progress, areas worked, and major milestones or decisions that matter later.</FieldHint>
             </div>
 
-            <div className="rounded-[22px] border border-orange-200 bg-orange-50/80 p-4">
+            <div className="rounded-[22px] border border-blue-100 bg-blue-50/80 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-zinc-950">Readable cleanup</p>
@@ -346,7 +346,7 @@ export function DailyReportForm({
                   type="button"
                   onClick={handleCleanupWithAI}
                   disabled={assistantLoading || loading}
-                  className="inline-flex items-center justify-center rounded-[20px] border border-orange-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-[20px] border border-blue-100 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {assistantLoading ? "Cleaning..." : "Clean up with AI"}
                 </button>

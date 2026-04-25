@@ -31,7 +31,7 @@ function getStatusTone(status: string) {
   if (normalized.includes("hold") || normalized.includes("delay")) {
     return "bg-amber-100 text-amber-700";
   }
-  return "bg-orange-100 text-orange-700";
+  return "bg-blue-50 text-blue-700";
 }
 
 export default async function JobHubPage({ params }: { params: Promise<{ jobId: string }> }) {
@@ -103,7 +103,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
       <section className="rounded-[32px] border border-zinc-900 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 p-6 text-white shadow-[0_30px_90px_rgba(24,24,27,0.28)] sm:p-8">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <Link href="/dashboard/jobs" className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-300 hover:text-orange-200">
+            <Link href="/dashboard/jobs" className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-200 hover:text-blue-100">
               Back to Jobs
             </Link>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -130,7 +130,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
             {!isForeman ? (
               <Link
                 href={`/dashboard/jobs/${job.id}/edit`}
-                className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-orange-400"
+                className="inline-flex items-center justify-center rounded-2xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-blue-800"
               >
                 Edit Job
               </Link>
@@ -197,7 +197,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
             <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Latest crew movement</h2>
           </div>
 
-          <div className="mt-5 rounded-[24px] border border-orange-200 bg-orange-50 p-4">
+          <div className="mt-5 rounded-[24px] border border-blue-100 bg-blue-50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-zinc-950">Live field status</p>
@@ -207,7 +207,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
                     : "No one is currently clocked in on this job."}
                 </p>
               </div>
-              <Link href="/dashboard/time" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+              <Link href="/dashboard/time" className="text-sm font-medium text-blue-700 hover:text-blue-800">
                 Open time board
               </Link>
             </div>
@@ -294,7 +294,7 @@ export default async function JobHubPage({ params }: { params: Promise<{ jobId: 
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Documents</p>
             <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">Shared files for this job</h2>
           </div>
-          <Link href={`/dashboard/uploads?jobId=${jobId}`} className="text-sm font-medium text-orange-600 hover:text-orange-500">
+          <Link href={`/dashboard/uploads?jobId=${jobId}`} className="text-sm font-medium text-blue-700 hover:text-blue-800">
             View all uploads
           </Link>
         </div>

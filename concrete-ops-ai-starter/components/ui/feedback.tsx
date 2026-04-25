@@ -69,11 +69,11 @@ export function StatusChip({
   tone?: StatusTone;
 }) {
   const toneClasses: Record<StatusTone, string> = {
-    neutral: "border border-zinc-200 bg-white/90 text-zinc-700 shadow-[0_8px_18px_rgba(15,23,42,0.05)]",
+    neutral: "border border-blue-100 bg-white/90 text-slate-700 shadow-[0_8px_18px_rgba(30,64,175,0.05)]",
     success: "border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_18px_rgba(16,185,129,0.08)]",
     warning: "border border-amber-200 bg-amber-50 text-amber-700 shadow-[0_8px_18px_rgba(245,158,11,0.08)]",
     error: "border border-rose-200 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.08)]",
-    info: "border border-sky-200 bg-sky-50 text-sky-700 shadow-[0_8px_18px_rgba(14,165,233,0.08)]",
+    info: "border border-blue-100 bg-blue-50 text-blue-700 shadow-[0_8px_18px_rgba(37,99,235,0.08)]",
   };
 
   return (
@@ -99,21 +99,21 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-dashed border-zinc-300/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,247,248,0.92))] p-7 text-center shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
-      <div className="absolute inset-x-10 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(201,106,44,0.45),transparent)]" />
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] border border-white bg-white text-zinc-500 shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+    <div className="relative overflow-hidden rounded-[28px] border border-dashed border-blue-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,246,255,0.74))] p-7 text-center shadow-[0_20px_50px_rgba(30,64,175,0.07)]">
+      <div className="absolute inset-x-10 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(37,99,235,0.45),transparent)]" />
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] border border-blue-100 bg-white text-blue-700 shadow-[0_14px_30px_rgba(30,64,175,0.08)]">
         <FeedbackIcon kind={icon} />
       </div>
-      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">Nothing to show yet</p>
-      <h3 className="mt-3 text-[1.15rem] font-semibold tracking-[-0.03em] text-zinc-950">{title}</h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-600">{description}</p>
+      <p className="mt-4 text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">Nothing to show yet</p>
+      <h3 className="mt-3 text-[1.15rem] font-black tracking-[-0.03em] text-slate-950">{title}</h3>
+      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-slate-600">{description}</p>
       {action ? (
         <div className="mt-6 flex justify-center">{action}</div>
       ) : actionHref && actionLabel ? (
         <div className="mt-6 flex justify-center">
           <Link
             href={actionHref}
-            className="inline-flex items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
+            className="inline-flex items-center justify-center rounded-[18px] bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800"
           >
             {actionLabel}
           </Link>

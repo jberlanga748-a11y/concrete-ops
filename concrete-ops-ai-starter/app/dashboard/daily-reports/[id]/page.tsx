@@ -84,7 +84,7 @@ export default async function DailyReportDetailPage({
           <div className="max-w-3xl">
             <Link
               href="/dashboard/daily-reports"
-              className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-orange-300 transition hover:text-orange-200"
+              className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-blue-200 transition hover:text-blue-100"
             >
               Back to daily reports
             </Link>
@@ -112,7 +112,7 @@ export default async function DailyReportDetailPage({
             </Link>
             <Link
               href={`/dashboard/daily-reports/${report.id}/edit`}
-              className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-orange-400"
+              className="inline-flex items-center justify-center rounded-2xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(249,115,22,0.34)] transition hover:bg-blue-800"
             >
               Edit report
             </Link>

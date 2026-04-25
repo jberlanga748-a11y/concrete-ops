@@ -25,7 +25,7 @@ type JobFormValues = {
 const statusOptions: JobStatus[] = ["draft", "scheduled", "in_progress", "on_hold", "completed", "archived"];
 
 const fieldClassName =
-  "w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-zinc-400 focus:border-[#d79b73] focus:ring-2 focus:ring-[#f3dfd1]";
+  "w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-zinc-400 focus:border-[#93c5fd] focus:ring-2 focus:ring-[#dbeafe]";
 const textAreaClassName = `${fieldClassName} min-h-28 resize-y`;
 
 const statusDetails: Record<JobStatus, { title: string; detail: string; tone: "neutral" | "success" | "warning" | "info" }> = {

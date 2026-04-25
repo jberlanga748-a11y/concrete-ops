@@ -321,7 +321,7 @@ export function ConcreteCalculator() {
                 <span className="text-sm text-zinc-600">Waste yards</span>
                 <span className="text-sm font-semibold text-zinc-950">{formatNumber(totals.wasteCubicYards)}</span>
               </div>
-              <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-4">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
                 <p className="text-sm text-zinc-600">Total with waste</p>
                 <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
                   {formatNumber(totals.totalCubicYards)} yd³

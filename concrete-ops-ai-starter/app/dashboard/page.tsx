@@ -5,16 +5,18 @@ import type { LucideIcon } from "lucide-react";
 import {
   ActivityIcon,
   ArrowRightIcon,
-  BellDotIcon,
+  BriefcaseBusinessIcon,
   CalculatorIcon,
   ClipboardListIcon,
   Clock3Icon,
+  FileCheck2Icon,
   FileTextIcon,
   HardHatIcon,
   LayoutDashboardIcon,
   ShieldCheckIcon,
   SparklesIcon,
   UploadIcon,
+  UsersIcon,
 } from "lucide-react";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
 import { DashboardActivityTime } from "@/components/dashboard/DashboardActivityTime";
@@ -27,12 +29,20 @@ import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
 import {
   getDailyReports,
   getDocuments,
+  getCustomers,
+  getEstimates,
+  getJobs,
   getNotifications,
+  getProposals,
   getTimeEntries,
+  type CustomerListRow,
   type DailyReportListRow,
   type DocumentRow,
+  type EstimateListRow,
+  type JobListRow,
   type JobTimeEntryRow,
   type NotificationRow,
+  type ProposalListRow,
 } from "@/lib/db/queries";
 import { formatDateOnly } from "@/lib/time/formatting";
 
@@ -70,6 +80,26 @@ function formatRelativeCount(value: number, singular: string, plural = `${singul
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(value);
+}
+
+function isActiveJob(job: JobListRow) {
+  return !["completed", "archived"].includes(job.status.toLowerCase());
+}
+
+function isOpenEstimate(estimate: EstimateListRow) {
+  return ["draft", "sent"].includes(estimate.status.toLowerCase());
+}
+
+function isProposalInMotion(proposal: ProposalListRow) {
+  return ["draft", "sent"].includes(proposal.status.toLowerCase());
+}
+
 async function getSafeUnreadNotifications() {
   try {
     const result = await getNotifications({ unreadOnly: true });
@@ -93,6 +123,43 @@ async function getSafeRecentUploads() {
     return { data: result.data ?? [], unavailable: false };
   } catch {
     return { data: [] as DocumentRow[], unavailable: true };
+  }
+}
+
+async function getSafeOfficeSnapshot() {
+  try {
+    const [customers, estimates, jobs, proposals] = await Promise.all([
+      getCustomers(),
+      getEstimates(),
+      getJobs(),
+      getProposals(),
+    ]);
+
+    if (customers.error || estimates.error || jobs.error || proposals.error) {
+      return {
+        customers: [] as CustomerListRow[],
+        estimates: [] as EstimateListRow[],
+        jobs: [] as JobListRow[],
+        proposals: [] as ProposalListRow[],
+        unavailable: true,
+      };
+    }
+
+    return {
+      customers: customers.data ?? [],
+      estimates: estimates.data ?? [],
+      jobs: jobs.data ?? [],
+      proposals: proposals.data ?? [],
+      unavailable: false,
+    };
+  } catch {
+    return {
+      customers: [] as CustomerListRow[],
+      estimates: [] as EstimateListRow[],
+      jobs: [] as JobListRow[],
+      proposals: [] as ProposalListRow[],
+      unavailable: true,
+    };
   }
 }
 
@@ -143,7 +210,7 @@ function MetricCard({ metric }: { metric: Metric }) {
         </span>
       </div>
       <p className="mt-4 text-sm leading-7 text-zinc-600">{metric.detail}</p>
-      <Link href={metric.href} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
+      <Link href={metric.href} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]">
         {metric.cta}
         <ArrowRightIcon className="h-4 w-4" />
       </Link>
@@ -188,7 +255,7 @@ function ActionLaneCard({ lane }: { lane: ActionLane }) {
           <Link
             key={item.href}
             href={item.href}
-            className="block rounded-[24px] border border-zinc-200 bg-white px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+            className="block rounded-[24px] border border-zinc-200 bg-white px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -268,11 +335,13 @@ export default async function DashboardPage() {
     { data: reports, error: reportsError },
     { data: uploads, unavailable: uploadsUnavailable },
     { data: unreadNotifications, unavailable: notificationsUnavailable },
+    officeSnapshot,
   ] = await Promise.all([
     getTimeEntries(),
     getDailyReports(),
     getSafeRecentUploads(),
     getSafeUnreadNotifications(),
+    getSafeOfficeSnapshot(),
   ]);
 
   if (timeEntriesError || reportsError) {
@@ -292,13 +361,25 @@ export default async function DashboardPage() {
   const allReports = reports ?? [];
   const allUploads = uploads ?? [];
   const allUnreadNotifications = unreadNotifications ?? [];
+  const allCustomers = officeSnapshot.customers;
+  const allEstimates = officeSnapshot.estimates;
+  const allJobs = officeSnapshot.jobs;
+  const allProposals = officeSnapshot.proposals;
 
   const recentTimeEntries = allTimeEntries.slice(0, 5);
   const recentReports = allReports.slice(0, 5);
   const recentUploads = allUploads.slice(0, 5);
 
-  const activeClocks = allTimeEntries.filter((entry) => entry.status === "clocked_in").length;
   const todayIso = new Date().toISOString().slice(0, 10);
+  const activeClocks = allTimeEntries.filter((entry) => entry.status === "clocked_in").length;
+  const crewHoursToday = allTimeEntries
+    .filter((entry) => entry.clock_in_at?.slice(0, 10) === todayIso || entry.clock_out_at?.slice(0, 10) === todayIso)
+    .reduce((total, entry) => total + (entry.total_hours ?? 0), 0);
+  const activeCustomers = allCustomers.filter((customer) => customer.status === "active").length;
+  const activeJobs = allJobs.filter(isActiveJob).length;
+  const openEstimates = allEstimates.filter(isOpenEstimate);
+  const openEstimateValue = openEstimates.reduce((total, estimate) => total + estimate.subtotal, 0);
+  const proposalsInMotion = allProposals.filter(isProposalInMotion).length;
   const reportsToday = allReports.filter((report) => report.report_date === todayIso).length;
   const uploadsToday = allUploads.filter((upload) => upload.created_at?.slice(0, 10) === todayIso).length;
   const jobsTouchedToday = new Set(
@@ -310,7 +391,9 @@ export default async function DashboardPage() {
   const canUseAdminOpsCopilot = isOfficeRole(appUser.role);
 
   const focusMessage =
-    uploadsUnavailable && notificationsUnavailable
+    officeSnapshot.unavailable
+      ? "The office pipeline snapshot is temporarily unavailable, but labor, reports, uploads, and notifications are still represented where they can be loaded."
+      : uploadsUnavailable && notificationsUnavailable
       ? "Uploads and notifications are temporarily unavailable, but the core labor and reporting picture is still loaded."
       : uploadsUnavailable
         ? "Recent uploads are temporarily unavailable, but the core labor and reporting picture is still loaded."
@@ -326,48 +409,46 @@ export default async function DashboardPage() {
 
   const metrics: Metric[] = [
     {
-      label: "Active Crew Clocks",
-      value: activeClocks.toString(),
+      label: "Customers",
+      value: officeSnapshot.unavailable ? "—" : activeCustomers.toString(),
+      detail: officeSnapshot.unavailable
+        ? "Customer records are temporarily unavailable."
+        : `${formatRelativeCount(allCustomers.length, "customer")} in the office workspace.`,
+      cta: "Open customers",
+      href: "/dashboard/customers",
+      icon: UsersIcon,
+      accentClass: "bg-[linear-gradient(90deg,#2563eb_0%,#60a5fa_100%)]",
+    },
+    {
+      label: "Open Estimates",
+      value: officeSnapshot.unavailable ? "—" : formatCurrency(openEstimateValue),
+      detail: officeSnapshot.unavailable
+        ? "Estimate records are temporarily unavailable."
+        : `${formatRelativeCount(openEstimates.length, "estimate")} still in draft or sent status.`,
+      cta: "Review estimates",
+      href: "/dashboard/estimates",
+      icon: FileCheck2Icon,
+      accentClass: "bg-[linear-gradient(90deg,#0f766e_0%,#34d399_100%)]",
+    },
+    {
+      label: "Active Jobs",
+      value: officeSnapshot.unavailable ? "—" : activeJobs.toString(),
+      detail: officeSnapshot.unavailable
+        ? "Job records are temporarily unavailable."
+        : `${formatRelativeCount(allJobs.length, "job")} on the board, excluding completed and archived work.`,
+      cta: "Open job board",
+      href: "/dashboard/jobs",
+      icon: BriefcaseBusinessIcon,
+      accentClass: "bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_100%)]",
+    },
+    {
+      label: "Crew Hours Today",
+      value: crewHoursToday.toFixed(1),
       detail: activeClocks > 0 ? `${activeClocks} people are currently clocked in.` : "No crews are clocked in right now.",
       cta: "Open time board",
       href: "/dashboard/time",
       icon: Clock3Icon,
-      accentClass: "bg-[linear-gradient(90deg,#cf6f33_0%,#ebb086_100%)]",
-    },
-    {
-      label: "Reports Filed Today",
-      value: reportsToday.toString(),
-      detail: `${formatRelativeCount(allReports.length, "report")} across the record, with today's pace visible at a glance.`,
-      cta: "Review reports",
-      href: "/dashboard/daily-reports",
-      icon: ClipboardListIcon,
-      accentClass: "bg-[linear-gradient(90deg,#1f3b57_0%,#4c6c88_100%)]",
-    },
-    {
-      label: "Uploads Captured",
-      value: uploadsUnavailable ? "—" : allUploads.length.toString(),
-      detail: uploadsUnavailable
-        ? "Recent uploads are temporarily unavailable."
-        : uploadsToday > 0
-          ? `${uploadsToday} file uploads landed today.`
-          : "No uploads have been captured yet today.",
-      cta: "Open uploads",
-      href: "/dashboard/uploads",
-      icon: UploadIcon,
-      accentClass: "bg-[linear-gradient(90deg,#0f766e_0%,#4da89a_100%)]",
-    },
-    {
-      label: "Unread Notifications",
-      value: notificationsUnavailable ? "—" : allUnreadNotifications.length.toString(),
-      detail: notificationsUnavailable
-        ? "The notification queue is temporarily unavailable."
-        : jobsTouchedToday > 0
-          ? `${jobsTouchedToday} jobs have labor activity today.`
-          : "No jobs have logged labor activity yet today.",
-      cta: "Review alerts",
-      href: "/dashboard/notifications",
-      icon: BellDotIcon,
-      accentClass: "bg-[linear-gradient(90deg,#7c5b1f_0%,#c7a25f_100%)]",
+      accentClass: "bg-[linear-gradient(90deg,#f59e0b_0%,#fb923c_100%)]",
     },
   ];
 
@@ -377,7 +458,7 @@ export default async function DashboardPage() {
       title: "Keep crews, reports, and scope aligned.",
       detail: "Use the live work surfaces first so the field record stays current while the day is in motion.",
       icon: HardHatIcon,
-      accentClass: "border-[#f1d7c6] bg-[#fff4ed] text-[#b95f26]",
+      accentClass: "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]",
       items: [
         { href: "/dashboard/time", title: "Open live labor board", detail: "Review clock status, breaks, and active field coverage." },
         { href: "/dashboard/daily-reports/new", title: "Create daily report", detail: "Capture production notes before end-of-day compression." },
@@ -424,28 +505,53 @@ export default async function DashboardPage() {
     },
     {
       label: "Office queue",
-      value: notificationsUnavailable
+      value: officeSnapshot.unavailable
+        ? "Pipeline unavailable"
+        : notificationsUnavailable
         ? "Queue unavailable"
         : allUnreadNotifications.length > 0
-          ? `${allUnreadNotifications.length} unread notifications`
-          : "Queue is clear",
-      detail: notificationsUnavailable
+        ? `${allUnreadNotifications.length} unread notifications`
+        : "Queue is clear",
+      detail: officeSnapshot.unavailable
+        ? "Customer, estimate, job, and proposal counts could not be loaded."
+        : notificationsUnavailable
         ? "Notifications could not be loaded for this view."
         : allUnreadNotifications.length > 0
-          ? "Follow-up is waiting in the notification feed."
-          : "No office escalations are sitting unreviewed.",
+        ? "Follow-up is waiting in the notification feed."
+        : "No office escalations are sitting unreviewed.",
+    },
+    {
+      label: "Estimating posture",
+      value: officeSnapshot.unavailable ? "Estimates unavailable" : `${openEstimates.length} open estimates`,
+      detail: officeSnapshot.unavailable
+        ? "The estimating board could not be loaded for this snapshot."
+        : `${formatCurrency(openEstimateValue)} remains in draft or sent status.`,
+    },
+    {
+      label: "Active projects",
+      value: officeSnapshot.unavailable ? "Jobs unavailable" : `${activeJobs} active jobs`,
+      detail: officeSnapshot.unavailable
+        ? "The job board could not be loaded for this snapshot."
+        : `${allJobs.length} total project records are visible from the live board.`,
+    },
+    {
+      label: "Proposal pace",
+      value: officeSnapshot.unavailable ? "Proposals unavailable" : `${proposalsInMotion} proposals moving`,
+      detail: officeSnapshot.unavailable
+        ? "Proposal records could not be loaded for this snapshot."
+        : `${allProposals.length} proposal records are represented in the office workflow.`,
     },
   ];
 
   return (
     <div className="space-y-6 lg:space-y-8">
       <SurfaceCard className="relative overflow-hidden p-7 sm:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
 
         <div className="relative">
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.42fr)_minmax(320px,0.92fr)] xl:items-start">
             <div className="min-w-0">
-              <Badge className="rounded-full border border-[#ead3c3] bg-[#fff4eb] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b95f26]">
+              <Badge className="rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1d4ed8]">
                 Operations Command
               </Badge>
               <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
@@ -467,13 +573,13 @@ export default async function DashboardPage() {
                 </Link>
                 <Link
                   href="/dashboard/jobs"
-                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
                 >
                   Open job board
                 </Link>
                 <Link
                   href="#tools-and-ai"
-                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
                 >
                   Browse Tools &amp; AI
                 </Link>
@@ -508,7 +614,7 @@ export default async function DashboardPage() {
 
               <Link
                 href="/dashboard/notifications"
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]"
               >
                 Review follow-up queue
                 <ArrowRightIcon className="h-4 w-4" />
@@ -548,7 +654,7 @@ export default async function DashboardPage() {
               These action lanes keep the highest-value surfaces close at hand without reshaping how teams already work inside the product.
             </p>
           </div>
-          <Link href="/dashboard/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
+          <Link href="/dashboard/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]">
             Open jobs
             <ArrowRightIcon className="h-4 w-4" />
           </Link>
@@ -598,7 +704,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="rounded-[30px] border border-[#ead3c3] bg-[linear-gradient(135deg,#fff8f2_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+          <div className="rounded-[30px] border border-[#bfdbfe] bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Copilot Access</p>
@@ -606,7 +712,7 @@ export default async function DashboardPage() {
                   {canUseAdminOpsCopilot ? "Office-side AI follow-up is available in this workspace." : "AI follow-up remains intentionally hidden outside office-side roles."}
                 </h3>
               </div>
-              <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#ead3c3] bg-white text-[#b95f26]">
+              <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#bfdbfe] bg-white text-[#1d4ed8]">
                 <SparklesIcon className="h-5 w-5" />
               </span>
             </div>
@@ -618,7 +724,7 @@ export default async function DashboardPage() {
             {canUseAdminOpsCopilot ? (
               <Link
                 href="#admin-ops-copilot"
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]"
               >
                 Jump to Admin Ops Copilot
                 <ArrowRightIcon className="h-4 w-4" />
@@ -658,7 +764,7 @@ export default async function DashboardPage() {
               Read the newest field, reporting, and upload signals without leaving the command surface.
             </p>
           </div>
-          <Link href="/dashboard/time" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b95f26] transition hover:text-[#9f4f1c]">
+          <Link href="/dashboard/time" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]">
             View time board
             <ArrowRightIcon className="h-4 w-4" />
           </Link>

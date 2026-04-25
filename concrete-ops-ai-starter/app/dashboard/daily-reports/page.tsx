@@ -205,7 +205,7 @@ export default async function DailyReportsPage({
               actions={
                 <Link
                   href="/dashboard/daily-reports/new"
-                  className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-orange-300 hover:bg-orange-50"
+                  className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-blue-300 hover:bg-blue-50"
                 >
                   Add report
                 </Link>
@@ -244,7 +244,7 @@ export default async function DailyReportsPage({
                       <select
                         name="jobId"
                         defaultValue={selectedJobId}
-                        className="w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#d79b73] focus:ring-2 focus:ring-[#f3dfd1]"
+                        className="w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#93c5fd] focus:ring-2 focus:ring-[#dbeafe]"
                       >
                         <option value="">All jobs</option>
                         {jobOptions.map((job) => (
@@ -261,7 +261,7 @@ export default async function DailyReportsPage({
                         name="date"
                         type="date"
                         defaultValue={selectedDate}
-                        className="w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#d79b73] focus:ring-2 focus:ring-[#f3dfd1]"
+                        className="w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#93c5fd] focus:ring-2 focus:ring-[#dbeafe]"
                       />
                     </div>
 

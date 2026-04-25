@@ -168,7 +168,7 @@ export default async function EmployeeHomePage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <EmployeeSurface className="relative overflow-hidden p-6 sm:p-7">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,106,44,0.15),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.06),_transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.24),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.15),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.06),_transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.24),transparent_55%)]" />
         <div className="relative flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-500">Employee Portal</p>
@@ -188,7 +188,7 @@ export default async function EmployeeHomePage() {
             </Link>
             <Link
               href="/employee/uploads"
-              className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]"
+              className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
             >
               Open Uploads
             </Link>
@@ -234,7 +234,7 @@ export default async function EmployeeHomePage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Today</p>
               <h2 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.05em] text-zinc-950">Stay ready for the shift</h2>
             </div>
-            <Link href="/employee/time" className="text-sm font-semibold text-orange-600 hover:text-orange-500">
+            <Link href="/employee/time" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
               Open time
             </Link>
           </div>
@@ -258,7 +258,7 @@ export default async function EmployeeHomePage() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-[26px] border border-orange-200 bg-[linear-gradient(135deg,rgba(255,244,237,0.95),rgba(255,249,244,0.92))] p-5 shadow-[0_14px_30px_rgba(201,106,44,0.08)]">
+          <div className="mt-6 rounded-[26px] border border-blue-100 bg-[linear-gradient(135deg,rgba(255,244,237,0.95),rgba(255,249,244,0.92))] p-5 shadow-[0_14px_30px_rgba(37,99,235,0.08)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-zinc-900">Quick access</p>
@@ -267,10 +267,10 @@ export default async function EmployeeHomePage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/employee/policies" className="rounded-[18px] border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]">
+                <Link href="/employee/policies" className="rounded-[18px] border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]">
                   Policies
                 </Link>
-                <Link href="/employee/ppe" className="rounded-[18px] border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-[#d69a72] hover:bg-[#fffaf6]">
+                <Link href="/employee/ppe" className="rounded-[18px] border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]">
                   PPE
                 </Link>
               </div>
@@ -308,7 +308,7 @@ export default async function EmployeeHomePage() {
               <Link
                 key={action.href}
                 href={action.href}
-                className="block rounded-[24px] border border-zinc-200 bg-white/88 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:border-orange-300 hover:bg-orange-50"
+                className="block rounded-[24px] border border-zinc-200 bg-white/88 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:border-blue-300 hover:bg-blue-50"
               >
                 <p className="text-sm font-semibold text-zinc-950">{action.title}</p>
                 <p className="mt-2 text-sm leading-7 text-zinc-600">{action.detail}</p>
@@ -324,7 +324,7 @@ export default async function EmployeeHomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Recent Activity</p>
             <h2 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.05em] text-zinc-950">Your latest uploads</h2>
           </div>
-          <Link href="/employee/uploads" className="text-sm font-semibold text-orange-600 hover:text-orange-500">
+          <Link href="/employee/uploads" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
             View all uploads
           </Link>
         </div>

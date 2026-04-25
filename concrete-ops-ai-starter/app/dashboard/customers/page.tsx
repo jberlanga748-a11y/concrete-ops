@@ -21,7 +21,7 @@ export default async function CustomersPage() {
           </div>
           <Link
             href="/dashboard/customers/new"
-            className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(249,115,22,0.28)] transition hover:bg-orange-400"
+            className="inline-flex items-center justify-center rounded-2xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800"
           >
             New Customer
           </Link>
@@ -46,7 +46,7 @@ export default async function CustomersPage() {
               actions={
                 <Link
                   href="/dashboard/customers/new"
-                  className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-orange-300 hover:bg-orange-50"
+                  className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-blue-300 hover:bg-blue-50"
                 >
                   Add customer
                 </Link>
