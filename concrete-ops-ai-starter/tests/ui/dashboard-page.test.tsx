@@ -85,18 +85,10 @@ describe("DashboardPage", () => {
   it("creates real tools and copilot anchors for office users", async () => {
     await renderDashboardPage("owner");
 
-    expect(screen.getByRole("link", { name: "Browse Tools & AI" })).toHaveAttribute(
-      "href",
-      "#tools-and-ai",
-    );
-    expect(document.getElementById("tools-and-ai")).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Open Concrete Calculator" })).toHaveAttribute(
+    expect(screen.getByText("Tools and AI")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Concrete Calculator/ })).toHaveAttribute(
       "href",
       "/dashboard/concrete-calculator",
-    );
-    expect(screen.getByRole("link", { name: "Jump to Admin Ops Copilot" })).toHaveAttribute(
-      "href",
-      "#admin-ops-copilot",
     );
     expect(document.getElementById("admin-ops-copilot")).not.toBeNull();
     expect(screen.getByText("Admin Ops Copilot")).toBeInTheDocument();
@@ -181,8 +173,8 @@ describe("DashboardPage", () => {
     );
 
     expect(screen.queryByText("We couldn’t load the operations command view right now")).not.toBeInTheDocument();
-    expect(screen.getByText("A steadier command view for field work, documentation, and office follow-up.")).toBeInTheDocument();
-    expect(screen.getByText("Queue unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Daily workspace")).toBeInTheDocument();
+    expect(screen.getAllByText("Queue unavailable").length).toBeGreaterThan(0);
   });
 
   it("keeps the dashboard home available when uploads fail", async () => {
@@ -209,7 +201,7 @@ describe("DashboardPage", () => {
     );
 
     expect(screen.queryByText("We couldn’t load the operations command view right now")).not.toBeInTheDocument();
-    expect(screen.getByText("A steadier command view for field work, documentation, and office follow-up.")).toBeInTheDocument();
-    expect(screen.getAllByText("Recent uploads are temporarily unavailable.").length).toBeGreaterThan(0);
+    expect(screen.getByText("Daily workspace")).toBeInTheDocument();
+    expect(screen.getByText("Uploads unavailable")).toBeInTheDocument();
   });
 });

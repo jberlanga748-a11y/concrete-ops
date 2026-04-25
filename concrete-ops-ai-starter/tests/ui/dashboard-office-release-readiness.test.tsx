@@ -100,7 +100,7 @@ describe("dashboard office release readiness", () => {
 
     render(await EstimatesPage());
 
-    expect(screen.getByText("No estimates created yet")).toBeInTheDocument();
+    expect(screen.getByText("No estimates match this board")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create estimate" })).toHaveAttribute("href", "/dashboard/estimates/new");
   });
 

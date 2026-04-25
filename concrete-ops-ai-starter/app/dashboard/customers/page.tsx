@@ -1,60 +1,83 @@
 import Link from "next/link";
 import { CustomerTable } from "@/components/customers/CustomerTable";
 import { ErrorPanel } from "@/components/ui/feedback";
+import { FilterBar, PageHeader, RecordPreview } from "@/components/ui/page-primitives";
 import { TableToolbar } from "@/components/ui/table";
 import { getCustomers } from "@/lib/db/queries";
+import type { CustomerStatus } from "@/lib/db/schema";
 
-export default async function CustomersPage() {
-  const { data, error } = await getCustomers();
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams?: { status?: CustomerStatus | "all" };
+} = {}) {
+  const selectedStatus = searchParams?.status ?? "all";
+  const { data, error } = await getCustomers(selectedStatus === "all" ? undefined : { status: selectedStatus });
   const customers = data ?? [];
+  const latestCustomer = customers[0] ?? null;
+  const filterOptions = [
+    { label: "All", href: "/dashboard/customers", active: selectedStatus === "all" },
+    { label: "Active", href: "/dashboard/customers?status=active", active: selectedStatus === "active" },
+    { label: "Inactive", href: "/dashboard/customers?status=inactive", active: selectedStatus === "inactive" },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-500">Office</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950">Customers</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-zinc-600">
-              Keep customer contacts and account status organized so jobs, proposals, and change orders all point back to a clean source record.
-            </p>
-          </div>
-          <Link
-            href="/dashboard/customers/new"
-            className="inline-flex items-center justify-center rounded-2xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800"
-          >
+    <div>
+      <PageHeader
+        eyebrow="Office"
+        title="Customers"
+        description="Customer records are the account layer for jobs, estimates, proposals, and change orders. Keep contact details, status, and the next record action easy to scan."
+        actions={
+          <Link href="/dashboard/customers/new" className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800">
             New Customer
           </Link>
-        </div>
-      </div>
+        }
+      />
 
-      {error ? (
-        <ErrorPanel
-          title="We couldn’t load customers right now"
-          description="The customer list is temporarily unavailable. Try refreshing the page or come back in a moment."
-          actionHref="/dashboard/customers"
-          actionLabel="Try again"
-        />
-      ) : (
-        <CustomerTable
-          customers={customers}
-          toolbar={
-            <TableToolbar
-              title="Customer list"
-              description="Review customer contact details, account status, and quick edit actions from one place."
-              countLabel={`${customers.length} customer${customers.length === 1 ? "" : "s"}`}
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8 xl:grid-cols-[1fr_360px]">
+        {error ? (
+          <div className="xl:col-span-2">
+            <ErrorPanel
+              title="We couldn’t load customers right now"
+              description="The customer list is temporarily unavailable. Try refreshing the page or come back in a moment."
+              actionHref="/dashboard/customers"
+              actionLabel="Try again"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="min-w-0">
+              <FilterBar options={filterOptions} />
+              <CustomerTable
+                customers={customers}
+                toolbar={
+                  <TableToolbar
+                    title="Customer list"
+                    description="Review customer contact details, account status, and quick edit actions from one place."
+                    countLabel={`${customers.length} customer${customers.length === 1 ? "" : "s"}`}
+                  />
+                }
+              />
+            </div>
+            <RecordPreview
+              title={latestCustomer?.name}
+              rows={[
+                ["Contact", latestCustomer?.contact_name || "—"],
+                ["Email", latestCustomer?.email || "—"],
+                ["Phone", latestCustomer?.phone || "—"],
+                ["Status", latestCustomer?.status ?? "—"],
+              ]}
               actions={
-                <Link
-                  href="/dashboard/customers/new"
-                  className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:border-blue-300 hover:bg-blue-50"
-                >
-                  Add customer
-                </Link>
+                latestCustomer ? (
+                  <Link href={`/dashboard/customers/${latestCustomer.id}`} className="inline-flex rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">
+                    Open Customer
+                  </Link>
+                ) : null
               }
             />
-          }
-        />
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

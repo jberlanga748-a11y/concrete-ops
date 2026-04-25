@@ -1,35 +1,33 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ComponentProps, ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
-import {
-  ActivityIcon,
-  ArrowRightIcon,
-  BriefcaseBusinessIcon,
-  CalculatorIcon,
-  ClipboardListIcon,
-  Clock3Icon,
-  FileCheck2Icon,
-  FileTextIcon,
-  HardHatIcon,
-  LayoutDashboardIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-  UploadIcon,
-  UsersIcon,
-} from "lucide-react";
+import { BriefcaseBusinessIcon, ClipboardListIcon, Clock3Icon, FileTextIcon, InboxIcon } from "lucide-react";
 import { AdminOpsCopilotCard } from "@/components/copilot/AdminOpsCopilotCard";
 import { DashboardActivityTime } from "@/components/dashboard/DashboardActivityTime";
 import { ViewerCurrentDateLabel } from "@/components/time/ViewerCurrentDateLabel";
-import { Badge } from "@/components/ui/badge";
-import { ErrorPanel } from "@/components/ui/feedback";
-import { cn } from "@/lib/utils";
+import { EmptyState, ErrorPanel, StatusChip } from "@/components/ui/feedback";
+import {
+  KpiTile,
+  OperationalCard,
+  PageHeader,
+  RecordPreview,
+  SectionHeader,
+} from "@/components/ui/page-primitives";
+import {
+  DataTable,
+  TableActionLink,
+  TableBody,
+  TableCell,
+  TableEmptyRow,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+} from "@/components/ui/table";
 import { getCurrentAppUserContext } from "@/lib/auth/server";
 import { getRoleHomePath, isOfficeRole } from "@/lib/auth/roles";
 import {
+  getCustomers,
   getDailyReports,
   getDocuments,
-  getCustomers,
   getEstimates,
   getJobs,
   getNotifications,
@@ -52,14 +50,17 @@ function getEmployeeName(employees: JobTimeEntryRow["employees"]) {
   return employees.full_name;
 }
 
-function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"] | DocumentRow["jobs"]) {
+function getJobLabel(jobs: JobTimeEntryRow["jobs"] | DailyReportListRow["jobs"] | DocumentRow["jobs"] | EstimateListRow["jobs"] | JobListRow["customers"]) {
   if (!jobs) return "—";
   if (Array.isArray(jobs)) {
-    const job = jobs[0];
-    return job ? `${job.job_number} · ${job.name}` : "—";
+    const item = jobs[0];
+    if (!item) return "—";
+    if ("job_number" in item) return `${item.job_number} · ${item.name}`;
+    return item.name;
   }
 
-  return `${jobs.job_number} · ${jobs.name}`;
+  if ("job_number" in jobs) return `${jobs.job_number} · ${jobs.name}`;
+  return jobs.name;
 }
 
 function getSubmitter(users: DailyReportListRow["users"] | DocumentRow["users"], employees?: DocumentRow["employees"]) {
@@ -76,16 +77,16 @@ function getSubmitter(users: DailyReportListRow["users"] | DocumentRow["users"],
   return "—";
 }
 
-function formatRelativeCount(value: number, singular: string, plural = `${singular}s`) {
-  return `${value} ${value === 1 ? singular : plural}`;
-}
-
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     currency: "USD",
     maximumFractionDigits: 0,
     style: "currency",
   }).format(value);
+}
+
+function formatCount(value: number, singular: string, plural = `${singular}s`) {
+  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 function isActiveJob(job: JobListRow) {
@@ -100,13 +101,19 @@ function isProposalInMotion(proposal: ProposalListRow) {
   return ["draft", "sent"].includes(proposal.status.toLowerCase());
 }
 
+function getStatusTone(status: string): "neutral" | "success" | "warning" | "error" | "info" {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("approved") || normalized.includes("complete")) return "success";
+  if (normalized.includes("hold") || normalized.includes("waiting") || normalized.includes("sent")) return "warning";
+  if (normalized.includes("reject") || normalized.includes("decline")) return "error";
+  if (normalized.includes("progress") || normalized.includes("draft") || normalized.includes("scheduled")) return "info";
+  return "neutral";
+}
+
 async function getSafeUnreadNotifications() {
   try {
     const result = await getNotifications({ unreadOnly: true });
-    if (result.error) {
-      return { data: [] as NotificationRow[], unavailable: true };
-    }
-
+    if (result.error) return { data: [] as NotificationRow[], unavailable: true };
     return { data: result.data ?? [], unavailable: false };
   } catch {
     return { data: [] as NotificationRow[], unavailable: true };
@@ -116,10 +123,7 @@ async function getSafeUnreadNotifications() {
 async function getSafeRecentUploads() {
   try {
     const result = await getDocuments();
-    if (result.error) {
-      return { data: [] as DocumentRow[], unavailable: true };
-    }
-
+    if (result.error) return { data: [] as DocumentRow[], unavailable: true };
     return { data: result.data ?? [], unavailable: false };
   } catch {
     return { data: [] as DocumentRow[], unavailable: true };
@@ -163,158 +167,135 @@ async function getSafeOfficeSnapshot() {
   }
 }
 
-function SurfaceCard({
-  children,
-  className,
-  ...props
-}: {
-  children: ReactNode;
-  className?: string;
-} & ComponentProps<"article">) {
-  return (
-    <article
-      className={cn(
-        "rounded-[34px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,249,250,0.9))] p-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-7",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </article>
-  );
-}
-
-type Metric = {
-  label: string;
-  value: string;
-  detail: string;
-  cta: string;
-  href: string;
-  icon: LucideIcon;
-  accentClass: string;
-};
-
-function MetricCard({ metric }: { metric: Metric }) {
-  const Icon = metric.icon;
-
-  return (
-    <SurfaceCard className="relative overflow-hidden p-5">
-      <div className={cn("absolute inset-x-6 top-0 h-1.5 rounded-full", metric.accentClass)} />
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">{metric.label}</p>
-          <p className="mt-5 text-[2.35rem] font-semibold tracking-[-0.07em] text-[#101828]">{metric.value}</p>
-        </div>
-        <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200/80 bg-white text-zinc-700 shadow-[0_12px_26px_rgba(15,23,42,0.06)]">
-          <Icon className="h-5 w-5" />
-        </span>
-      </div>
-      <p className="mt-4 text-sm leading-7 text-zinc-600">{metric.detail}</p>
-      <Link href={metric.href} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]">
-        {metric.cta}
-        <ArrowRightIcon className="h-4 w-4" />
-      </Link>
-    </SurfaceCard>
-  );
-}
-
-type ActionLaneItem = {
-  href: string;
+type QueueItem = {
   title: string;
-  detail: string;
+  meta: string;
+  status: string;
+  href: string;
 };
 
-type ActionLane = {
-  eyebrow: string;
-  title: string;
-  detail: string;
-  icon: LucideIcon;
-  accentClass: string;
-  items: ActionLaneItem[];
-};
-
-function ActionLaneCard({ lane }: { lane: ActionLane }) {
-  const Icon = lane.icon;
-
+function QueueList({ items }: { items: QueueItem[] }) {
   return (
-    <div className="rounded-[30px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,248,250,0.9))] p-6 shadow-[0_20px_44px_rgba(15,23,42,0.06)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-app-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">{lane.eyebrow}</p>
-          <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">{lane.title}</h3>
-        </div>
-        <span className={cn("flex h-11 w-11 items-center justify-center rounded-[18px] border", lane.accentClass)}>
-          <Icon className="h-5 w-5" />
-        </span>
-      </div>
-
-      <p className="mt-4 text-sm leading-7 text-zinc-600">{lane.detail}</p>
-
-      <div className="mt-6 space-y-3">
-        {lane.items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="block rounded-[24px] border border-zinc-200 bg-white px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-zinc-950">{item.title}</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">{item.detail}</p>
-              </div>
-              <ArrowRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+    <OperationalCard className="p-4">
+      <SectionHeader
+        title="Today's Queue"
+        description="Practical work queue with only items that need movement."
+        action={
+          <Link href="/dashboard/notifications" className="text-xs font-black text-blue-700 hover:text-blue-800">
+            View all
+          </Link>
+        }
+      />
+      <div className="space-y-2">
+        {items.map((item) => (
+          <Link key={`${item.title}-${item.status}`} href={item.href} className="flex items-start justify-between gap-3 rounded-xl border border-blue-100 bg-white p-3 hover:bg-blue-50/50">
+            <div>
+              <p className="text-sm font-black text-slate-950">{item.title}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">{item.meta}</p>
             </div>
+            <StatusChip tone={getStatusTone(item.status)}>{item.status}</StatusChip>
           </Link>
         ))}
+        {items.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-4 text-sm font-medium text-slate-600">
+            No queue items need attention right now.
+          </div>
+        ) : null}
       </div>
+    </OperationalCard>
+  );
+}
+
+function EstimateTable({ estimates }: { estimates: EstimateListRow[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <DataTable>
+        <TableHead>
+          <tr>
+            <TableHeadCell>Estimate</TableHeadCell>
+            <TableHeadCell>Customer</TableHeadCell>
+            <TableHeadCell>Status</TableHeadCell>
+            <TableHeadCell>Value</TableHeadCell>
+            <TableHeadCell>Action</TableHeadCell>
+          </tr>
+        </TableHead>
+        <TableBody>
+          {estimates.map((estimate) => (
+            <TableRow key={estimate.id}>
+              <TableCell>
+                <p className="font-black text-slate-950">{estimate.title}</p>
+                <p className="text-xs font-bold text-slate-500">{getJobLabel(estimate.jobs)}</p>
+              </TableCell>
+              <TableCell>{getJobLabel(estimate.customers)}</TableCell>
+              <TableCell>
+                <StatusChip tone={getStatusTone(estimate.status)}>{estimate.status}</StatusChip>
+              </TableCell>
+              <TableCell className="font-black text-slate-950">{formatCurrency(estimate.subtotal)}</TableCell>
+              <TableCell>
+                <TableActionLink href={`/dashboard/estimates/${estimate.id}`} label="Open" />
+              </TableCell>
+            </TableRow>
+          ))}
+          {estimates.length === 0 ? (
+            <TableEmptyRow colSpan={5}>
+              <EmptyState
+                icon="file"
+                title="No open estimates"
+                description="Draft and sent estimates will appear here when the office has pricing work to move."
+                actionHref="/dashboard/estimates/new"
+                actionLabel="Create estimate"
+              />
+            </TableEmptyRow>
+          ) : null}
+        </TableBody>
+      </DataTable>
     </div>
   );
 }
 
-function ActivityPanel<T>({
-  title,
-  eyebrow,
-  href,
-  icon: Icon,
-  items,
-  emptyLabel,
-  renderItem,
-}: {
-  title: string;
-  eyebrow: string;
-  href: string;
-  icon: LucideIcon;
-  items: T[];
-  emptyLabel: string;
-  renderItem: (item: T) => ReactNode;
-}) {
+function JobsTable({ jobs }: { jobs: JobListRow[] }) {
   return (
-    <div className="rounded-[30px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(246,247,248,0.9),rgba(241,244,246,0.78))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-[18px] border border-white bg-white text-zinc-700 shadow-sm">
-            <Icon className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">{eyebrow}</p>
-            <h3 className="mt-1 text-base font-semibold text-zinc-950">{title}</h3>
-          </div>
-        </div>
-        <Link href={href} className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 transition hover:text-zinc-800">
-          View all
-        </Link>
-      </div>
-
-      <ul className="mt-5 space-y-3 text-sm">
-        {items.map((item, index) => (
-          <li key={index} className="rounded-[24px] border border-white bg-white/92 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-            {renderItem(item)}
-          </li>
-        ))}
-        {items.length === 0 ? (
-          <li className="rounded-[24px] border border-dashed border-zinc-300 bg-white/92 p-5 text-zinc-600">{emptyLabel}</li>
-        ) : null}
-      </ul>
+    <div className="overflow-x-auto">
+      <DataTable>
+        <TableHead>
+          <tr>
+            <TableHeadCell>Job</TableHeadCell>
+            <TableHeadCell>Customer</TableHeadCell>
+            <TableHeadCell>Status</TableHeadCell>
+            <TableHeadCell>Schedule</TableHeadCell>
+            <TableHeadCell>Action</TableHeadCell>
+          </tr>
+        </TableHead>
+        <TableBody>
+          {jobs.map((job) => (
+            <TableRow key={job.id}>
+              <TableCell>
+                <p className="font-black text-slate-950">{job.name}</p>
+                <p className="text-xs font-bold text-slate-500">{job.job_number}</p>
+              </TableCell>
+              <TableCell>{getJobLabel(job.customers)}</TableCell>
+              <TableCell>
+                <StatusChip tone={getStatusTone(job.status)}>{job.status.replaceAll("_", " ")}</StatusChip>
+              </TableCell>
+              <TableCell>{job.start_date ? formatDateOnly(job.start_date, "") : "Not scheduled"}</TableCell>
+              <TableCell>
+                <TableActionLink href={`/dashboard/jobs/${job.id}`} label="Open" />
+              </TableCell>
+            </TableRow>
+          ))}
+          {jobs.length === 0 ? (
+            <TableEmptyRow colSpan={5}>
+              <EmptyState
+                icon="briefcase"
+                title="No active jobs"
+                description="Active job records will appear here when planning or field work is moving."
+                actionHref="/dashboard/jobs/new"
+                actionLabel="Create job"
+              />
+            </TableEmptyRow>
+          ) : null}
+        </TableBody>
+      </DataTable>
     </div>
   );
 }
@@ -322,13 +303,8 @@ function ActivityPanel<T>({
 export default async function DashboardPage() {
   const appUser = await getCurrentAppUserContext();
 
-  if (!appUser) {
-    redirect("/login?next=/dashboard");
-  }
-
-  if (appUser.role === "foreman") {
-    redirect(getRoleHomePath(appUser.role));
-  }
+  if (!appUser) redirect("/login?next=/dashboard");
+  if (appUser.role === "foreman") redirect(getRoleHomePath(appUser.role));
 
   const [
     { data: timeEntries, error: timeEntriesError },
@@ -346,7 +322,7 @@ export default async function DashboardPage() {
 
   if (timeEntriesError || reportsError) {
     return (
-      <div className="space-y-6 lg:space-y-8">
+      <div className="px-5 py-5 sm:px-6 lg:px-8">
         <ErrorPanel
           title="We couldn’t load the operations command view right now"
           description="The dashboard command view is temporarily unavailable. Try refreshing the page or come back in a moment."
@@ -366,484 +342,231 @@ export default async function DashboardPage() {
   const allJobs = officeSnapshot.jobs;
   const allProposals = officeSnapshot.proposals;
 
-  const recentTimeEntries = allTimeEntries.slice(0, 5);
-  const recentReports = allReports.slice(0, 5);
-  const recentUploads = allUploads.slice(0, 5);
-
   const todayIso = new Date().toISOString().slice(0, 10);
   const activeClocks = allTimeEntries.filter((entry) => entry.status === "clocked_in").length;
   const crewHoursToday = allTimeEntries
     .filter((entry) => entry.clock_in_at?.slice(0, 10) === todayIso || entry.clock_out_at?.slice(0, 10) === todayIso)
     .reduce((total, entry) => total + (entry.total_hours ?? 0), 0);
+  const reportsToday = allReports.filter((report) => report.report_date === todayIso).length;
   const activeCustomers = allCustomers.filter((customer) => customer.status === "active").length;
-  const activeJobs = allJobs.filter(isActiveJob).length;
+  const activeJobs = allJobs.filter(isActiveJob);
   const openEstimates = allEstimates.filter(isOpenEstimate);
   const openEstimateValue = openEstimates.reduce((total, estimate) => total + estimate.subtotal, 0);
   const proposalsInMotion = allProposals.filter(isProposalInMotion).length;
-  const reportsToday = allReports.filter((report) => report.report_date === todayIso).length;
-  const uploadsToday = allUploads.filter((upload) => upload.created_at?.slice(0, 10) === todayIso).length;
-  const jobsTouchedToday = new Set(
-    allTimeEntries
-      .filter((entry) => entry.clock_in_at?.slice(0, 10) === todayIso)
-      .map((entry) => getJobLabel(entry.jobs))
-      .filter((label) => label !== "—")
-  ).size;
+  const latestJob = activeJobs[0] ?? allJobs[0] ?? null;
+  const latestEstimate = openEstimates[0] ?? allEstimates[0] ?? null;
   const canUseAdminOpsCopilot = isOfficeRole(appUser.role);
 
-  const focusMessage =
-    officeSnapshot.unavailable
-      ? "The office pipeline snapshot is temporarily unavailable, but labor, reports, uploads, and notifications are still represented where they can be loaded."
-      : uploadsUnavailable && notificationsUnavailable
-      ? "Uploads and notifications are temporarily unavailable, but the core labor and reporting picture is still loaded."
-      : uploadsUnavailable
-        ? "Recent uploads are temporarily unavailable, but the core labor and reporting picture is still loaded."
-        : notificationsUnavailable
-      ? "The notification queue is temporarily unavailable, but the core labor, report, and upload picture is still loaded."
-      : allUnreadNotifications.length > 0
-      ? "Clear the unread office queue after reviewing today's reports so follow-up stays same-day."
-      : reportsToday === 0
-        ? "Prompt the field for today's report set before closeout so documentation doesn't slip."
-        : uploadsToday === 0
-          ? "Ask for supporting photos and files while the field context is still fresh."
-          : "The core queues look stable. Use this command view to keep records complete and crews unblocked.";
+  const queueItems: QueueItem[] = [
+    ...allUnreadNotifications.slice(0, 2).map((notification) => ({
+      title: notification.title,
+      meta: notification.body || "Unread notification",
+      status: notification.priority === "high" ? "Due today" : "Ready",
+      href: "/dashboard/notifications",
+    })),
+    ...(latestEstimate
+      ? [{
+          title: `Review ${latestEstimate.title}`,
+          meta: `${getJobLabel(latestEstimate.customers)} · ${formatCurrency(latestEstimate.subtotal)}`,
+          status: latestEstimate.status,
+          href: `/dashboard/estimates/${latestEstimate.id}`,
+        }]
+      : []),
+    ...(latestJob
+      ? [{
+          title: `Check ${latestJob.name}`,
+          meta: `${latestJob.job_number} · ${latestJob.status.replaceAll("_", " ")}`,
+          status: latestJob.status,
+          href: `/dashboard/jobs/${latestJob.id}`,
+        }]
+      : []),
+    ...(reportsToday === 0
+      ? [{
+          title: "Prompt daily report capture",
+          meta: "No daily reports have been filed today.",
+          status: "Due today",
+          href: "/dashboard/daily-reports/new",
+        }]
+      : []),
+  ].slice(0, 4);
 
-  const metrics: Metric[] = [
+  const kpis = [
     {
-      label: "Customers",
+      label: "Customers active",
       value: officeSnapshot.unavailable ? "—" : activeCustomers.toString(),
-      detail: officeSnapshot.unavailable
-        ? "Customer records are temporarily unavailable."
-        : `${formatRelativeCount(allCustomers.length, "customer")} in the office workspace.`,
-      cta: "Open customers",
-      href: "/dashboard/customers",
-      icon: UsersIcon,
-      accentClass: "bg-[linear-gradient(90deg,#2563eb_0%,#60a5fa_100%)]",
+      helper: officeSnapshot.unavailable ? "Office data unavailable" : `${formatCount(allCustomers.length, "customer")} total`,
+      icon: <InboxIcon className="h-4 w-4" />,
     },
     {
-      label: "Open Estimates",
+      label: "Estimates outstanding",
       value: officeSnapshot.unavailable ? "—" : formatCurrency(openEstimateValue),
-      detail: officeSnapshot.unavailable
-        ? "Estimate records are temporarily unavailable."
-        : `${formatRelativeCount(openEstimates.length, "estimate")} still in draft or sent status.`,
-      cta: "Review estimates",
-      href: "/dashboard/estimates",
-      icon: FileCheck2Icon,
-      accentClass: "bg-[linear-gradient(90deg,#0f766e_0%,#34d399_100%)]",
+      helper: officeSnapshot.unavailable ? "Estimate data unavailable" : `${formatCount(openEstimates.length, "open estimate")}`,
+      icon: <FileTextIcon className="h-4 w-4" />,
     },
     {
-      label: "Active Jobs",
-      value: officeSnapshot.unavailable ? "—" : activeJobs.toString(),
-      detail: officeSnapshot.unavailable
-        ? "Job records are temporarily unavailable."
-        : `${formatRelativeCount(allJobs.length, "job")} on the board, excluding completed and archived work.`,
-      cta: "Open job board",
-      href: "/dashboard/jobs",
-      icon: BriefcaseBusinessIcon,
-      accentClass: "bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_100%)]",
+      label: "Jobs active today",
+      value: officeSnapshot.unavailable ? "—" : activeJobs.length.toString(),
+      helper: officeSnapshot.unavailable ? "Job data unavailable" : `${activeClocks} crew clocks open`,
+      icon: <BriefcaseBusinessIcon className="h-4 w-4" />,
     },
     {
-      label: "Crew Hours Today",
-      value: crewHoursToday.toFixed(1),
-      detail: activeClocks > 0 ? `${activeClocks} people are currently clocked in.` : "No crews are clocked in right now.",
-      cta: "Open time board",
-      href: "/dashboard/time",
-      icon: Clock3Icon,
-      accentClass: "bg-[linear-gradient(90deg,#f59e0b_0%,#fb923c_100%)]",
-    },
-  ];
-
-  const actionLanes: ActionLane[] = [
-    {
-      eyebrow: "Field Execution",
-      title: "Keep crews, reports, and scope aligned.",
-      detail: "Use the live work surfaces first so the field record stays current while the day is in motion.",
-      icon: HardHatIcon,
-      accentClass: "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]",
-      items: [
-        { href: "/dashboard/time", title: "Open live labor board", detail: "Review clock status, breaks, and active field coverage." },
-        { href: "/dashboard/daily-reports/new", title: "Create daily report", detail: "Capture production notes before end-of-day compression." },
-      ],
-    },
-    {
-      eyebrow: "Office Follow-Up",
-      title: "Work the queue before it turns reactive.",
-      detail: "Stay ahead of approvals, change capture, and notification cleanup without hunting across modules.",
-      icon: FileTextIcon,
-      accentClass: "border-[#d7e2ec] bg-[#f2f7fb] text-[#2c5678]",
-      items: [
-        { href: "/dashboard/change-orders/new", title: "Start change order", detail: "Log scope movement while the cost story is still fresh." },
-        { href: "/dashboard/notifications", title: "Clear notification queue", detail: "Keep office follow-up tight and visible." },
-      ],
-    },
-    {
-      eyebrow: "Project Record",
-      title: "Keep documentation credible and easy to trust.",
-      detail: "Centralize the latest job artifacts so office and field teams share the same source of truth.",
-      icon: ShieldCheckIcon,
-      accentClass: "border-[#d3e3dd] bg-[#eef7f2] text-[#1f6b52]",
-      items: [
-        { href: "/dashboard/uploads/new", title: "Add supporting upload", detail: "Bring photos and project files into the record quickly." },
-        { href: "/dashboard/jobs", title: "Open job board", detail: "Move from the command view into the active project roster." },
-      ],
-    },
-  ];
-
-  const briefingItems = [
-    {
-      label: "Field coverage",
-      value: activeClocks > 0 ? `${activeClocks} active clocks` : "No active clocks yet",
-      detail: jobsTouchedToday > 0 ? `${jobsTouchedToday} jobs have labor activity today.` : "Waiting on the first field signal.",
-    },
-    {
-      label: "Documentation pace",
-      value: reportsToday > 0 ? `${reportsToday} daily reports filed` : "No reports filed yet",
-      detail: uploadsUnavailable
-        ? "Recent uploads could not be loaded for this view."
-        : uploadsToday > 0
-          ? `${uploadsToday} uploads were added today.`
-          : "Supporting files still need to land.",
-    },
-    {
-      label: "Office queue",
-      value: officeSnapshot.unavailable
-        ? "Pipeline unavailable"
-        : notificationsUnavailable
-        ? "Queue unavailable"
-        : allUnreadNotifications.length > 0
-        ? `${allUnreadNotifications.length} unread notifications`
-        : "Queue is clear",
-      detail: officeSnapshot.unavailable
-        ? "Customer, estimate, job, and proposal counts could not be loaded."
-        : notificationsUnavailable
-        ? "Notifications could not be loaded for this view."
-        : allUnreadNotifications.length > 0
-        ? "Follow-up is waiting in the notification feed."
-        : "No office escalations are sitting unreviewed.",
-    },
-    {
-      label: "Estimating posture",
-      value: officeSnapshot.unavailable ? "Estimates unavailable" : `${openEstimates.length} open estimates`,
-      detail: officeSnapshot.unavailable
-        ? "The estimating board could not be loaded for this snapshot."
-        : `${formatCurrency(openEstimateValue)} remains in draft or sent status.`,
-    },
-    {
-      label: "Active projects",
-      value: officeSnapshot.unavailable ? "Jobs unavailable" : `${activeJobs} active jobs`,
-      detail: officeSnapshot.unavailable
-        ? "The job board could not be loaded for this snapshot."
-        : `${allJobs.length} total project records are visible from the live board.`,
-    },
-    {
-      label: "Proposal pace",
-      value: officeSnapshot.unavailable ? "Proposals unavailable" : `${proposalsInMotion} proposals moving`,
-      detail: officeSnapshot.unavailable
-        ? "Proposal records could not be loaded for this snapshot."
-        : `${allProposals.length} proposal records are represented in the office workflow.`,
+      label: "Reports filed today",
+      value: reportsToday.toString(),
+      helper: uploadsUnavailable ? "Uploads unavailable" : `${allUploads.filter((upload) => upload.created_at?.slice(0, 10) === todayIso).length} uploads today`,
+      icon: <ClipboardListIcon className="h-4 w-4" />,
     },
   ];
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <SurfaceCard className="relative overflow-hidden p-7 sm:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.16),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.07),_transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.3),transparent_55%)]" />
+    <div>
+      <PageHeader
+        eyebrow="Operations Command"
+        title="Daily workspace"
+        description="Calm command surface for customers, estimates, jobs, reports, and queues. The dashboard shows what needs action first, then lets the user drill into records without changing context."
+        actions={
+          <>
+            <Link href="/dashboard/estimates/new" className="rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-blue-50">
+              Create Estimate
+            </Link>
+            <Link href="/dashboard/customers/new" className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-700/20 hover:bg-blue-800">
+              New Customer
+            </Link>
+          </>
+        }
+        tabs={
+          <>
+            {["Today", "This Week", "Needs Action", "Ready to Bill"].map((tab, index) => (
+              <span key={tab} className={index === 0 ? "rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white" : "rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700"}>
+                {tab}
+              </span>
+            ))}
+          </>
+        }
+      />
 
-        <div className="relative">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.42fr)_minmax(320px,0.92fr)] xl:items-start">
-            <div className="min-w-0">
-              <Badge className="rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1d4ed8]">
-                Operations Command
-              </Badge>
-              <p className="mt-4 font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">
-                <ViewerCurrentDateLabel />
-              </p>
-              <h1 className="mt-4 max-w-5xl text-[clamp(2.35rem,4.2vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#101828]">
-                A steadier command view for field work, documentation, and office follow-up.
-              </h1>
-              <p className="mt-5 max-w-4xl text-base leading-8 text-zinc-600">
-                See the day&apos;s operating picture before diving into individual modules. This home surface is designed to help crews, paperwork, and project records stay aligned without adding workflow churn.
-              </p>
+      <div className="grid gap-4 px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {kpis.map((item) => <KpiTile key={item.label} {...item} />)}
+        </div>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link
-                  href="/dashboard/daily-reports"
-                  className="inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
-                >
-                  Review today&apos;s reports
-                </Link>
-                <Link
-                  href="/dashboard/jobs"
-                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
-                >
-                  Open job board
-                </Link>
-                <Link
-                  href="#tools-and-ai"
-                  className="inline-flex items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-900 shadow-[0_12px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd] hover:bg-[#eff6ff]"
-                >
-                  Browse Tools &amp; AI
-                </Link>
-              </div>
+        {notificationsUnavailable ? (
+          <OperationalCard className="p-4">
+            <p className="text-sm font-black text-slate-950">Queue unavailable</p>
+            <p className="mt-1 text-sm font-medium text-slate-600">The notification queue is temporarily unavailable, but the dashboard remains available.</p>
+          </OperationalCard>
+        ) : null}
+
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <OperationalCard className="overflow-hidden">
+            <div className="p-4">
+              <SectionHeader
+                title="Estimate Pipeline"
+                description="High-density office queue with status, customer, value, and action."
+                action={<Link href="/dashboard/estimates" className="text-xs font-black text-blue-700 hover:text-blue-800">Open Estimates</Link>}
+              />
             </div>
-
-            <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_20px_42px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recommended Focus</p>
-                  <h2 className="mt-3 text-[1.35rem] font-semibold tracking-[-0.04em] text-[#101828]">
-                    Make the command surface carry the operating picture first.
-                  </h2>
-                </div>
-                <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#d7e2ec] bg-white text-[#2c5678] shadow-[0_12px_24px_rgba(15,23,42,0.05)]">
-                  <LayoutDashboardIcon className="h-5 w-5" />
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-zinc-600">{focusMessage}</p>
-
-              <div className="mt-5 grid gap-3">
-                {briefingItems.map((item) => (
-                  <div key={item.label} className="rounded-[22px] border border-white bg-white/92 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">{item.label}</p>
-                    <p className="mt-2 text-sm font-semibold text-zinc-950">
-                      {item.label === "Office queue" && item.value === "Queue unavailable" ? "Notification queue unavailable" : item.value}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-zinc-600">{item.detail}</p>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                href="/dashboard/notifications"
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]"
-              >
-                Review follow-up queue
-                <ArrowRightIcon className="h-4 w-4" />
-              </Link>
-            </div>
+            <EstimateTable estimates={openEstimates.slice(0, 5)} />
+          </OperationalCard>
+          <div className="space-y-4">
+            <QueueList items={queueItems} />
+            <RecordPreview
+              title={latestJob?.name ?? latestEstimate?.title}
+              rows={[
+                ["Customer", latestJob ? getJobLabel(latestJob.customers) : latestEstimate ? getJobLabel(latestEstimate.customers) : "—"],
+                ["Stage", latestJob?.status.replaceAll("_", " ") ?? latestEstimate?.status ?? "—"],
+                ["Next Step", latestJob ? "Open job hub and check field status" : latestEstimate ? "Review estimate record" : "No active record"],
+                ["Risk", notificationsUnavailable ? "Queue unavailable" : officeSnapshot.unavailable ? "Office pipeline unavailable" : "No active blocker surfaced"],
+              ]}
+              actions={
+                latestJob ? (
+                  <Link href={`/dashboard/jobs/${latestJob.id}`} className="inline-flex rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">
+                    Open Record
+                  </Link>
+                ) : null
+              }
+            />
           </div>
+        </div>
 
-          <div className="mt-8 overflow-hidden rounded-[30px] border border-white/85 bg-white/90 shadow-[0_22px_44px_rgba(15,23,42,0.06)]">
-            <div className="grid gap-px bg-zinc-200/80 xl:grid-cols-3">
-              {briefingItems.map((item) => (
-                <div key={item.label} className="bg-white/94 px-5 py-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">{item.label}</p>
-                    <ActivityIcon className="h-4 w-4 text-zinc-400" />
-                  </div>
-                  <p className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-zinc-950">{item.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">{item.detail}</p>
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <OperationalCard className="overflow-hidden">
+            <div className="p-4">
+              <SectionHeader
+                title="Active Jobs"
+                description="Operational job list with status, schedule, customer, and next action."
+                action={<Link href="/dashboard/jobs" className="text-xs font-black text-blue-700 hover:text-blue-800">Open Jobs</Link>}
+              />
+            </div>
+            <JobsTable jobs={activeJobs.slice(0, 5)} />
+          </OperationalCard>
+
+          <OperationalCard className="p-4">
+            <SectionHeader title="Recent Activity" description="Compact audit rhythm across labor, reports, and uploads." />
+            <div className="space-y-3">
+              {allTimeEntries.slice(0, 2).map((entry) => (
+                <div key={entry.id} className="border-l-2 border-blue-200 pl-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-700">
+                    <DashboardActivityTime value={entry.clock_in_at} />
+                  </p>
+                  <p className="mt-1 text-sm font-black text-slate-950">Time entry updated</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{getEmployeeName(entry.employees)} · {getJobLabel(entry.jobs)}</p>
                 </div>
               ))}
+              {allReports.slice(0, 1).map((report) => (
+                <div key={report.id} className="border-l-2 border-blue-200 pl-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-700">{formatDateOnly(report.report_date)}</p>
+                  <p className="mt-1 text-sm font-black text-slate-950">Daily report submitted</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{getJobLabel(report.jobs)} · {getSubmitter(report.users)}</p>
+                </div>
+              ))}
+              {allUploads.slice(0, 1).map((upload) => (
+                <div key={upload.id} className="border-l-2 border-blue-200 pl-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-700">
+                    <DashboardActivityTime value={upload.created_at} />
+                  </p>
+                  <p className="mt-1 text-sm font-black text-slate-950">Upload added</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{upload.file_name} · {getJobLabel(upload.jobs)}</p>
+                </div>
+              ))}
+              {allTimeEntries.length + allReports.length + allUploads.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-4 text-sm font-medium text-slate-600">
+                  No activity has landed yet.
+                </p>
+              ) : null}
             </div>
-          </div>
-        </div>
-      </SurfaceCard>
-
-      <section className="grid gap-5 xl:grid-cols-2 2xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <MetricCard key={metric.label} metric={metric} />
-        ))}
-      </section>
-
-      <SurfaceCard>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-3xl">
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Quick Actions</p>
-            <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-[#101828]">Move the day forward from a smaller set of stronger decisions.</h2>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">
-              These action lanes keep the highest-value surfaces close at hand without reshaping how teams already work inside the product.
-            </p>
-          </div>
-          <Link href="/dashboard/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]">
-            Open jobs
-            <ArrowRightIcon className="h-4 w-4" />
-          </Link>
+          </OperationalCard>
         </div>
 
-        <div className="mt-8 grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-          {actionLanes.map((lane) => (
-            <ActionLaneCard key={lane.title} lane={lane} />
-          ))}
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard id="tools-and-ai" className="overflow-hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Tools &amp; AI</p>
-            <h2 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.05em] text-[#101828]">Keep specialty tools visible without turning the desktop workspace into a right-side utility column.</h2>
-          </div>
-          <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
-            <SparklesIcon className="h-5 w-5" />
-          </span>
-        </div>
-
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600">
-          The concrete calculator stays accessible to both field and office roles, while Admin Ops Copilot remains constrained to owner and office admin access.
-        </p>
-
-        <div className="mt-7 grid gap-4 xl:grid-cols-2">
-          <div className="rounded-[30px] border border-[#d7e2ec] bg-[linear-gradient(135deg,#f4f8fb_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Concrete Calculator</p>
-                <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">Estimate yardage quickly, then move back into delivery conversations.</h3>
-              </div>
-              <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#d7e2ec] bg-white text-[#2c5678]">
-                <CalculatorIcon className="h-5 w-5" />
-              </span>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-zinc-600">
-              This is the utility surface that belongs in the shell-level toolkit: useful, role-safe, and immediately actionable.
-            </p>
-            <Link
-              href="/dashboard/concrete-calculator"
-              className="mt-6 inline-flex items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#101828_0%,#1f2937_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.18)] transition hover:brightness-110"
-            >
-              Open Concrete Calculator
-            </Link>
-          </div>
-
-          <div className="rounded-[30px] border border-[#bfdbfe] bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_100%)] p-6 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-app-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Copilot Access</p>
-                <h3 className="mt-3 text-lg font-semibold tracking-[-0.04em] text-[#101828]">
-                  {canUseAdminOpsCopilot ? "Office-side AI follow-up is available in this workspace." : "AI follow-up remains intentionally hidden outside office-side roles."}
-                </h3>
-              </div>
-              <span className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-[#bfdbfe] bg-white text-[#1d4ed8]">
-                <SparklesIcon className="h-5 w-5" />
-              </span>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-zinc-600">
-              {canUseAdminOpsCopilot
-                ? "Jump directly into the assistant without leaving the command center."
-                : "Role-based restraint keeps the dashboard cleaner for the field while still preserving the office workflow."}
-            </p>
-            {canUseAdminOpsCopilot ? (
-              <Link
-                href="#admin-ops-copilot"
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]"
-              >
-                Jump to Admin Ops Copilot
-                <ArrowRightIcon className="h-4 w-4" />
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <OperationalCard className="p-4">
+            <SectionHeader title="Tools and AI" description="Keep utilities visible without turning the desktop into a decorative concept dashboard." />
+            <div className="grid gap-3 md:grid-cols-2">
+              <Link href="/dashboard/concrete-calculator" className="rounded-xl border border-blue-100 bg-blue-50 p-4 hover:bg-blue-100">
+                <p className="text-sm font-black text-slate-950">Concrete Calculator</p>
+                <p className="mt-1 text-sm font-medium text-slate-600">Estimate yardage, then move back into delivery conversations.</p>
               </Link>
-            ) : null}
-          </div>
-        </div>
-      </SurfaceCard>
-
-      <div id="admin-ops-copilot">
-        {canUseAdminOpsCopilot ? (
-          <AdminOpsCopilotCard />
-        ) : (
-          <SurfaceCard className="bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(247,248,250,0.92))]">
-            <div className="flex items-start justify-between gap-4">
-              <div className="max-w-xl">
-                <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Admin Ops Copilot</p>
-                <h3 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.05em] text-[#101828]">Reserved for owner and office admin follow-up.</h3>
-                <p className="mt-4 text-sm leading-7 text-zinc-600">
-                  This keeps the command surface focused on field-safe tools while reserving this workflow for owner and office admin roles.
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-sm font-black text-slate-950">Pipeline health</p>
+                <p className="mt-1 text-sm font-medium text-slate-600">
+                  {officeSnapshot.unavailable ? "Office pipeline unavailable." : `${proposalsInMotion} proposals moving through draft or sent status.`}
                 </p>
               </div>
-              <span className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-zinc-200 bg-zinc-50 text-zinc-700">
-                <SparklesIcon className="h-5 w-5" />
-              </span>
             </div>
-          </SurfaceCard>
-        )}
+          </OperationalCard>
+          <OperationalCard className="p-4">
+            <SectionHeader title="Crew Hours Today" description="Field status remains visible without a separate right strip." />
+            <div className="rounded-xl bg-blue-950 p-4 text-white">
+              <p className="text-xs font-black uppercase tracking-widest text-blue-200">
+                <ViewerCurrentDateLabel />
+              </p>
+              <p className="mt-2 text-4xl font-black">{crewHoursToday.toFixed(1)}</p>
+              <p className="mt-1 text-sm font-bold text-blue-100">{activeClocks} active crew clocks</p>
+            </div>
+          </OperationalCard>
+        </div>
+
+        {canUseAdminOpsCopilot ? <div id="admin-ops-copilot"><AdminOpsCopilotCard /></div> : null}
       </div>
-
-      <SurfaceCard>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="font-app-mono text-[11px] uppercase tracking-[0.24em] text-zinc-500">Recent Activity</p>
-            <h2 className="mt-3 text-[1.85rem] font-semibold tracking-[-0.05em] text-[#101828]">Latest movement across the operation.</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">
-              Read the newest field, reporting, and upload signals without leaving the command surface.
-            </p>
-          </div>
-          <Link href="/dashboard/time" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1d4ed8] transition hover:text-[#1e40af]">
-            View time board
-            <ArrowRightIcon className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="mt-8 grid gap-4 xl:grid-cols-[1fr,1fr,1.08fr]">
-          <ActivityPanel
-            title="Time activity"
-            eyebrow="Labor"
-            href="/dashboard/time"
-            icon={Clock3Icon}
-            items={recentTimeEntries}
-            emptyLabel="No time activity has been recorded yet."
-            renderItem={(entry) => (
-              <>
-                <p className="font-semibold text-zinc-950">{getEmployeeName(entry.employees)}</p>
-                <p className="mt-1 text-zinc-600">{getJobLabel(entry.jobs)}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
-                    {entry.status.replaceAll("_", " ")}
-                  </Badge>
-                  <DashboardActivityTime
-                    value={entry.clock_in_at}
-                    className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500"
-                  />
-                </div>
-              </>
-            )}
-          />
-
-          <ActivityPanel
-            title="Daily reports"
-            eyebrow="Reporting"
-            href="/dashboard/daily-reports"
-            icon={ClipboardListIcon}
-            items={recentReports}
-            emptyLabel="No daily reports have been filed yet."
-            renderItem={(report) => (
-              <>
-                <p className="font-semibold text-zinc-950">{getJobLabel(report.jobs)}</p>
-                <p className="mt-1 text-zinc-600">{getSubmitter(report.users)}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
-                    Filed
-                  </Badge>
-                  <span className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                    {formatDateOnly(report.report_date)}
-                  </span>
-                </div>
-              </>
-            )}
-          />
-
-          <ActivityPanel
-            title="Uploads"
-            eyebrow="Project Record"
-            href="/dashboard/uploads"
-            icon={UploadIcon}
-            items={recentUploads}
-            emptyLabel={uploadsUnavailable ? "Recent uploads are temporarily unavailable." : "No files have been uploaded yet."}
-            renderItem={(upload) => (
-              <>
-                <p className="font-semibold text-zinc-950">{upload.file_name}</p>
-                <p className="mt-1 text-zinc-600">{getJobLabel(upload.jobs)}</p>
-                <p className="mt-1 text-zinc-600">{getSubmitter(upload.users, upload.employees)}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className="rounded-full border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-700">
-                    Upload
-                  </Badge>
-                  <DashboardActivityTime
-                    value={upload.created_at}
-                    className="font-app-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500"
-                  />
-                </div>
-              </>
-            )}
-          />
-        </div>
-      </SurfaceCard>
     </div>
   );
 }
